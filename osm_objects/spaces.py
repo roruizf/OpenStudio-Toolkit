@@ -2,7 +2,7 @@ import openstudio
 import pandas as pd
 
 
-def get_all_space_objects_into_a_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+def get_all_space_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
     Retrieve all spaces from the OpenStudio model and organize them into a pandas DataFrame.
 
