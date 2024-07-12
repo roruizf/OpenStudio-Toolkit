@@ -1,0 +1,8 @@
+# Ignore Python bytecode files
+*.pyc
+*.pyo
+
+# Ignore all __pycache__ directories
+**/__pycache__/
+
+# Other rules can go here
