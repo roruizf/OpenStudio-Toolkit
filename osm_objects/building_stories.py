@@ -1,5 +1,6 @@
 import openstudio
 import pandas as pd
+import numpy as np
 
 def get_all_building_stories_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
@@ -37,3 +38,96 @@ def get_all_building_stories_objects_as_dataframe(osm_model: openstudio.model.Mo
         by='Name', ascending=True).reset_index(drop=True)
 
     return all_building_stories_df
+
+
+def create_new_building_stories_objects(osm_model: openstudio.model.Model, building_stories_to_create_df: pd.DataFrame) -> None:
+    """
+    Create new building stories components based on data from a New Objects DataFrame.
+
+    Parameters:
+    - osm_model: The OpenStudio Model object.
+    - building_stories_to_create_df: DataFrame containing data for new building story components.
+
+    Returns:
+    - None
+    """
+    building_stories_to_create_df = building_stories_to_create_df.replace(np.nan, None)
+
+    for _, row in building_stories_to_create_df.iterrows():
+        new_story = openstudio.model.BuildingStory(osm_model)
+        new_story.setName(row['Name'])
+
+        # Setting attributes if defined in building_stories_to_create_df
+
+        # Nominal Z Coordinate {m}
+        if row['Nominal Z Coordinate {m}'] is not None:
+            new_story.setNominalZCoordinate(row['Nominal Z Coordinate {m}'])
+
+        # Nominal Floor to Floor Height {m}
+        if row['Nominal Floor to Floor Height {m}'] is not None:
+            new_story.setNominalFloortoFloorHeight(
+                row['Nominal Floor to Floor Height {m}'])
+        
+        # Default Construction Set Name
+        if row['Default Construction Set Name'] is not None:
+            new_construction_set = openstudio.model.DefaultConstructionSet(
+                osm_model)
+            new_story.setDefaultConstructionSet(new_construction_set)
+        
+        # Default Schedule Set Name
+        if row['Default Schedule Set Name'] is not None:
+            new_schedule_set = openstudio.model.DefaultScheduleSet(osm_model)
+            new_story.setDefaultScheduleSet(new_schedule_set)
+        
+        # Group Rendering Name   
+        if row['Group Rendering Name'] is not None:
+            if osm_model.getRenderingColorByName(row['Group Rendering Name']).isNull():
+                rendering_color = openstudio.model.RenderingColor(osm_model)
+            else:
+                rendering_color = osm_model.getRenderingColorByName(row['Group Rendering Name']).get()
+
+            rendering_color.setName(row['Group Rendering Name'])
+            new_story.setRenderingColor(rendering_color)
+       
+        # Nominal Floor to Ceiling Height {m}
+        if row['Nominal Floor to Ceiling Height {m}'] is not None:
+            new_story.setNominalFloortoCeilingHeight(
+                row['Nominal Floor to Ceiling Height {m}'])
+
+    print(f"{building_stories_to_create_df.shape[0]} new building story objects created")
+
+def update_building_stories_objects(osm_model, building_stories_to_update_df):
+
+    for _, row in building_stories_to_update_df.iterrows():
+        story = osm_model.getBuildingStory(row['Handle'])
+
+        # Nominal Z Coordinate {m}
+        if row['Nominal Z Coordinate {m}'] is not None:
+            story.get().setNominalZCoordinate(row['Nominal Z Coordinate {m}'])
+
+        # Nominal Floor to Floor Height {m}
+        if row['Nominal Floor to Floor Height {m}'] is not None:
+            story.get().setNominalFloortoFloorHeight(
+                row['Nominal Floor to Floor Height {m}'])
+        
+        # Default Construction Set Name
+        if row['Default Construction Set Name'] is not None:
+            pass
+        
+        # Set new name
+        if row['Name'] is not None:
+            pass
+
+
+        # Default Schedule Set Name
+        if row['Default Schedule Set Name'] is not None:
+            pass
+
+        # Group Rendering Name
+        if row['Group Rendering Name'] is not None:
+            pass
+        
+        # Nominal Floor to Ceiling Height {m}
+        if row['Nominal Floor to Ceiling Height {m}'] is not None:
+            story.get().setNominalFloortoCeilingHeight(
+                row['Nominal Floor to Ceiling Height {m}'])
