@@ -131,3 +131,9 @@ def update_building_stories_objects(osm_model, building_stories_to_update_df):
         if row['Nominal Floor to Ceiling Height {m}'] is not None:
             story.get().setNominalFloortoCeilingHeight(
                 row['Nominal Floor to Ceiling Height {m}'])
+            
+def set_stories_to_spaces(osm_model, space_story_dict_list):
+    space_story_df = pd.DataFrame(space_story_dict_list)
+    for index, row in space_story_df.iterrows():
+        osm_model.getSpace(row['Handle']).get().setBuildingStory(
+            osm_model.getBuildingStoryByName(row['Story']).get())
