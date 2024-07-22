@@ -1,7 +1,7 @@
 import openstudio
 import pandas as pd
 
-def get_all_building_storys_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+def get_all_building_stories_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
     Retrieve all building stories from the OpenStudio model and organize them into a pandas DataFrame.
 
