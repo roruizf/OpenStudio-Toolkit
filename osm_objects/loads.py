@@ -99,7 +99,7 @@ def get_all_lights_objects_as_dafarame(osm_model: openstudio.model.Model) -> pd.
     # Define attributtes to retrieve in a dictionary
     object_attr = {'Handle': [str(x.handle()) for x in all_lights],
                    'Name': [x.name().get() for x in all_lights],
-                   'Lights Definition Name': None,
+                   'Lights Definition Name': [x.lightsDefinition().name().get() if not x.lightsDefinition().name().isNull() else None for x in all_lights],
                    'Space or SpaceType Name': [x.spaceType().get().name().get() if not x.spaceType().isNull() else
                                                (x.space().get().name().get()
                                                 if not x.space().isNull() else None)
@@ -131,13 +131,13 @@ def get_all_lights_definition_objects_as_dafarame(osm_model: openstudio.model.Mo
     # Define attributtes to retrieve in a dictionary
     object_attr = {'Handle': [str(x.handle()) for x in all_lights_definition],
                    'Name': [x.name().get() for x in all_lights_definition],
-                   'Design Level Calculation Method': None,
-                   'Lighting Level {W}': None,
-                   'Watts per Space Floor Area {W/m2}': None,
-                   'Watts per Person {W/person}': None,
-                   'Fraction Radiant': None,
-                   'Fraction Visible': None,
-                   'Return Air Fraction': None}
+                   'Design Level Calculation Method': [x.designLevelCalculationMethod() for x in all_lights_definition],
+                   'Lighting Level {W}': [x.lightingLevel().get() if not x.lightingLevel().isNull() else None  for x in all_lights_definition],
+                   'Watts per Space Floor Area {W/m2}': [x.wattsperSpaceFloorArea().get() if not x.wattsperSpaceFloorArea().isNull() else None  for x in all_lights_definition],
+                   'Watts per Person {W/person}': [x.wattsperPerson().get() if not x.wattsperPerson().isNull() else None  for x in all_lights_definition],
+                   'Fraction Radiant': [x.fractionRadiant() for x in all_lights_definition],
+                   'Fraction Visible': [x.fractionVisible() for x in all_lights_definition],
+                   'Return Air Fraction': [x.returnAirFraction() for x in all_lights_definition]}
 
     # Create a DataFrame of all lights objects.
     all_lights_definition_df = pd.DataFrame(columns=object_attr.keys())
