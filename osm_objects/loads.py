@@ -5,7 +5,7 @@ import pandas as pd
 # --------
 
 
-def get_all_people_objects_as_dafarame(osm_model: openstudio.model.Model) -> pd.DataFrame:
+def get_all_people_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
     Retrieves all the people objects in an OpenStudio model and returns them as a DataFrame.
 
@@ -55,7 +55,7 @@ def get_all_people_objects_as_dafarame(osm_model: openstudio.model.Model) -> pd.
     return all_people_df
 
 
-def get_all_people_definition_objects_as_dafarame(osm_model: openstudio.model.Model) -> pd.DataFrame:
+def get_all_people_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     # OS:People:Definition
     # Get all People Definition in the OpenStudio model.
     all_people_definition = osm_model.getPeopleDefinitions()
@@ -91,7 +91,7 @@ def get_all_people_definition_objects_as_dafarame(osm_model: openstudio.model.Mo
 # --------
 
 
-def get_all_lights_objects_as_dafarame(osm_model: openstudio.model.Model) -> pd.DataFrame:
+def get_all_lights_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     # OS:Lights
     # Get all spaces in the OpenStudio model.
     all_lights = osm_model.getLightss()
@@ -123,7 +123,7 @@ def get_all_lights_objects_as_dafarame(osm_model: openstudio.model.Model) -> pd.
     return all_lights_df
 
 
-def get_all_lights_definition_objects_as_dafarame(osm_model: openstudio.model.Model) -> pd.DataFrame:
+def get_all_lights_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     # OS:Lights:Definition
     # Get all lights Definition in the OpenStudio model.
     all_lights_definition = osm_model.getLightsDefinitions()
@@ -157,7 +157,7 @@ def get_all_lights_definition_objects_as_dafarame(osm_model: openstudio.model.Mo
 # --------------------
 
 
-def get_all_electric_equipment_objects_as_dafarame(osm_model: openstudio.model.Model) -> pd.DataFrame:
+def get_all_electric_equipment_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     # OS:ElectricEquipment
     # Get all spaces in the OpenStudio model.
     all_electric_equipment = osm_model.getElectricEquipments()
@@ -189,7 +189,7 @@ def get_all_electric_equipment_objects_as_dafarame(osm_model: openstudio.model.M
     return all_electric_equipment_df
 
 
-def get_all_electric_equipment_definition_objects_as_dafarame(osm_model: openstudio.model.Model) -> pd.DataFrame:
+def get_all_electric_equipment_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     # OS:ElectricEquipment:Definition
     # Get all electric equipment Definition in the OpenStudio model.
     all_electric_equipment_definition = osm_model.getElectricEquipmentDefinitions()
@@ -220,7 +220,7 @@ def get_all_electric_equipment_definition_objects_as_dafarame(osm_model: openstu
 
 # Space Infiltration
 # --------------------
-def get_all_space_infiltration_design_flowrate_objects_as_dafarame(osm_model: openstudio.model.Model) -> pd.DataFrame:
+def get_all_space_infiltration_design_flowrate_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     # OS:ElectricEquipment
     # Get all spaces in the OpenStudio model.
     all_space_infiltration_design_flowrate = osm_model.getSpaceInfiltrationDesignFlowRates()
