@@ -74,7 +74,6 @@ def get_all_zone_hvac_equipment_list_objects_as_dataframe(osm_model: openstudio.
     Returns:
     - pd.DataFrame: DataFrame containing information about all thermal zones.
     """
-
     all_zone_hvac_equipment_lists = osm_model.getZoneHVACEquipmentLists()
 
     # Define attributes to retrieve in a dictionary
@@ -84,20 +83,6 @@ def get_all_zone_hvac_equipment_list_objects_as_dataframe(osm_model: openstudio.
         'Thermal Zone': [x.thermalZone().name().get() for x in all_zone_hvac_equipment_lists],
         'Load Distribution Scheme': [x.loadDistributionScheme() for x in all_zone_hvac_equipment_lists]
         }
-    # Get maximum number of zoneHVAC equipments
-    zone_equipment_max = 0
-    for zone_hvac_equipment_list in all_zone_hvac_equipment_lists:
-        num_elements = len(zone_hvac_equipment_list.equipment())
-        if num_elements > zone_equipment_max:
-            zone_equipment_max = num_elements
-
-    # Add columns for each zone HVAC equipment
-    for i in range(zone_equipment_max):
-      object_attr[f'Zone Equipment {i+1}'] = [x.equipment()[i].name().get() for x in all_zone_hvac_equipment_lists]
-      object_attr[f'Zone Equipment Cooling Sequence {i+1}'] = [x.coolingPriority(x.equipment()[i]) for x in all_zone_hvac_equipment_lists]
-      object_attr[f'Zone Equipment Heating or No-Load Sequence {i+1}'] = [x.heatingPriority(x.equipment()[i]) for x in all_zone_hvac_equipment_lists]
-      object_attr[f'Zone Equipment Sequential Cooling Fraction Schedule Name {i+1}'] = [x.sequentialCoolingFractionSchedule(x.equipment()[i]).get().name().get() if not x.sequentialCoolingFractionSchedule(x.equipment()[i]).isNull() else None for x in all_zone_hvac_equipment_lists]
-      object_attr[f'Zone Equipment Sequential Heating Fraction Schedule Name {i+1}'] = [x.sequentialHeatingFractionSchedule(x.equipment()[i]).get().name().get() if not x.sequentialHeatingFractionSchedule(x.equipment()[i]).isNull() else None for x in all_zone_hvac_equipment_lists]
 
     # Create a DataFrame of all thermal zones.
     all_zone_hvac_equipment_lists_df = pd.DataFrame(columns=object_attr.keys())
@@ -107,6 +92,31 @@ def get_all_zone_hvac_equipment_list_objects_as_dataframe(osm_model: openstudio.
     # Sort the DataFrame alphabetically by the Name column and reset indexes
     all_zone_hvac_equipment_lists_df = all_zone_hvac_equipment_lists_df.sort_values(
         by='Name', ascending=True).reset_index(drop=True)
+
+    # Get maximum number of zoneHVAC equipments
+    zone_equipment_max = 0
+    for zone_hvac_equipment_list in all_zone_hvac_equipment_lists:
+        num_elements = len(zone_hvac_equipment_list.equipment())
+        if num_elements > zone_equipment_max:
+            zone_equipment_max = num_elements
+    
+    for i in range(zone_equipment_max):
+      all_zone_hvac_equipment_lists_df[f'Zone Equipment {i+1}'] = None
+      all_zone_hvac_equipment_lists_df[f'Zone Equipment Cooling Sequence {i+1}'] = None
+      all_zone_hvac_equipment_lists_df[f'Zone Equipment Heating or No-Load Sequence {i+1}'] = None
+      all_zone_hvac_equipment_lists_df[f'Zone Equipment Sequential Cooling Fraction Schedule Name {i+1}'] = None
+      all_zone_hvac_equipment_lists_df[f'Zone Equipment Sequential Heating Fraction Schedule Name {i+1}'] = None
+
+
+    for index, row in all_zone_hvac_equipment_lists_df.iterrows():
+      # Add columns for each zone HVAC equipment
+      zone_hvac_equipment_list = osm_model.getZoneHVACEquipmentListByName(row['Name']).get()
+      for i in range(len(zone_hvac_equipment_list.equipment())):
+        all_zone_hvac_equipment_lists_df.loc[index, f'Zone Equipment {i+1}'] = zone_hvac_equipment_list.equipment()[i].name().get()
+        all_zone_hvac_equipment_lists_df.loc[index, f'Zone Equipment Cooling Sequence {i+1}'] = zone_hvac_equipment_list.coolingPriority(zone_hvac_equipment_list.equipment()[i])
+        all_zone_hvac_equipment_lists_df.loc[index, f'Zone Equipment Heating or No-Load Sequence {i+1}'] = zone_hvac_equipment_list.heatingPriority(zone_hvac_equipment_list.equipment()[i])
+        all_zone_hvac_equipment_lists_df.loc[index, f'Zone Equipment Sequential Cooling Fraction Schedule Name {i+1}'] = zone_hvac_equipment_list.sequentialCoolingFractionSchedule(zone_hvac_equipment_list.equipment()[i]).get().name().get() if not zone_hvac_equipment_list.sequentialCoolingFractionSchedule(zone_hvac_equipment_list.equipment()[i]).isNull() else None
+        all_zone_hvac_equipment_lists_df.loc[index, f'Zone Equipment Sequential Heating Fraction Schedule Name {i+1}'] = zone_hvac_equipment_list.sequentialHeatingFractionSchedule(zone_hvac_equipment_list.equipment()[i]).get().name().get() if not zone_hvac_equipment_list.sequentialHeatingFractionSchedule(zone_hvac_equipment_list.equipment()[i]).isNull() else None
 
     print(
         f"The OSM model contains {all_zone_hvac_equipment_lists_df.shape[0]} thermal zones")
