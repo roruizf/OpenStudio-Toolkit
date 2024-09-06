@@ -80,3 +80,44 @@ def get_all_coil_heating_dx_variable_refrigerant_flow_objects_as_dataframe(osm_m
         f"The OSM model contains {all_coil_heating_dx_vrfs_df.shape[0]} sizing zones")
 
     return all_coil_heating_dx_vrfs_df
+
+def get_all_fan_constant_volume_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all Fan Constant Volume Objects from the OpenStudio model and organize them into a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing information about all thermal zones.
+    """
+
+    all_fan_constant_volume = osm_model.getFanConstantVolumes()
+    # Define attributes to retrieve in a dictionary
+    object_attr = {
+        'Handle': [str(x.handle()) for x in all_fan_constant_volume],
+        'Name': [x.name().get() for x in all_fan_constant_volume],
+        'Availability Schedule Name': [x.availabilitySchedule().name().get() if not x.availabilitySchedule().name().isNull() else None for x in all_fan_constant_volume],
+        'Fan Total Efficiency': [x.fanTotalEfficiency() for x in all_fan_constant_volume],
+        'Pressure Rise {Pa}': [x.pressureRise() for x in all_fan_constant_volume],
+        'Maximum Flow Rate {m3/s}': [x.maximumFlowRate().get() if not x.maximumFlowRate().isNull() else None for x in all_fan_constant_volume],
+        'Motor Efficiency': None,
+        'Motor In Airstream Fraction': None,
+        'Air Inlet Node Name': None,
+        'Air Outlet Node Name': None,
+        'End-Use Subcategory': [x.endUseSubcategory() for x in all_fan_constant_volume]
+        }
+
+    # Create a DataFrame of Fan Constant Volume Objects.
+    all_fan_constant_volume_df = pd.DataFrame(columns=object_attr.keys())
+    for key in object_attr.keys():
+        all_fan_constant_volume_df[key] = object_attr[key]
+
+    # Sort the DataFrame alphabetically by the Name column and reset indexes
+    all_fan_constant_volume_df = all_fan_constant_volume_df.sort_values(
+        by='Name', ascending=True).reset_index(drop=True)
+
+    print(
+        f"The OSM model contains {all_fan_constant_volume_df.shape[0]} Fan Constant Volume Objects")
+
+    return all_fan_constant_volume_df
