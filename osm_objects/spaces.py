@@ -30,7 +30,7 @@ def get_all_space_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.
         'Building Story Name': [x.buildingStory().get().name().get() if not x.buildingStory().isNull() else None for x in all_spaces],
         'Thermal Zone Name': [x.thermalZone().get().name().get() if not x.thermalZone().isNull() else None for x in all_spaces],
         'Part of Total Floor Area': [x.partofTotalFloorArea() for x in all_spaces],
-        'Design Specification Outdoor Air Object Name': None,
+        'Design Specification Outdoor Air Object Name': [x.designSpecificationOutdoorAir().get().name().get() if not x.designSpecificationOutdoorAir().isNull() else None for x in all_spaces],
         'Building Unit Name': [x.buildingUnit().get().name().get() if not x.buildingUnit().isNull() else None for x in all_spaces],
         'Volume {m3}': [x.volume() for x in all_spaces],
         'Ceiling Height {m}': [x.ceilingHeight() for x in all_spaces],

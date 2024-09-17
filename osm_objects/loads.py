@@ -257,3 +257,35 @@ def get_all_space_infiltration_design_flowrate_objects_as_dataframe(osm_model: o
         f"The OSM model contains {all_space_infiltration_design_flowrate_df.shape[0]} design infiltration flow rate objects")
 
     return all_space_infiltration_design_flowrate_df
+
+# Design Specification Outdoor Air
+# --------------------------------
+def get_all_design_specification_outdoor_air_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+  # OS:DesignSpecification:OutdoorAir
+  all_design_specification_outdoor_air = osm_model.getDesignSpecificationOutdoorAirs()
+
+  # Define attributtes to retrieve in a dictionary
+  object_attr = {'Handle': [str(x.handle()) for x in all_design_specification_outdoor_air ],
+                  'Name': [x.name().get() for x in all_design_specification_outdoor_air ],
+                  'Outdoor Air Method': [x.outdoorAirMethod() for x in all_design_specification_outdoor_air ],
+                  'Outdoor Air Flow per Person {m3/s-person}': [x.outdoorAirFlowperPerson() for x in all_design_specification_outdoor_air ],
+                  'Outdoor Air Flow per Floor Area {m3/s-m2}': [x.outdoorAirFlowperFloorArea() for x in all_design_specification_outdoor_air ],
+                  'Outdoor Air Flow Rate {m3/s}': [x.outdoorAirFlowRate() for x in all_design_specification_outdoor_air ],
+                  'Outdoor Air Flow Air Changes per Hour {1/hr}': [x.outdoorAirFlowAirChangesperHour() for x in all_design_specification_outdoor_air ],
+                  'Outdoor Air Flow Rate Fraction Schedule Name': [x.outdoorAirFlowRateFractionSchedule().get().name() if not x.outdoorAirFlowRateFractionSchedule().isNull() else None for x in all_design_specification_outdoor_air ]
+  }
+  # Create a DataFrame of all space_infiltration_design_flowrate objects.
+  all_design_specification_outdoor_air_df = pd.DataFrame(
+      columns=object_attr.keys())
+
+  for key in object_attr.keys():
+      all_design_specification_outdoor_air_df[key] = object_attr[key]
+
+  # Sort the DataFrame alphabetically by the Name column and reset indexes
+  all_design_specification_outdoor_air_df = all_design_specification_outdoor_air_df.sort_values(
+      by='Name', ascending=True).reset_index(drop=True)
+
+  print(
+      f"The OSM model contains {all_design_specification_outdoor_air_df.shape[0]} OS:DesignSpecification:OutdoorAir objects")
+
+  return all_design_specification_outdoor_air_df
