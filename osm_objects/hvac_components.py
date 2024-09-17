@@ -121,3 +121,46 @@ def get_all_fan_constant_volume_objects_as_dataframe(osm_model: openstudio.model
         f"The OSM model contains {all_fan_constant_volume_df.shape[0]} Fan Constant Volume Objects")
 
     return all_fan_constant_volume_df
+
+def get_all_fan_on_off_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all Fan On Off Objects from the OpenStudio model and organize them into a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing information about all thermal zones.
+    """
+
+    all_fan_on_off = osm_model.getFanOnOffs()
+    # Define attributes to retrieve in a dictionary
+    object_attr = {
+        'Handle': [str(x.handle()) for x in all_fan_on_off],
+        'Name': [x.name().get() for x in all_fan_on_off],
+        'Availability Schedule Name': [x.availabilitySchedule().name().get() if not x.availabilitySchedule().name().isNull() else None for x in all_fan_on_off],
+        'Fan Total Efficiency': [x.fanTotalEfficiency() for x in all_fan_on_off],
+        'Pressure Rise {Pa}': [x.pressureRise() for x in all_fan_on_off],
+        'Maximum Flow Rate {m3/s}': [x.maximumFlowRate().get() if not x.maximumFlowRate().isNull() else None for x in all_fan_on_off],
+        'Motor Efficiency': None,
+        'Motor In Airstream Fraction': None,
+        'Air Inlet Node Name': None,
+        'Air Outlet Node Name': None,
+        'Fan Power Ratio Function of Speed Ratio Curve Name': [x.fanPowerRatioFunctionofSpeedRatioCurve().nameString() for x in all_fan_on_off],
+        'Fan Efficiency Ratio Function of Speed Ratio Curve Name': [x.fanEfficiencyRatioFunctionofSpeedRatioCurve().nameString() for x in all_fan_on_off],
+        'End-Use Subcategory': [x.endUseSubcategory() for x in all_fan_on_off]
+        }
+
+    # Create a DataFrame of Fan Constant Volume Objects.
+    all_fan_on_off_df = pd.DataFrame(columns=object_attr.keys())
+    for key in object_attr.keys():
+        all_fan_on_off_df[key] = object_attr[key]
+
+    # Sort the DataFrame alphabetically by the Name column and reset indexes
+    all_fan_on_off_df = all_fan_on_off_df.sort_values(
+        by='Name', ascending=True).reset_index(drop=True)
+
+    print(
+        f"The OSM model contains {all_fan_on_off_df.shape[0]} Fan Constant Volume Objects")
+
+    return all_fan_on_off_df
