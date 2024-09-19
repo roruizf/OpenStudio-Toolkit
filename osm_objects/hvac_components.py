@@ -151,7 +151,7 @@ def get_all_fan_on_off_objects_as_dataframe(osm_model: openstudio.model.Model) -
         'End-Use Subcategory': [x.endUseSubcategory() for x in all_fan_on_off]
         }
 
-    # Create a DataFrame of Fan Constant Volume Objects.
+    # Create a DataFrame of Fan On Off Objects.
     all_fan_on_off_df = pd.DataFrame(columns=object_attr.keys())
     for key in object_attr.keys():
         all_fan_on_off_df[key] = object_attr[key]
@@ -161,6 +161,6 @@ def get_all_fan_on_off_objects_as_dataframe(osm_model: openstudio.model.Model) -
         by='Name', ascending=True).reset_index(drop=True)
 
     print(
-        f"The OSM model contains {all_fan_on_off_df.shape[0]} Fan Constant Volume Objects")
+        f"The OSM model contains {all_fan_on_off_df.shape[0]} Fan On Off Objects")
 
     return all_fan_on_off_df
