@@ -112,7 +112,7 @@ def get_all_space_types_as_dataframe(osm_model: openstudio.model.Model) -> pd.Da
 
     return all_space_types_df
 
-def create_new_space_types_objects(osm_model: openstudio.model.Model, space_types_to_create_df: pd.DataFrame) -> None:
+def create_new_space_types_objects(osm_model: openstudio.model.Model, space_types_to_create_df: pd.DataFrame) -> openstudio.model.Model:
     """
     Create new space types components based on data from a New Objects DataFrame.
 
@@ -121,20 +121,26 @@ def create_new_space_types_objects(osm_model: openstudio.model.Model, space_type
     - space_types_to_create_df: DataFrame containing data for new building story components.
 
     Returns:
-    - None
+    - osm_model: The OpenStudio Model object.
     """
     space_types_to_create_df = space_types_to_create_df.replace(np.nan, None)
 
     for _, row in space_types_to_create_df.iterrows():
+
+        # Create new Space Type
         new_space_type = openstudio.model.SpaceType(osm_model)
         new_space_type.setName(row['Name'])
+
+        if new_space_type.nameString() != row['Name']:
+            print(f"Space type Name set {new_space_type.nameString()} is different than defined: {row['Name']}")
 
         # Setting attributes if defined in space_types_to_create_df
 
         # Default Construction Set Name
         if row['Default Construction Set Name'] is not None:
+          if osm_model.getDefaultConstructionSetByName(row['Default Construction Set Name']).isNull():
             new_construction_set = openstudio.model.DefaultConstructionSet(
-                osm_model)
+                  osm_model)
             new_space_type.setDefaultConstructionSet(new_construction_set)
         
         # Default Schedule Set Name
@@ -159,7 +165,12 @@ def create_new_space_types_objects(osm_model: openstudio.model.Model, space_type
         # Standards Template	
         # Standards Building Type	
         # Standards Space Type
+
+        new_space_type.setName(row['Name'])   
+
     print(f"{space_types_to_create_df.shape[0]} new space types objects created")
+    
+    return osm_model
 
 def rename_space_types_components(osm_model: openstudio.model.Model, space_type_name_list: list) -> None:
 
@@ -278,7 +289,7 @@ def rename_space_types_components(osm_model: openstudio.model.Model, space_type_
         # pass
 
 
-def create_complete_edit_space_types_components(osm_model: openstudio.model.Model, space_type_name_list: list, create_if_none: bool = False) -> None:
+def create_complete_edit_space_types_components(osm_model: openstudio.model.Model, space_type_name_list: list, create_if_none: bool = False) -> openstudio.model.Model:
 
     # Rename all space types components
     rename_space_types_components(osm_model, space_type_name_list)
@@ -478,3 +489,5 @@ def create_complete_edit_space_types_components(osm_model: openstudio.model.Mode
             # Assign it to the corresponding Default Schedule Set
             osm_model.getDefaultScheduleSetByName(row['Default Schedule Set']).get(
             ).setInfiltrationSchedule(schdle_ruleset.get())
+    
+    return osm_model
