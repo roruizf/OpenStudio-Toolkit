@@ -164,3 +164,56 @@ def get_all_fan_on_off_objects_as_dataframe(osm_model: openstudio.model.Model) -
         f"The OSM model contains {all_fan_on_off_df.shape[0]} Fan On Off Objects")
 
     return all_fan_on_off_df
+
+def get_all_hx_air_to_air_sensible_and_latent_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:  
+  
+  """
+      Retrieve all Heat Exchanger Air To Air Sensible And Latent Objects from the OpenStudio model and organize them into a pandas DataFrame.
+
+      Parameters:
+      - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+      Returns:
+      - pd.DataFrame: DataFrame containing information about all Heat Exchanger Air To Air Sensible And Latent.
+  """
+  all_hx_air_to_air_sensible_and_latent = osm_model.getHeatExchangerAirToAirSensibleAndLatents()
+
+  # Define attributes to retrieve in a dictionary
+  object_attr = {
+                'Handle': [str(x.handle()) for x in all_hx_air_to_air_sensible_and_latent],
+                'Name': [x.name().get() for x in all_hx_air_to_air_sensible_and_latent],      
+                'Availability Schedule': [x.availabilitySchedule().name().get() if not x.availabilitySchedule().name().isNull() else None for x in all_hx_air_to_air_sensible_and_latent],
+                'Nominal Supply Air Flow Rate {m3/s}': [x.nominalSupplyAirFlowRate().get() if not x.nominalSupplyAirFlowRate().isNull() else None for x in all_hx_air_to_air_sensible_and_latent],
+                'Sensible Effectiveness at 100% Heating Air Flow {dimensionless}': [x.sensibleEffectivenessat100HeatingAirFlow() for x in all_hx_air_to_air_sensible_and_latent],
+                'Latent Effectiveness at 100% Heating Air Flow {dimensionless}': [x.latentEffectivenessat100HeatingAirFlow() for x in all_hx_air_to_air_sensible_and_latent],
+                'Sensible Effectiveness at 100% Cooling Air Flow {dimensionless}': [x.sensibleEffectivenessat100CoolingAirFlow() for x in all_hx_air_to_air_sensible_and_latent],
+                'Latent Effectiveness at 100% Cooling Air Flow {dimensionless}': [x.latentEffectivenessat100CoolingAirFlow() for x in all_hx_air_to_air_sensible_and_latent],
+                'Supply Air Inlet Node': None,
+                'Supply Air Outlet Node': None,
+                'Exhaust Air Inlet Node': None,
+                'Exhaust Air Outlet Node': None,
+                'Nominal Electric Power {W}': [x.nominalElectricPower() for x in all_hx_air_to_air_sensible_and_latent],
+                'Supply Air Outlet Temperature Control': [x.supplyAirOutletTemperatureControl() for x in all_hx_air_to_air_sensible_and_latent],
+                'Heat Exchanger Type': [x.heatExchangerType() for x in all_hx_air_to_air_sensible_and_latent],
+                'Frost Control Type': [x.frostControlType() for x in all_hx_air_to_air_sensible_and_latent],
+                'Threshold Temperature {C}': [x.thresholdTemperature() for x in all_hx_air_to_air_sensible_and_latent],
+                'Initial Defrost Time Fraction {dimensionless}': [x.initialDefrostTimeFraction() for x in all_hx_air_to_air_sensible_and_latent],
+                'Rate of Defrost Time Fraction Increase {1/K}': [x.rateofDefrostTimeFractionIncrease() for x in all_hx_air_to_air_sensible_and_latent],
+                'Economizer Lockout': [x.economizerLockout() for x in all_hx_air_to_air_sensible_and_latent],
+                'Sensible Effectiveness of Heating Air Flow Curve Name': None,
+                'Latent Effectiveness of Heating Air Flow Curve Name': None,
+                'Sensible Effectiveness of Cooling Air Flow Curve Name': None,
+                'Latent Effectiveness of Cooling Air Flow Curve Name': None
+                }
+  # Create a DataFrame of Heat Exchanger Air To Air Sensible And Latent Objects.
+  all_hx_air_to_air_sensible_and_latent_df = pd.DataFrame(columns=object_attr.keys())
+  for key in object_attr.keys():
+      all_hx_air_to_air_sensible_and_latent_df[key] = object_attr[key]
+
+  # Sort the DataFrame alphabetically by the Name column and reset indexes
+  all_hx_air_to_air_sensible_and_latent_df = all_hx_air_to_air_sensible_and_latent_df.sort_values(
+      by='Name', ascending=True).reset_index(drop=True)
+
+  print(
+      f"The OSM model contains {all_hx_air_to_air_sensible_and_latent_df.shape[0]} Heat Exchanger Air To Air Sensible And Latent Objects Objects")
+  return all_hx_air_to_air_sensible_and_latent_df
