@@ -217,3 +217,114 @@ def get_all_hx_air_to_air_sensible_and_latent_as_dataframe(osm_model: openstudio
   print(
       f"The OSM model contains {all_hx_air_to_air_sensible_and_latent_df.shape[0]} Heat Exchanger Air To Air Sensible And Latent Objects Objects")
   return all_hx_air_to_air_sensible_and_latent_df
+
+def get_all_air_conditioner_variable_refrigerant_flow_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+        Retrieve all OS:AirConditioner:VariableRefrigerantFlow Objects from the OpenStudio model and organize them into a pandas DataFrame.
+
+        Parameters:
+        - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+        Returns:
+        - pd.DataFrame: DataFrame containing information about all OS:AirConditioner:VariableRefrigerantFlow objects.
+    """
+    all_objects = osm_model.getAirConditionerVariableRefrigerantFlows()
+
+    # Define attributes to retrieve in a dictionary
+    object_attr = {
+        'Handle': [str(x.handle()) for x in all_objects],
+        'Name': [x.name().get() for x in all_objects],
+        'Availability Schedule': [x.availabilitySchedule().name() for x in all_objects],
+        'Gross Rated Total Cooling Capacity {W}': [x.grossRatedTotalCoolingCapacity() for x in all_objects],
+        'Gross Rated Cooling COP {W/W}': [x.grossRatedCoolingCOP() for x in all_objects],
+        'Minimum Outdoor Temperature in Cooling Mode {C}': [x.minimumOutdoorTemperatureinCoolingMode() for x in all_objects],
+        'Maximum Outdoor Temperature in Cooling Mode {C}': [x.maximumOutdoorTemperatureinCoolingMode() for x in all_objects],
+        'Cooling Capacity Ratio Modifier Function of Low Temperature Curve Name': [x.coolingCapacityRatioModifierFunctionofLowTemperatureCurve().get().name() if not x.coolingCapacityRatioModifierFunctionofLowTemperatureCurve().isNull() else None for x in all_objects],
+        'Cooling Capacity Ratio Boundary Curve Name': [x.coolingCapacityRatioBoundaryCurve().get().name() if not x.coolingCapacityRatioBoundaryCurve().isNull() else None for x in all_objects],
+        'Cooling Capacity Ratio Modifier Function of High Temperature Curve Name': [x.coolingCapacityRatioModifierFunctionofHighTemperatureCurve().get().name() if not x.coolingCapacityRatioModifierFunctionofHighTemperatureCurve().isNull() else None for x in all_objects],
+        'Cooling Energy Input Ratio Modifier Function of Low Temperature Curve Name': [x.coolingEnergyInputRatioModifierFunctionofLowTemperatureCurve().get().name() if not x.coolingEnergyInputRatioModifierFunctionofLowTemperatureCurve().isNull() else None for x in all_objects],
+        'Cooling Energy Input Ratio Boundary Curve Name': [x.coolingEnergyInputRatioBoundaryCurve().get().name() if not x.coolingEnergyInputRatioBoundaryCurve().isNull() else None for x in all_objects],
+        'Cooling Energy Input Ratio Modifier Function of High Temperature Curve Name': [x.coolingEnergyInputRatioModifierFunctionofHighTemperatureCurve().get().name() if not x.coolingEnergyInputRatioModifierFunctionofHighTemperatureCurve().isNull() else None for x in all_objects],
+        'Cooling Energy Input Ratio Modifier Function of Low Part-Load Ratio Curve Name': [x.coolingEnergyInputRatioModifierFunctionofLowPartLoadRatioCurve().get().name() if not x.coolingEnergyInputRatioModifierFunctionofLowPartLoadRatioCurve().isNull() else None for x in all_objects],
+        'Cooling Energy Input Ratio Modifier Function of High Part-Load Ratio Curve Name': [x.coolingEnergyInputRatioModifierFunctionofHighPartLoadRatioCurve().get().name() if not x.coolingEnergyInputRatioModifierFunctionofHighPartLoadRatioCurve().isNull() else None for x in all_objects],
+        'Cooling Combination Ratio Correction Factor Curve Name': [x.coolingCombinationRatioCorrectionFactorCurve().get().name() if not x.coolingCombinationRatioCorrectionFactorCurve().isNull() else None for x in all_objects],
+        'Cooling Part-Load Fraction Correlation Curve Name': [x.coolingPartLoadFractionCorrelationCurve().get().name() if not x.coolingPartLoadFractionCorrelationCurve().isNull() else None for x in all_objects],
+        'Gross Rated Heating Capacity {W}': [x.grossRatedHeatingCapacity() for x in all_objects],
+        'Rated Heating Capacity Sizing Ratio {W/W}': [x.ratedHeatingCapacitySizingRatio() for x in all_objects],
+        'Rated Heating COP {W/W}': [x.ratedHeatingCOP() for x in all_objects],
+        'Minimum Outdoor Temperature in Heating Mode {C}': [x.minimumOutdoorTemperatureinHeatingMode() for x in all_objects],
+        'Maximum Outdoor Temperature in Heating Mode {C}': [x.maximumOutdoorTemperatureinHeatingMode() for x in all_objects],
+        'Heating Capacity Ratio Modifier Function of Low Temperature Curve Name': [x.heatingCapacityRatioModifierFunctionofLowTemperatureCurve().get().name() if not x.heatingCapacityRatioModifierFunctionofLowTemperatureCurve().isNull() else None for x in all_objects],
+        'Heating Capacity Ratio Boundary Curve Name': [x.heatingCapacityRatioBoundaryCurve().get().name() if not x.heatingCapacityRatioBoundaryCurve().isNull() else None for x in all_objects],
+        'Heating Capacity Ratio Modifier Function of High Temperature Curve Name': [x.heatingCapacityRatioModifierFunctionofHighTemperatureCurve().get().name() if not x.heatingCapacityRatioModifierFunctionofHighTemperatureCurve().isNull() else None for x in all_objects],
+        'Heating Energy Input Ratio Modifier Function of Low Temperature Curve Name': [x.heatingEnergyInputRatioModifierFunctionofLowTemperatureCurve().get().name() if not x.heatingEnergyInputRatioModifierFunctionofLowTemperatureCurve().isNull() else None for x in all_objects],
+        'Heating Energy Input Ratio Boundary Curve Name': [x.heatingEnergyInputRatioBoundaryCurve().get().name() if not x.heatingEnergyInputRatioBoundaryCurve().isNull() else None for x in all_objects],
+        'Heating Energy Input Ratio Modifier Function of High Temperature Curve Name': [x.heatingEnergyInputRatioModifierFunctionofHighTemperatureCurve().get().name() if not x.heatingEnergyInputRatioModifierFunctionofHighTemperatureCurve().isNull() else None for x in all_objects],
+        'Heating Performance Curve Outdoor Temperature Type': [x.heatingPerformanceCurveOutdoorTemperatureType() for x in all_objects],
+        'Heating Energy Input Ratio Modifier Function of Low Part-Load Ratio Curve Name': [x.heatingEnergyInputRatioModifierFunctionofLowPartLoadRatioCurve().get().name() if not x.heatingEnergyInputRatioModifierFunctionofLowPartLoadRatioCurve().isNull() else None for x in all_objects],
+        'Heating Energy Input Ratio Modifier Function of High Part-Load Ratio Curve Name': [x.heatingEnergyInputRatioModifierFunctionofHighPartLoadRatioCurve().get().name() if not x.heatingEnergyInputRatioModifierFunctionofHighPartLoadRatioCurve().isNull() else None for x in all_objects],
+        'Heating Combination Ratio Correction Factor Curve Name': [x.heatingCombinationRatioCorrectionFactorCurve().get().name() if not x.heatingCombinationRatioCorrectionFactorCurve().isNull() else None for x in all_objects],
+        'Heating Part-Load Fraction Correlation Curve Name': [x.heatingPartLoadFractionCorrelationCurve().get().name() if not x.heatingPartLoadFractionCorrelationCurve().isNull() else None for x in all_objects],
+        'Minimum Heat Pump Part-Load Ratio {dimensionless}': [x.minimumHeatPumpPartLoadRatio() for x in all_objects],
+        'Zone Name for Master Thermostat Location': [x.zoneforMasterThermostatLocation().get().name() if not x.zoneforMasterThermostatLocation().isNull() else None for x in all_objects],
+        'Master Thermostat Priority Control Type': [x.masterThermostatPriorityControlType() for x in all_objects],
+        'Thermostat Priority Schedule': [x.thermostatPrioritySchedule().get().name() if not x.thermostatPrioritySchedule().isNull() else None for x in all_objects],
+        'Zone Terminal Unit List': [None for x in all_objects],
+        'Heat Pump Waste Heat Recovery': [x.heatPumpWasteHeatRecovery() for x in all_objects],
+        'Equivalent Piping Length used for Piping Correction Factor in Cooling Mode {m}': [x.equivalentPipingLengthusedforPipingCorrectionFactorinCoolingMode() for x in all_objects],
+        'Vertical Height used for Piping Correction Factor {m}': [x.verticalHeightusedforPipingCorrectionFactor() for x in all_objects],
+        'Piping Correction Factor for Length in Cooling Mode Curve Name': [x.pipingCorrectionFactorforLengthinCoolingModeCurve().get().name() if not x.pipingCorrectionFactorforLengthinCoolingModeCurve().isNull() else None for x in all_objects],
+        'Piping Correction Factor for Height in Cooling Mode Coefficient {1/m}': [x.pipingCorrectionFactorforHeightinCoolingModeCoefficient() for x in all_objects],
+        'Equivalent Piping Length used for Piping Correction Factor in Heating Mode {m}': [x.equivalentPipingLengthusedforPipingCorrectionFactorinHeatingMode() for x in all_objects],
+        'Piping Correction Factor for Length in Heating Mode Curve Name': [x.pipingCorrectionFactorforLengthinHeatingModeCurve().get().name() if not x.pipingCorrectionFactorforLengthinHeatingModeCurve().isNull() else None for x in all_objects],
+        'Piping Correction Factor for Height in Heating Mode Coefficient {1/m}': [x.pipingCorrectionFactorforHeightinHeatingModeCoefficient() for x in all_objects],
+        'Crankcase Heater Power per Compressor {W}': [x.crankcaseHeaterPowerperCompressor() for x in all_objects],
+        'Number of Compressors {dimensionless}': [x.numberofCompressors() for x in all_objects],
+        'Ratio of Compressor Size to Total Compressor Capacity {W/W}': [x.ratioofCompressorSizetoTotalCompressorCapacity() for x in all_objects],
+        'Maximum Outdoor Dry-bulb Temperature for Crankcase Heater {C}': [x.maximumOutdoorDrybulbTemperatureforCrankcaseHeater() for x in all_objects],
+        'Defrost Strategy': [x.defrostStrategy() for x in all_objects],
+        'Defrost Control': [x.defrostControl() for x in all_objects],
+        'Defrost Energy Input Ratio Modifier Function of Temperature Curve Name': [x.defrostEnergyInputRatioModifierFunctionofTemperatureCurve().get().name() if not x.defrostEnergyInputRatioModifierFunctionofTemperatureCurve().isNull() else None for x in all_objects],
+        'Defrost Time Period Fraction {dimensionless}': [x.defrostTimePeriodFraction() for x in all_objects],
+        'Resistive Defrost Heater Capacity {W}': [x.resistiveDefrostHeaterCapacity() for x in all_objects],
+        'Maximum Outdoor Dry-bulb Temperature for Defrost Operation {C}': [x.maximumOutdoorDrybulbTemperatureforDefrostOperation() for x in all_objects],
+        'Condenser Type': [x.condenserType() for x in all_objects],
+        'Condenser Inlet Node': [None for x in all_objects],
+        'Condenser Outlet Node': [None for x in all_objects],
+        'Water Condenser Volume Flow Rate {m3/s}': [x.waterCondenserVolumeFlowRate() for x in all_objects],
+        'Evaporative Condenser Effectiveness {dimensionless}': [x.evaporativeCondenserEffectiveness() for x in all_objects],
+        'Evaporative Condenser Air Flow Rate {m3/s}': [x.evaporativeCondenserAirFlowRate() for x in all_objects],
+        'Evaporative Condenser Pump Rated Power Consumption {W}': [x.evaporativeCondenserPumpRatedPowerConsumption() for x in all_objects],
+        'Supply Water Storage Tank': [None for x in all_objects],
+        'Basin Heater Capacity {W/K}': [x.basinHeaterCapacity() for x in all_objects],
+        'Basin Heater Setpoint Temperature {C}': [x.basinHeaterSetpointTemperature() for x in all_objects],
+        'Basin Heater Operating Schedule': [x.basinHeaterOperatingSchedule().get().name() if not x.basinHeaterOperatingSchedule().isNull() else None for x in all_objects],
+        'Fuel Type': [x.fuelType() for x in all_objects],
+        'Minimum Outdoor Temperature in Heat Recovery Mode {C}': [x.minimumOutdoorTemperatureinHeatRecoveryMode() for x in all_objects],
+        'Maximum Outdoor Temperature in Heat Recovery Mode {C}': [x.maximumOutdoorTemperatureinHeatRecoveryMode() for x in all_objects],
+        'Heat Recovery Cooling Capacity Modifier Curve Name': [x.heatRecoveryCoolingCapacityModifierCurve().get().name() if not x.heatRecoveryCoolingCapacityModifierCurve().isNull() else None for x in all_objects],
+        'Initial Heat Recovery Cooling Capacity Fraction {W/W}': [x.initialHeatRecoveryCoolingCapacityFraction() for x in all_objects],
+        'Heat Recovery Cooling Capacity Time Constant {hr}': [x.heatRecoveryCoolingCapacityTimeConstant() for x in all_objects],
+        'Heat Recovery Cooling Energy Modifier Curve Name': [x.heatRecoveryCoolingEnergyModifierCurve().get().name() if not x.heatRecoveryCoolingEnergyModifierCurve().isNull() else None for x in all_objects],
+        'Initial Heat Recovery Cooling Energy Fraction {W/W}': [x.initialHeatRecoveryCoolingEnergyFraction() for x in all_objects],
+        'Heat Recovery Cooling Energy Time Constant {hr}': [x.heatRecoveryCoolingEnergyTimeConstant() for x in all_objects],
+        'Heat Recovery Heating Capacity Modifier Curve Name': [x.heatRecoveryHeatingCapacityModifierCurve().get().name() if not x.heatRecoveryHeatingCapacityModifierCurve().isNull() else None for x in all_objects],
+        'Initial Heat Recovery Heating Capacity Fraction {W/W}': [x.initialHeatRecoveryHeatingCapacityFraction() for x in all_objects],
+        'Heat Recovery Heating Capacity Time Constant {hr}': [x.heatRecoveryHeatingCapacityTimeConstant() for x in all_objects],
+        'Heat Recovery Heating Energy Modifier Curve Name': [x.heatRecoveryHeatingEnergyModifierCurve().get().name() if not x.heatRecoveryHeatingEnergyModifierCurve().isNull() else None for x in all_objects],
+        'Initial Heat Recovery Heating Energy Fraction {W/W}': [x.initialHeatRecoveryHeatingEnergyFraction() for x in all_objects],
+        'Heat Recovery Heating Energy Time Constant {hr}': [x.heatRecoveryHeatingEnergyTimeConstant() for x in all_objects]
+    }
+
+  # Create a DataFrame of Heat Exchanger Air To Air Sensible And Latent Objects.
+    all_objects_df = pd.DataFrame(columns=object_attr.keys())
+    for key in object_attr.keys():
+        all_objects_df[key] = object_attr[key]
+
+    # Sort the DataFrame alphabetically by the Name column and reset indexes
+    all_objects_df = all_objects_df.sort_values(
+        by='Name', ascending=True).reset_index(drop=True)
+
+    print(
+        f"The OSM model contains {all_objects_df.shape[0]} OS:AirConditioner:VariableRefrigerantFlow Objects")
+    return all_objects_df

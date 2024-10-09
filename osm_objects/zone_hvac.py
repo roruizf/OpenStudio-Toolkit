@@ -142,7 +142,7 @@ def get_all_zone_hvac_terminal_unit_variant_refrigerant_flow_objects_as_datafram
     object_attr = {
         'Handle': [str(x.handle()) for x in all_zone_hvac_vrfs],
         'Name': [x.name().get() for x in all_zone_hvac_vrfs],
-        'Terminal Unit Availability schedule': None,
+        'Terminal Unit Availability schedule': [x.terminalUnitAvailabilityschedule().name() for x in all_zone_hvac_vrfs],
         'Terminal Unit Air Inlet Node': None,
         'Terminal Unit Air Outlet Node': None,
         'Supply Air Flow Rate During Cooling Operation {m3/s}': [x.supplyAirFlowRateDuringCoolingOperation().get() if not x.supplyAirFlowRateDuringCoolingOperation().isNull() else None for x in all_zone_hvac_vrfs],
@@ -152,20 +152,20 @@ def get_all_zone_hvac_terminal_unit_variant_refrigerant_flow_objects_as_datafram
         'Outdoor Air Flow Rate During Cooling Operation {m3/s}': [x.outdoorAirFlowRateDuringCoolingOperation().get() if not x.outdoorAirFlowRateDuringCoolingOperation().isNull() else None for x in all_zone_hvac_vrfs],
         'Outdoor Air Flow Rate During Heating Operation {m3/s}': [x.outdoorAirFlowRateDuringHeatingOperation().get() if not x.outdoorAirFlowRateDuringHeatingOperation().isNull() else None for x in all_zone_hvac_vrfs],
         'Outdoor Air Flow Rate When No Cooling or Heating is Needed {m3/s}': [x.outdoorAirFlowRateWhenNoCoolingorHeatingisNeeded().get() if not x.outdoorAirFlowRateWhenNoCoolingorHeatingisNeeded().isNull() else None for x in all_zone_hvac_vrfs],
-        'Supply Air Fan Operating Mode Schedule': None,
-        'Supply Air Fan Placement': None,
+        'Supply Air Fan Operating Mode Schedule': [x.supplyAirFanOperatingModeSchedule().name() if not x.supplyAirFanOperatingModeSchedule().name().isNull() else None for x in all_zone_hvac_vrfs],
+        'Supply Air Fan Placement': [x.supplyAirFanPlacement() for x in all_zone_hvac_vrfs],
         'Supply Air Fan': [x.supplyAirFan().name().get() if not x.supplyAirFan().name().isNull() else None for x in all_zone_hvac_vrfs],
         'Outside Air Mixer': None,
         'Cooling Coil': [x.coolingCoil().get().name().get() if not x.coolingCoil().get().name().isNull() else None for x in all_zone_hvac_vrfs],
         'Heating Coil': [x.heatingCoil().get().name().get() if not x.heatingCoil().get().name().isNull() else None for x in all_zone_hvac_vrfs],
-        'Zone Terminal Unit On Parasitic Electric Energy Use {W}': None,
-        'Zone Terminal Unit Off Parasitic Electric Energy Use {W}': None,
-        'Rated Total Heating Capacity Sizing Ratio {W/W}': None,
+        'Zone Terminal Unit On Parasitic Electric Energy Use {W}': [x.zoneTerminalUnitOnParasiticElectricEnergyUse() for x in all_zone_hvac_vrfs],
+        'Zone Terminal Unit Off Parasitic Electric Energy Use {W}': [x.zoneTerminalUnitOffParasiticElectricEnergyUse() for x in all_zone_hvac_vrfs],
+        'Rated Total Heating Capacity Sizing Ratio {W/W}': [x.ratedTotalHeatingCapacitySizingRatio() for x in all_zone_hvac_vrfs],
         'Availability Manager List Name': None,
         'Design Specification ZoneHVAC Sizing Object Name': None,
-        'Supplemental Heating Coil Name': None,
-        'Maximum Supply Air Temperature from Supplemental Heater {C}': None,
-        'Maximum Outdoor Dry-Bulb Temperature for Supplemental Heater Operation {C}': None
+        'Supplemental Heating Coil Name': [x.supplementalHeatingCoil().get().name() if not x.supplementalHeatingCoil().isNull() else None for x in all_zone_hvac_vrfs],
+        'Maximum Supply Air Temperature from Supplemental Heater {C}': [x.maximumSupplyAirTemperaturefromSupplementalHeater() for x in all_zone_hvac_vrfs],
+        'Maximum Outdoor Dry-Bulb Temperature for Supplemental Heater Operation {C}': [x.maximumOutdoorDryBulbTemperatureforSupplementalHeaterOperation() for x in all_zone_hvac_vrfs]
         }
                        
     # Create a DataFrame of all thermal zones.
