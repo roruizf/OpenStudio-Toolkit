@@ -6,3 +6,5 @@
 **/__pycache__/
 
 # Other rules can go here
+/bin/
+main.py
