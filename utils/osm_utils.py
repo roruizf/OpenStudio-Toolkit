@@ -43,3 +43,16 @@ def save_model_as_osm_file(osm_model, osm_file_path, new_file_name=None):
 
     openstudio.model.saveModel(
         osm_model, new_osm_file_name, osm_file_folder)
+
+
+def convert_osm_to_idf(osm_model, idf_file_path):
+    # Create a ForwardTranslator to convert the model to IDF
+    ft = openstudio.energyplus.ForwardTranslator()
+
+    # Translate the OpenStudio model to an EnergyPlus model (IDF)
+    idf_model = ft.translateModel(osm_model)
+
+    # Save the translated model as an IDF file
+    idf_model.save(idf_file_path, True)
+
+    print(f"IDF file created successfully at: {idf_file_path}")

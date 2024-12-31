@@ -108,3 +108,9 @@ def get_all_space_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.
     print(f"The OSM model contains {all_spaces_df.shape[0]} spaces")
 
     return all_spaces_df
+
+
+def update_space_object(osm_model, space_handle: str = None, space_name: str = None, attributes: dict = None):
+
+    target_object_dict = get_space_object_as_dict(
+        osm_model, space_handle, space_name)
