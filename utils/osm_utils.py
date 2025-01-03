@@ -32,20 +32,42 @@ def load_osm_file_as_model(osm_file_path: str, version_translator: Optional[bool
     return osm_model
 
 
-def save_model_as_osm_file(osm_model, osm_file_path, new_file_name=None):
+def save_model_as_osm_file(osm_model: openstudio.model.Model, osm_file_path: str, new_file_name: Optional[str] = None) -> None:
+    """
+    Saves an OpenStudio model to a specified OSM file path.
 
+    Args:
+        osm_model: An OpenStudio model to be saved.
+        osm_file_path: The path where the OSM file will be saved.
+        new_file_name: An optional name for the new OSM file.
+
+    Returns:
+        None
+    """
+    # Extract the folder from the provided OSM file path.
     osm_file_folder = os.path.split(osm_file_path)[0]
 
+    # Determine the new OSM file name if not specified.
     if new_file_name is not None:
         new_osm_file_name = new_file_name
     else:
         new_osm_file_name = os.path.split(osm_file_path)[-1]
 
-    openstudio.model.saveModel(
-        osm_model, new_osm_file_name, osm_file_folder)
+    # Save the model to the new OSM file.
+    openstudio.model.saveModel(osm_model, new_osm_file_name, osm_file_folder)
 
 
-def convert_osm_to_idf(osm_model, idf_file_path):
+def convert_osm_to_idf(osm_model: openstudio.model.Model, idf_file_path: str) -> None:
+    """
+    Converts an OpenStudio model to an EnergyPlus IDF file.
+
+    Args:
+        osm_model: The OpenStudio model to be converted.
+        idf_file_path: The path where the IDF file will be saved.
+
+    Returns:
+        None: This function saves the IDF file to the specified path.
+    """
     # Create a ForwardTranslator to convert the model to IDF
     ft = openstudio.energyplus.ForwardTranslator()
 

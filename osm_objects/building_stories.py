@@ -2,6 +2,7 @@ import openstudio
 import pandas as pd
 import numpy as np
 
+
 def get_all_building_stories_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
     Retrieve all building stories from the OpenStudio model and organize them into a pandas DataFrame.
@@ -51,7 +52,8 @@ def create_new_building_stories_objects(osm_model: openstudio.model.Model, build
     Returns:
     - None
     """
-    building_stories_to_create_df = building_stories_to_create_df.replace(np.nan, None)
+    building_stories_to_create_df = building_stories_to_create_df.replace(
+        np.nan, None)
 
     for _, row in building_stories_to_create_df.iterrows():
         new_story = openstudio.model.BuildingStory(osm_model)
@@ -67,34 +69,37 @@ def create_new_building_stories_objects(osm_model: openstudio.model.Model, build
         if row['Nominal Floor to Floor Height {m}'] is not None:
             new_story.setNominalFloortoFloorHeight(
                 row['Nominal Floor to Floor Height {m}'])
-        
+
         # Default Construction Set Name
         if row['Default Construction Set Name'] is not None:
             new_construction_set = openstudio.model.DefaultConstructionSet(
                 osm_model)
             new_story.setDefaultConstructionSet(new_construction_set)
-        
+
         # Default Schedule Set Name
         if row['Default Schedule Set Name'] is not None:
             new_schedule_set = openstudio.model.DefaultScheduleSet(osm_model)
             new_story.setDefaultScheduleSet(new_schedule_set)
-        
-        # Group Rendering Name   
+
+        # Group Rendering Name
         if row['Group Rendering Name'] is not None:
             if osm_model.getRenderingColorByName(row['Group Rendering Name']).isNull():
                 rendering_color = openstudio.model.RenderingColor(osm_model)
             else:
-                rendering_color = osm_model.getRenderingColorByName(row['Group Rendering Name']).get()
+                rendering_color = osm_model.getRenderingColorByName(
+                    row['Group Rendering Name']).get()
 
             rendering_color.setName(row['Group Rendering Name'])
             new_story.setRenderingColor(rendering_color)
-       
+
         # Nominal Floor to Ceiling Height {m}
         if row['Nominal Floor to Ceiling Height {m}'] is not None:
             new_story.setNominalFloortoCeilingHeight(
                 row['Nominal Floor to Ceiling Height {m}'])
 
-    print(f"{building_stories_to_create_df.shape[0]} new building story objects created")
+    print(
+        f"{building_stories_to_create_df.shape[0]} new building story objects created")
+
 
 def update_building_stories_objects(osm_model, building_stories_to_update_df):
 
@@ -109,15 +114,14 @@ def update_building_stories_objects(osm_model, building_stories_to_update_df):
         if row['Nominal Floor to Floor Height {m}'] is not None:
             story.get().setNominalFloortoFloorHeight(
                 row['Nominal Floor to Floor Height {m}'])
-        
+
         # Default Construction Set Name
         if row['Default Construction Set Name'] is not None:
             pass
-        
+
         # Set new name
         if row['Name'] is not None:
             pass
-
 
         # Default Schedule Set Name
         if row['Default Schedule Set Name'] is not None:
@@ -126,14 +130,30 @@ def update_building_stories_objects(osm_model, building_stories_to_update_df):
         # Group Rendering Name
         if row['Group Rendering Name'] is not None:
             pass
-        
+
         # Nominal Floor to Ceiling Height {m}
         if row['Nominal Floor to Ceiling Height {m}'] is not None:
             story.get().setNominalFloortoCeilingHeight(
                 row['Nominal Floor to Ceiling Height {m}'])
-            
-def set_stories_to_spaces(osm_model, space_story_dict_list):
+
+
+def set_stories_to_spaces(osm_model: openstudio.model.Model, space_story_dict_list: list) -> None:
+    """
+    Assigns building stories to spaces in the given OpenStudio model.
+
+    Args:
+        osm_model (openstudio.model.Model): The OpenStudio model containing spaces.
+        space_story_dict_list (list): A list of dictionaries where each dictionary contains.
+            'Handle' (str) - The unique identifier for a space.
+            'Story' (str) - The name of the building story to assign.
+
+    Returns:
+        None: This function does not return a value.
+    """
+    # Convert the list of dictionaries to a DataFrame for easier manipulation.
     space_story_df = pd.DataFrame(space_story_dict_list)
+
+    # Iterate over the DataFrame rows to set building stories for each space.
     for index, row in space_story_df.iterrows():
         osm_model.getSpace(row['Handle']).get().setBuildingStory(
             osm_model.getBuildingStoryByName(row['Story']).get())

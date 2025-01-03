@@ -99,10 +99,19 @@ def update_excel_from_dataframe(excel_file_path: str, sheet_name: str, columns_r
         print(f"An error occurred: {e}")
 
 
-def replace_sheet_content(excel_file_path, sheet_name, df):
+def replace_sheet_content(excel_file_path: str, sheet_name: str, df: pd.DataFrame) -> None:
+    """
+    Loads an existing Excel file and replaces the content of a specified sheet with data from a DataFrame.
+
+    Args:
+        excel_file_path (str): The path to the Excel file.
+        sheet_name (str): The name of the sheet to replace.
+        df (pd.DataFrame): The DataFrame containing the data to write.
+
+    Returns:
+        None: The function does not return a value but saves changes to the Excel file.
+    """
     try:
-        # # Load existing Excel file
-        # wb = load_workbook(excel_file_path)
         # Load existing Excel file or create a new one if it doesn't exist
         try:
             wb = load_workbook(excel_file_path)

@@ -56,29 +56,39 @@ def get_all_people_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd
 
 
 def get_all_people_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    # OS:People:Definition
-    # Get all People Definition in the OpenStudio model.
+    """
+    Retrieves all People Definition objects in the OpenStudio model as a DataFrame.
+
+    Args:
+        osm_model (openstudio.model.Model): The OpenStudio model from which to retrieve People Definitions.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing all People Definition attributes.
+    """
+    # Fetch all People Definitions from the model
     all_people_definition = osm_model.getPeopleDefinitions()
-    floorArea = [x.floorArea() for x in all_people_definition]
+    floor_area = [x.floorArea() for x in all_people_definition]
 
-    # Define attributtes to retrieve in a dictionary
-    object_attr = {'Handle': [str(x.handle()) for x in all_people_definition],
-                   'Name': [x.name().get() for x in all_people_definition],
-                   'Number of People Calculation Method': [x.numberofPeopleCalculationMethod() for x in all_people_definition],
-                   'Number of People {people}': [result for x, y in zip(all_people_definition, floorArea) for result in [x.getNumberOfPeople(y)]],
-                   'People per Space Floor Area {person/m2}': [1/result if result != 0 else 0 for x, y in zip(all_people_definition, floorArea) for result in [x.getFloorAreaPerPerson(y) if x.getNumberOfPeople(y) != 0 else 0]],
-                   'Space Floor Area per Person {m2/person}': [result if result != 0 else 0 for x, y in zip(all_people_definition, floorArea) for result in [x.getFloorAreaPerPerson(y) if x.getNumberOfPeople(y) != 0 else 0]],
-                   'Fraction Radiant': [x.fractionRadiant() for x in all_people_definition],
-                   'Sensible Heat Fraction': [x.sensibleHeatFraction() if not x.sensibleHeatFraction().isNull() else None for x in all_people_definition],
-                   'Carbon Dioxide Generation Rate {m3/s-W}': [x.carbonDioxideGenerationRate() for x in all_people_definition],
-                   'Enable ASHRAE 55 Comfort Warnings': None}
+    # Define attributes to retrieve in a dictionary
+    object_attr = {
+        'Handle': [str(x.handle()) for x in all_people_definition],
+        'Name': [x.name().get() for x in all_people_definition],
+        'Number of People Calculation Method': [x.numberofPeopleCalculationMethod() for x in all_people_definition],
+        'Number of People {people}': [result for x, y in zip(all_people_definition, floor_area) for result in [x.getNumberOfPeople(y)]],
+        'People per Space Floor Area {person/m2}': [1/result if result != 0 else 0 for x, y in zip(all_people_definition, floor_area) for result in [x.getFloorAreaPerPerson(y) if x.getNumberOfPeople(y) != 0 else 0]],
+        'Space Floor Area per Person {m2/person}': [result if result != 0 else 0 for x, y in zip(all_people_definition, floor_area) for result in [x.getFloorAreaPerPerson(y) if x.getNumberOfPeople(y) != 0 else 0]],
+        'Fraction Radiant': [x.fractionRadiant() for x in all_people_definition],
+        'Sensible Heat Fraction': [x.sensibleHeatFraction() if not x.sensibleHeatFraction().isNull() else None for x in all_people_definition],
+        'Carbon Dioxide Generation Rate {m3/s-W}': [x.carbonDioxideGenerationRate() for x in all_people_definition],
+        'Enable ASHRAE 55 Comfort Warnings': None
+    }
 
-    # Create a DataFrame of all people objects.
+    # Create a DataFrame of all People Definition objects
     all_people_definition_df = pd.DataFrame(columns=object_attr.keys())
     for key in object_attr.keys():
         all_people_definition_df[key] = object_attr[key]
 
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
+    # Sort the DataFrame by the Name column and reset indexes
     all_people_definition_df = all_people_definition_df.sort_values(
         by='Name', ascending=True).reset_index(drop=True)
 
@@ -87,16 +97,25 @@ def get_all_people_definition_objects_as_dataframe(osm_model: openstudio.model.M
 
     return all_people_definition_df
 
+
 # Lights
 # --------
 
 
 def get_all_lights_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    # OS:Lights
+    """
+    Retrieves all lights objects from the given OpenStudio model and formats them into a Pandas DataFrame.
+
+    Args:
+        osm_model (openstudio.model.Model): The OpenStudio model containing lights objects.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing detailed information about all lights objects.
+    """
     # Get all spaces in the OpenStudio model.
     all_lights = osm_model.getLightss()
 
-    # Define attributtes to retrieve in a dictionary
+    # Define attributes to retrieve in a dictionary
     object_attr = {'Handle': [str(x.handle()) for x in all_lights],
                    'Name': [x.name().get() for x in all_lights],
                    'Lights Definition Name': [x.lightsDefinition().name().get() if not x.lightsDefinition().name().isNull() else None for x in all_lights],
@@ -124,20 +143,31 @@ def get_all_lights_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd
 
 
 def get_all_lights_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieves all lights definitions from the OpenStudio model and returns them as a DataFrame.
+
+    Args:
+        osm_model (openstudio.model.Model): The OpenStudio model containing lights definitions.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing lights definition attributes.
+    """
     # OS:Lights:Definition
     # Get all lights Definition in the OpenStudio model.
     all_lights_definition = osm_model.getLightsDefinitions()
 
-    # Define attributtes to retrieve in a dictionary
-    object_attr = {'Handle': [str(x.handle()) for x in all_lights_definition],
-                   'Name': [x.name().get() for x in all_lights_definition],
-                   'Design Level Calculation Method': [x.designLevelCalculationMethod() for x in all_lights_definition],
-                   'Lighting Level {W}': [x.lightingLevel().get() if not x.lightingLevel().isNull() else None  for x in all_lights_definition],
-                   'Watts per Space Floor Area {W/m2}': [x.wattsperSpaceFloorArea().get() if not x.wattsperSpaceFloorArea().isNull() else None  for x in all_lights_definition],
-                   'Watts per Person {W/person}': [x.wattsperPerson().get() if not x.wattsperPerson().isNull() else None  for x in all_lights_definition],
-                   'Fraction Radiant': [x.fractionRadiant() for x in all_lights_definition],
-                   'Fraction Visible': [x.fractionVisible() for x in all_lights_definition],
-                   'Return Air Fraction': [x.returnAirFraction() for x in all_lights_definition]}
+    # Define attributes to retrieve in a dictionary
+    object_attr = {
+        'Handle': [str(x.handle()) for x in all_lights_definition],
+        'Name': [x.name().get() for x in all_lights_definition],
+        'Design Level Calculation Method': [x.designLevelCalculationMethod() for x in all_lights_definition],
+        'Lighting Level {W}': [x.lightingLevel().get() if not x.lightingLevel().isNull() else None for x in all_lights_definition],
+        'Watts per Space Floor Area {W/m2}': [x.wattsperSpaceFloorArea().get() if not x.wattsperSpaceFloorArea().isNull() else None for x in all_lights_definition],
+        'Watts per Person {W/person}': [x.wattsperPerson().get() if not x.wattsperPerson().isNull() else None for x in all_lights_definition],
+        'Fraction Radiant': [x.fractionRadiant() for x in all_lights_definition],
+        'Fraction Visible': [x.fractionVisible() for x in all_lights_definition],
+        'Return Air Fraction': [x.returnAirFraction() for x in all_lights_definition]
+    }
 
     # Create a DataFrame of all lights objects.
     all_lights_definition_df = pd.DataFrame(columns=object_attr.keys())
@@ -152,6 +182,7 @@ def get_all_lights_definition_objects_as_dataframe(osm_model: openstudio.model.M
         f"The OSM model contains {all_lights_definition_df.shape[0]} lights definition objects")
 
     return all_lights_definition_df
+
 
 # Electric Equipment
 # --------------------
@@ -189,20 +220,31 @@ def get_all_electric_equipment_objects_as_dataframe(osm_model: openstudio.model.
     return all_electric_equipment_df
 
 
+
 def get_all_electric_equipment_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    # OS:ElectricEquipment:Definition
-    # Get all electric equipment Definition in the OpenStudio model.
+    """
+    Retrieves all electric equipment Definitions from an OpenStudio model and returns them as a DataFrame.
+
+    Args:
+        osm_model: An OpenStudio model object containing electric equipment definitions.
+
+    Returns:
+        A Pandas DataFrame containing attributes of all electric equipment definitions.
+    """  
+    # Get all electric equipment Definitions in the OpenStudio model.
     all_electric_equipment_definition = osm_model.getElectricEquipmentDefinitions()
 
-    # Define attributtes to retrieve in a dictionary
-    object_attr = {'Handle': [str(x.handle()) for x in all_electric_equipment_definition],
-                   'Name': [x.name().get() for x in all_electric_equipment_definition],
-                   'Design Level Calculation Method': None,
-                   'Design Level {W}': None,
-                   'Watts per Space Floor Area {W/m2}': None,
-                   'Watts per Person {W/person}': None}
+    # Define attributes to retrieve in a dictionary
+    object_attr = {
+        'Handle': [str(x.handle()) for x in all_electric_equipment_definition],
+        'Name': [x.name().get() for x in all_electric_equipment_definition],
+        'Design Level Calculation Method': [x.designLevelCalculationMethod() for x in all_electric_equipment_definition],
+        'Design Level {W}': [x.designLevel().get() if not x.designLevel().isNull() else None for x in all_electric_equipment_definition],
+        'Watts per Space Floor Area {W/m2}': [x.wattsperSpaceFloorArea().get() if not x.wattsperSpaceFloorArea().isNull() else None  for x in all_electric_equipment_definition],
+        'Watts per Person {W/person}': [x.wattsperPerson().get() if not x.wattsperPerson().isNull() else None  for x in all_electric_equipment_definition]
+    }
 
-    # Create a DataFrame of all electric_equipment objects.
+    # Create a DataFrame of all electric equipment objects.
     all_electric_equipment_definition_df = pd.DataFrame(
         columns=object_attr.keys())
     for key in object_attr.keys():
@@ -216,6 +258,7 @@ def get_all_electric_equipment_definition_objects_as_dataframe(osm_model: openst
         f"The OSM model contains {all_electric_equipment_definition_df.shape[0]} electric equipment definition objects")
 
     return all_electric_equipment_definition_df
+
 
 
 # Space Infiltration
@@ -260,32 +303,34 @@ def get_all_space_infiltration_design_flowrate_objects_as_dataframe(osm_model: o
 
 # Design Specification Outdoor Air
 # --------------------------------
+
+
 def get_all_design_specification_outdoor_air_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-  # OS:DesignSpecification:OutdoorAir
-  all_design_specification_outdoor_air = osm_model.getDesignSpecificationOutdoorAirs()
+    # OS:DesignSpecification:OutdoorAir
+    all_design_specification_outdoor_air = osm_model.getDesignSpecificationOutdoorAirs()
 
-  # Define attributtes to retrieve in a dictionary
-  object_attr = {'Handle': [str(x.handle()) for x in all_design_specification_outdoor_air ],
-                  'Name': [x.name().get() for x in all_design_specification_outdoor_air ],
-                  'Outdoor Air Method': [x.outdoorAirMethod() for x in all_design_specification_outdoor_air ],
-                  'Outdoor Air Flow per Person {m3/s-person}': [x.outdoorAirFlowperPerson() for x in all_design_specification_outdoor_air ],
-                  'Outdoor Air Flow per Floor Area {m3/s-m2}': [x.outdoorAirFlowperFloorArea() for x in all_design_specification_outdoor_air ],
-                  'Outdoor Air Flow Rate {m3/s}': [x.outdoorAirFlowRate() for x in all_design_specification_outdoor_air ],
-                  'Outdoor Air Flow Air Changes per Hour {1/hr}': [x.outdoorAirFlowAirChangesperHour() for x in all_design_specification_outdoor_air ],
-                  'Outdoor Air Flow Rate Fraction Schedule Name': [x.outdoorAirFlowRateFractionSchedule().get().name() if not x.outdoorAirFlowRateFractionSchedule().isNull() else None for x in all_design_specification_outdoor_air ]
-  }
-  # Create a DataFrame of all space_infiltration_design_flowrate objects.
-  all_design_specification_outdoor_air_df = pd.DataFrame(
-      columns=object_attr.keys())
+    # Define attributtes to retrieve in a dictionary
+    object_attr = {'Handle': [str(x.handle()) for x in all_design_specification_outdoor_air],
+                   'Name': [x.name().get() for x in all_design_specification_outdoor_air],
+                   'Outdoor Air Method': [x.outdoorAirMethod() for x in all_design_specification_outdoor_air],
+                   'Outdoor Air Flow per Person {m3/s-person}': [x.outdoorAirFlowperPerson() for x in all_design_specification_outdoor_air],
+                   'Outdoor Air Flow per Floor Area {m3/s-m2}': [x.outdoorAirFlowperFloorArea() for x in all_design_specification_outdoor_air],
+                   'Outdoor Air Flow Rate {m3/s}': [x.outdoorAirFlowRate() for x in all_design_specification_outdoor_air],
+                   'Outdoor Air Flow Air Changes per Hour {1/hr}': [x.outdoorAirFlowAirChangesperHour() for x in all_design_specification_outdoor_air],
+                   'Outdoor Air Flow Rate Fraction Schedule Name': [x.outdoorAirFlowRateFractionSchedule().get().name() if not x.outdoorAirFlowRateFractionSchedule().isNull() else None for x in all_design_specification_outdoor_air]
+                   }
+    # Create a DataFrame of all space_infiltration_design_flowrate objects.
+    all_design_specification_outdoor_air_df = pd.DataFrame(
+        columns=object_attr.keys())
 
-  for key in object_attr.keys():
-      all_design_specification_outdoor_air_df[key] = object_attr[key]
+    for key in object_attr.keys():
+        all_design_specification_outdoor_air_df[key] = object_attr[key]
 
-  # Sort the DataFrame alphabetically by the Name column and reset indexes
-  all_design_specification_outdoor_air_df = all_design_specification_outdoor_air_df.sort_values(
-      by='Name', ascending=True).reset_index(drop=True)
+    # Sort the DataFrame alphabetically by the Name column and reset indexes
+    all_design_specification_outdoor_air_df = all_design_specification_outdoor_air_df.sort_values(
+        by='Name', ascending=True).reset_index(drop=True)
 
-  print(
-      f"The OSM model contains {all_design_specification_outdoor_air_df.shape[0]} OS:DesignSpecification:OutdoorAir objects")
+    print(
+        f"The OSM model contains {all_design_specification_outdoor_air_df.shape[0]} OS:DesignSpecification:OutdoorAir objects")
 
-  return all_design_specification_outdoor_air_df
+    return all_design_specification_outdoor_air_df
