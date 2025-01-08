@@ -82,7 +82,7 @@ def get_all_space_types_as_dataframe(osm_model: openstudio.model.Model) -> pd.Da
         'People Number Of People Schedule': [x.defaultScheduleSet().get().numberofPeopleSchedule().get().name(
         ).get() if not x.defaultScheduleSet().isNull() and not x.defaultScheduleSet().get().numberofPeopleSchedule().isNull() else None for x in all_space_types],
         'People Activity Level Schedule': [x.defaultScheduleSet().get().peopleActivityLevelSchedule().get().name(
-        ).get() if not x.defaultScheduleSet().isNull() and not x.defaultScheduleSet().get().numberofPeopleSchedule().isNull() else None for x in all_space_types],
+        ).get() if not x.defaultScheduleSet().isNull() and not x.defaultScheduleSet().get().peopleActivityLevelSchedule().isNull() else None for x in all_space_types],
         # Lights
         'Lights Load Name': [x.lights()[0].name().get() if x.lights() else None for x in all_space_types],
         'Lights Definition': [x.lights()[0].definition().name().get() if x.lights() else None for x in all_space_types],
