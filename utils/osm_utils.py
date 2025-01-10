@@ -53,8 +53,8 @@ def save_model_as_osm_file(osm_model: openstudio.model.Model, osm_file_path: str
     else:
         new_osm_file_name = os.path.split(osm_file_path)[-1]
 
-    # Save the model to the new OSM file.
-    openstudio.model.saveModel(osm_model, new_osm_file_name, osm_file_folder)
+    # Save the model to the new OSM file.    
+    osm_model.save(os.path.join(osm_file_folder, new_osm_file_name), overwrite=True)
 
 
 def convert_osm_to_idf(osm_model: openstudio.model.Model, idf_file_path: str) -> None:
