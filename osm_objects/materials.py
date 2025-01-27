@@ -66,13 +66,13 @@ def get_all_standard_opaque_material_objects_as_dicts(osm_model: openstudio.mode
     """
 
     # Get all standard opaque materials in the OpenStudio model.
-    all_objects = osm_model.getStandardOpaqueMaterial()
+    all_objects = osm_model.getStandardOpaqueMaterials()
 
     all_objects_dicts = []
 
     for target_object in all_objects:
-        space_handle = str(target_object.handle())
-        object_dict = get_standard_opaque_material_object_as_dict(osm_model, space_handle)
+        handle = str(target_object.handle())
+        object_dict = get_standard_opaque_material_object_as_dict(osm_model, handle)
         all_objects_dicts.append(object_dict)
 
     return all_objects_dicts
