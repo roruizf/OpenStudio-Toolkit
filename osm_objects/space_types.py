@@ -237,115 +237,113 @@ def rename_space_types_components(osm_model: openstudio.model.Model, space_type_
     all_space_types_df = get_all_space_types_as_dataframe(osm_model)
     all_space_types_df = all_space_types_df[all_space_types_df['Name'].isin(space_type_name_list)].reset_index(drop=True)
 
-
     for index, row in all_space_types_df.iterrows():
-
+       
         space_type_name = row['Name']
         space_type_handle = row['Handle']
 
         # Get Space Type row by row
-        space_type = osm_model.getSpaceType(row['Handle']).get()
+        target_space_type = osm_model.getSpaceType(row['Handle']).get()
 
         print(f"{index + 1}. {space_type_name}:")
+        
+        for column in all_space_types_df.drop(columns=['Handle', 'Name']).columns: 
+            
+            new_name = f"{space_type_name} {column.replace('Name', '').replace('Load', '')}"
+            if row[column] is not None and row[column] != new_name:
+                if column == 'Rendering Color':
+                    target_space_type.renderingColor().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.renderingColor().get().nameString()}")
+                elif column == 'Default Construction Set':
+                    target_space_type.defaultConstructionSet().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.defaultConstructionSet().get().nameString()}")
+                elif column == 'Default Schedule Set':
+                    target_space_type.defaultScheduleSet().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.defaultScheduleSet().get().nameString()}")
+                elif column == 'Design Specification Outdoor Air':
+                    target_space_type.designSpecificationOutdoorAir().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.designSpecificationOutdoorAir().get().nameString()}")
+                elif column == 'Space Infiltration Design Flow Rates':
+                    target_space_type.spaceInfiltrationDesignFlowRates()[0].setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.spaceInfiltrationDesignFlowRates()[0].nameString()}")
+                elif column == 'Space Infiltration Effective Leakage Area':
+                    target_space_type.spaceInfiltrationEffectiveLeakageArea()[0].setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.spaceInfiltrationEffectiveLeakageArea()[0].nameString()}")
+                elif column == 'People Load Name':
+                    target_space_type.people()[0].setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.people()[0].nameString()}")
+                elif column == 'People Definition':
+                    target_space_type.people()[0].definition().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.people()[0].definition().nameString()}")
+                elif column == 'People Number Of People Schedule':
+                    target_space_type.defaultScheduleSet().get().numberofPeopleSchedule().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.defaultScheduleSet().get().numberofPeopleSchedule().get().nameString()}")
+                elif column == 'People Activity Level Schedule':
+                    target_space_type.defaultScheduleSet().get().peopleActivityLevelSchedule().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.defaultScheduleSet().get().peopleActivityLevelSchedule().get().nameString()}")
+                elif column == 'Lights Load Name':
+                    target_space_type.lights()[0].setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.lights()[0].nameString()}")
+                elif column == 'Lights Definition':
+                    target_space_type.lights()[0].definition().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.lights()[0].definition().nameString()}")
+                elif column == 'Lighting Schedule':
+                    target_space_type.defaultScheduleSet().get().lightingSchedule().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.defaultScheduleSet().get().lightingSchedule().get().nameString()}")
+                elif column == 'Luminaires Load Name':
+                    target_space_type.luminaires()[0].setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.luminaires()[0].nameString()}")
+                elif column == 'Luminaires Definition':
+                    target_space_type.luminaires()[0].definition().setName(new_name)
+                elif column == 'Luminaires Schedule':
+                    pass
+                elif column == 'Electric Equipment Load Name':
+                    target_space_type.electricEquipment()[0].setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.electricEquipment()[0].nameString()}")
+                elif column == 'Electric Equipment Definition':
+                    target_space_type.electricEquipment()[0].definition().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.electricEquipment()[0].definition().nameString()}")
+                elif column == 'Electric Equipment Schedule':
+                    target_space_type.defaultScheduleSet().get().electricEquipmentSchedule().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.defaultScheduleSet().get().electricEquipmentSchedule().get().nameString()}")
+                elif column == 'Gas Equipment Load Name':
+                    target_space_type.gasEquipment()[0].setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.gasEquipment()[0].nameString()}")
+                elif column == 'Gas Equipment Definition':
+                    target_space_type.gasEquipment()[0].definition().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.gasEquipment()[0].definition().nameString()}")
+                elif column == 'Gas Equipment Schedule':
+                    target_space_type.defaultScheduleSet().get().gasEquipmentSchedule().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.defaultScheduleSet().get().gasEquipmentSchedule().get().nameString()}")
+                elif column == 'Steam Equipment Load Name':
+                    target_space_type.steamEquipment()[0].setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.steamEquipment()[0].nameString()}")
+                elif column == 'Steam Equipment Definition':
+                    target_space_type.steamEquipment()[0].definition().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.steamEquipment()[0].definition().nameString()}")
+                elif column == 'Steam Equipment Schedule':
+                    target_space_type.defaultScheduleSet().get().steamEquipmentSchedule().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.defaultScheduleSet().get().steamEquipmentSchedule().get().nameString()}")
+                elif column == 'Other Equipment Load Name':
+                    target_space_type.otherEquipment()[0].setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.otherEquipment()[0].nameString()}")
+                elif column == 'Other Equipment Definition':
+                    target_space_type.otherEquipment()[0].definition().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.otherEquipment()[0].definition().nameString()}")
+                elif column == 'Other Equipment Schedule':
+                    target_space_type.defaultScheduleSet().get().otherEquipmentSchedule().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.defaultScheduleSet().get().otherEquipmentSchedule().get().nameString()}")
+                elif column == 'Internal Mass Name':
+                    target_space_type.internalMass()[0].setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.internalMass()[0].nameString()}")
+                elif column == 'Internal Mass Definition':
+                    target_space_type.internalMass()[0].definition().setName(new_name)   
+                elif column == 'Infiltration Schedule Name':
+                    target_space_type.infiltrationSchedule().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.infiltrationSchedule().get().nameString()}")
 
-        # Rendering Color
-        new_name = f"{space_type_name} Rendering Color"
-        if row['Rendering Color'] is not None and row['Rendering Color'] != new_name:
-            print(
-                f"    * Rendering Color Name changed: from {row['Rendering Color']} to {new_name}")
-            # Reset Name
-            space_type.renderingColor().get().setName(new_name)
 
-        # Default Construction Set
-        new_name = f"{space_type_name} Construction Set"
-        if row['Default Construction Set'] is not None and row['Default Construction Set'] != new_name:
-            print(
-                f"    * Construction Set Name changed: from {row['Default Construction Set']} to {new_name}")
-            # Reset Name
-            space_type.defaultConstructionSet().get().setName(new_name)
-
-        # Rename Default Schedule Set
-        new_name = f"{space_type_name} Schedule Set"
-        if row['Default Schedule Set'] is not None and row['Default Schedule Set'] != new_name:
-            print(
-                f"    * Schedule Set Name changed: from {row['Default Schedule Set']} to {new_name}")
-            # Reset Name
-            space_type.defaultScheduleSet().get().setName(new_name)
-
-        # Rename Design Specification Outdoor Air
-        new_name = f"{space_type_name} Ventilation"
-        if row['Design Specification Outdoor Air'] is not None and row['Design Specification Outdoor Air'] != new_name:
-            print(
-                f"    * Design Specification Outdoor Air Name changed: from {row['Design Specification Outdoor Air']} to {new_name}")
-            # Reset Name
-            space_type.designSpecificationOutdoorAir().get().setName(new_name)
-
-        # Space Infiltration Design Flow Rates
-        new_name = f"{space_type_name} Infiltration"
-        if row['Space Infiltration Design Flow Rates'] is not None and row['Space Infiltration Design Flow Rates'] != new_name:
-            print(
-                f"    * Space Infiltration Design Flow Rates Name changed: from {row['Space Infiltration Design Flow Rates']} to {new_name}")
-            space_type.spaceInfiltrationDesignFlowRates()[0].setName(new_name)
-
-        # Space Infiltration Effective Leakage Area
-        # pass
-
-        # People
-        new_name = f"{space_type_name} People"
-        if row['People Load Name'] is not None and row['People Load Name'] != new_name:
-            print(
-                f"    * People Load Name changed: from {row['People Load Name']} to {new_name}")
-            space_type.people()[0].setName(new_name)
-
-        # People Definition
-        new_name = f"{space_type_name} People Definition"
-        if row['People Definition'] is not None and row['People Definition'] != new_name:
-            print(
-                f"    * People Definition Name changed: from {row['People Definition']} to {new_name}")
-            space_type.people()[0].definition().setName(new_name)
-
-        # People Number Of People Schedule
-        # pass
-
-        # People Activity Level Schedule
-        # pass
-
-        # Lights Load Name
-        new_name = f"{space_type_name} Lights"
-        if row['Lights Load Name'] is not None and row['Lights Load Name'] != new_name:
-            print(
-                f"    * Lights Load Name changed: from {row['Lights Load Name']} to {new_name}")
-            space_type.lights()[0].setName(new_name)
-
-        # Lights Definition
-        new_name = f"{space_type_name} Lights Definition"
-        if row['Lights Definition'] is not None and row['Lights Definition'] != new_name:
-            print(
-                f"    * Lights Definition Name changed: from {row['Lights Definition']} to {new_name}")
-            space_type.lights()[0].definition().setName(new_name)
-
-        # Lighting Schedule
-        # pass
-
-        # Electric Equipment Load Name
-        new_name = f"{space_type_name} Elec Equip"
-        if row['Electric Equipment Load Name'] is not None and row['Electric Equipment Load Name'] != new_name:
-            print(
-                f"    * Electric Equipment Load Name changed: from {row['Electric Equipment Load Name']} to {new_name}")
-            space_type.electricEquipment()[0].setName(new_name)
-
-        # Electric Equipment Definition
-        new_name = f"{space_type_name} Elec Equip Definition"
-        if row['Electric Equipment Definition'] is not None and row['Electric Equipment Definition'] != new_name:
-            print(
-                f"    * Electric Equipment Definition changed: from {row['Electric Equipment Definition']} to {new_name}")
-            space_type.electricEquipment()[0].definition().setName(new_name)
-
-        # Electric Equipment Schedule
-        # pass
-
-        # Infiltration Schedule
-        # pass
+    
 
 
 def create_complete_edit_space_types_components(osm_model: openstudio.model.Model, space_type_name_list: list, create_if_none: bool = False) -> openstudio.model.Model:
