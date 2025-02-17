@@ -191,72 +191,56 @@ def get_all_schedule_type_limit_objects_as_dataframe(osm_model: openstudio.model
 
 
 def get_all_default_schedule_set_components_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    all_default_schedule_set_df = get_all_default_schedule_set_objects_as_dataframe(
-        osm_model)
-    columns_to_stack = all_default_schedule_set_df.columns[~all_default_schedule_set_df.columns.isin([
-                                                                                                     'Handle', 'Name'])].tolist()
-    default_schedule_ruleset_df = all_default_schedule_set_df.melt(
-        id_vars=['Handle', 'Name'], value_vars=columns_to_stack, var_name='Schedule Ruleset Type', value_name='Schedule Name').sort_values(by=['Handle', 'Name'])
-    default_schedule_ruleset_df = default_schedule_ruleset_df.drop(columns=[
-                                                                   'Handle'])
-    default_schedule_ruleset_df = default_schedule_ruleset_df.rename(
-        columns={'Name': 'Default Schedule Set Name', 'Schedule Name': 'Schedule Ruleset Name'})
-    default_schedule_ruleset_df['Schedule Ruleset Type'] = default_schedule_ruleset_df['Schedule Ruleset Type'].str.replace(
-        'Name', '').str.strip()
+    
+    """
+    Retrieves all default schedule set components from an OpenStudio model and formats them into a DataFrame.
 
-    default_schedule_ruleset_df = default_schedule_ruleset_df.reset_index(
-        drop=True)
+    Args:
+        osm_model (openstudio.model.Model): The OpenStudio model from which to extract the components. 
 
-    #
-    all_schedule_ruleset_objects_df = get_all_schedule_ruleset_objects_as_dataframe(
-        osm_model)
-    default_schedule_ruleset_df = pd.merge(
-        default_schedule_ruleset_df, all_schedule_ruleset_objects_df, left_on='Schedule Ruleset Name', right_on='Name', how='left')
-    default_schedule_ruleset_df = default_schedule_ruleset_df.drop(columns=[
-                                                                   'Handle', 'Name'])
-    default_schedule_ruleset_df = default_schedule_ruleset_df.replace(
-        np.nan, None)
-    columns_to_stack = default_schedule_ruleset_df.columns[~default_schedule_ruleset_df.columns.isin(
-        ['Default Schedule Set Name', 'Schedule Ruleset Type', 'Schedule Ruleset Name', 'Schedule Type Limits Name'])].tolist()
+    Returns:
+        pd.DataFrame: A DataFrame containing all default schedule set components organized by type.
+    """
+    all_default_schedule_set_df = get_all_default_schedule_set_objects_as_dataframe(osm_model)
+    columns_to_stack = all_default_schedule_set_df.columns[~all_default_schedule_set_df.columns.isin(['Handle', 'Name'])].tolist()
+    default_schedule_ruleset_df = all_default_schedule_set_df.melt(id_vars=['Handle', 'Name'], value_vars=columns_to_stack, var_name='Schedule Ruleset Type', value_name='Schedule Name').sort_values(by=['Handle', 'Name']).drop(columns=['Handle'])
+    default_schedule_ruleset_df = default_schedule_ruleset_df.rename(columns={'Name': 'Default Schedule Set Name', 'Schedule Name': 'Schedule Ruleset Name'})
+    default_schedule_ruleset_df['Schedule Ruleset Type'] = default_schedule_ruleset_df['Schedule Ruleset Type'].str.replace('Name', '').str.strip()
+    default_schedule_ruleset_df = default_schedule_ruleset_df.dropna().reset_index(drop=True)
+
+    all_schedule_ruleset_objects_df = get_all_schedule_ruleset_objects_as_dataframe(osm_model)
+    default_schedule_ruleset_df = pd.merge(default_schedule_ruleset_df, all_schedule_ruleset_objects_df, left_on='Schedule Ruleset Name', right_on='Name', how='left')
+    default_schedule_ruleset_df = default_schedule_ruleset_df.drop(columns=['Handle', 'Name'])
+    default_schedule_ruleset_df = default_schedule_ruleset_df.replace(np.nan, None)
+    columns_to_stack = default_schedule_ruleset_df.columns[~default_schedule_ruleset_df.columns.isin(['Default Schedule Set Name', 'Schedule Ruleset Type', 'Schedule Ruleset Name', 'Schedule Type Limits Name'])].tolist()
     default_schedule_day_df = default_schedule_ruleset_df.melt(id_vars=['Default Schedule Set Name', 'Schedule Ruleset Type', 'Schedule Ruleset Name', 'Schedule Type Limits Name'], value_vars=columns_to_stack,
-                                                               var_name='Schedule Day Type', value_name='Schedule Day Name').sort_values(by=['Default Schedule Set Name', 'Schedule Ruleset Type', 'Schedule Ruleset Name', 'Schedule Type Limits Name']).reset_index(drop=True)
-    default_schedule_day_df['Schedule Day Type'] = default_schedule_day_df['Schedule Day Type'].str.replace(
-        'Name', '').str.strip().reset_index(drop=True)
-    #
-    all_schedule_day_objects_df = get_all_schedule_day_objects_as_dataframe(
-        osm_model)
-    all_schedule_rule_objects_df = get_all_schedule_rule_objects_as_dataframe(
-        osm_model)
-    default_schedule_rule_objects_df = all_schedule_rule_objects_df[all_schedule_rule_objects_df['Schedule Ruleset Name'].isin(
-        default_schedule_day_df['Schedule Ruleset Name'].unique())]
+                                                                var_name='Schedule Day Type', value_name='Schedule Day Name').sort_values(by=['Default Schedule Set Name', 'Schedule Ruleset Type', 'Schedule Ruleset Name', 'Schedule Type Limits Name']).reset_index(drop=True)
+    default_schedule_day_df['Schedule Day Type'] = default_schedule_day_df['Schedule Day Type'].str.replace('Name', '').str.strip().reset_index(drop=True)
+
+    all_schedule_day_objects_df = get_all_schedule_day_objects_as_dataframe(osm_model)
+    all_schedule_rule_objects_df = get_all_schedule_rule_objects_as_dataframe(osm_model)
+    default_schedule_rule_objects_df = all_schedule_rule_objects_df[all_schedule_rule_objects_df['Schedule Ruleset Name'].isin(default_schedule_day_df['Schedule Ruleset Name'].unique())]
 
     # Stacking priority day schedules and rules
-    # print(default_schedule_day_df.shape[0])
-    # print(default_schedule_rule_objects_df.shape[0])
     default_schedule_day_df['Schedule Rule Name'] = np.nan
     default_schedule_day_df['Schedule Rule Order'] = np.nan
     default_schedule_day_df
     for index, row in default_schedule_rule_objects_df.iterrows():
-        # print(row['Schedule Ruleset Name'])
         schedule_ruleset_name = row['Schedule Ruleset Name']
         default_schedule_day_df_i = pd.DataFrame()
-        default_schedule_day_df_i = default_schedule_day_df[
-            default_schedule_day_df['Schedule Ruleset Name'] == schedule_ruleset_name]
+        default_schedule_day_df_i = default_schedule_day_df[default_schedule_day_df['Schedule Ruleset Name'] == schedule_ruleset_name]
         default_schedule_day_df_i = default_schedule_day_df_i.drop_duplicates(['Default Schedule Set Name', 'Schedule Ruleset Type', 'Schedule Ruleset Name',
-                                                                               'Schedule Type Limits Name'], keep='first')
+                                                                                'Schedule Type Limits Name'], keep='first')
         default_schedule_day_df_i['Schedule Day Name'] = row['Day Schedule Name']
         default_schedule_day_df_i['Schedule Day Type'] = 'Rule Day Schedule'
         default_schedule_day_df_i['Schedule Rule Name'] = row['Name']
-        default_schedule_day_df_i['Schedule Rule Order'] = str(
-            row['Rule Order'])
-        default_schedule_day_df_i
-
-        default_schedule_day_df = pd.concat(
-            [default_schedule_day_df, default_schedule_day_df_i], ignore_index=True)
+        default_schedule_day_df_i['Schedule Rule Order'] = str(row['Rule Order'])
+        
+        default_schedule_day_df = pd.concat([default_schedule_day_df, default_schedule_day_df_i], ignore_index=True)
         default_schedule_day_df = default_schedule_day_df.replace(np.nan, None)
-    default_schedule_day_df = default_schedule_day_df.sort_values(
-        by=['Default Schedule Set Name', 'Schedule Ruleset Type', 'Schedule Ruleset Name', 'Schedule Type Limits Name']).reset_index(drop=True)
-    # print(default_schedule_day_df.shape[0])
+
+    default_schedule_day_df = default_schedule_day_df.sort_values(by=['Default Schedule Set Name', 'Schedule Ruleset Type', 'Schedule Ruleset Name', 'Schedule Type Limits Name']).reset_index(drop=True)
+
     return default_schedule_day_df
 
 
