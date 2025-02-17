@@ -248,7 +248,7 @@ def rename_space_types_components(osm_model: openstudio.model.Model, space_type_
         print(f"{index + 1}. {space_type_name}:")
         
         for column in all_space_types_df.drop(columns=['Handle', 'Name']).columns: 
-            
+
             new_name = f"{space_type_name} {column.replace('Name', '').replace('Load', '')}"
             if row[column] is not None and row[column] != new_name:
                 if column == 'Rendering Color':
@@ -338,9 +338,11 @@ def rename_space_types_components(osm_model: openstudio.model.Model, space_type_
                     print(f"    * {column} changed: from {row[column]} to {target_space_type.internalMass()[0].nameString()}")
                 elif column == 'Internal Mass Definition':
                     target_space_type.internalMass()[0].definition().setName(new_name)   
-                elif column == 'Infiltration Schedule Name':
-                    target_space_type.infiltrationSchedule().get().setName(new_name)
-                    print(f"    * {column} changed: from {row[column]} to {target_space_type.infiltrationSchedule().get().nameString()}")
+                elif column == 'Infiltration Schedule':
+                    target_space_type.defaultScheduleSet().get().infiltrationSchedule().get().setName(new_name)
+                    print(f"    * {column} changed: from {row[column]} to {target_space_type.defaultScheduleSet().get().nameString()}")
+                else:
+                    pass
 
 
     
