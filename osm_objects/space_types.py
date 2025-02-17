@@ -45,9 +45,111 @@ def get_all_space_types_objects_as_dataframe(osm_model: openstudio.model.Model) 
     return all_space_types_df
 
 
+
+def get_space_type_as_dict(osm_model: openstudio.model.Model, space_type_handle: str = None, space_type_name: str = None) -> dict:
+    """
+    Retrieve a space from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - space_handle (str, optional): The handle of the space to retrieve.
+    - space_name (str, optional): The name of the space to retrieve.
+
+    Returns:
+    - dict: Dictionary containing information about the specified space.
+    """
+    if space_type_handle is None and space_type_name is None:
+        raise ValueError("Either 'space_type_handle' or 'space_type_name' must be provided.")
+    
+    # Find the space_type by handle or name
+    if space_type_handle is not None:
+        space_type_object = osm_model.getSpaceType(space_type_handle)
+        if space_type_object.isNull():
+            print(f"No space found with the handle: {space_type_handle}")
+            return {}
+    elif space_type_name is not None:
+        space_type_object = osm_model.getSpaceTypeByName(space_type_name)
+        if space_type_object.isNull():
+            print(f"No space found with the name: {space_type_name}")
+            return {}
+
+    target_space_type = space_type_object.get()
+    
+    space_type_dict ={
+        'Handle': str(target_space_type.handle()) ,
+        'Name': target_space_type.nameString() ,
+        'Rendering Color': target_space_type.renderingColor().get().name().get() if not target_space_type.renderingColor().isNull() else None ,
+        'Default Construction Set': target_space_type.defaultConstructionSet().get().name().get() if not target_space_type.defaultConstructionSet().isNull() else None ,
+        'Default Schedule Set': target_space_type.defaultScheduleSet().get().name().get() if not target_space_type.defaultScheduleSet().isNull() else None ,
+        # Design Specification Outdoor Air
+        'Design Specification Outdoor Air': target_space_type.designSpecificationOutdoorAir().get().name().get() if not target_space_type.designSpecificationOutdoorAir().isNull() else None ,
+        # Infiltration
+        'Space Infiltration Design Flow Rates': target_space_type.spaceInfiltrationDesignFlowRates()[0].name().get() if target_space_type.spaceInfiltrationDesignFlowRates() else None ,
+        'Space Infiltration Effective Leakage Area': target_space_type.spaceInfiltrationEffectiveLeakageAreas()[0].name().get() if target_space_type.spaceInfiltrationEffectiveLeakageAreas() else None ,
+        # People
+        'People Load Name': target_space_type.people()[0].name().get() if target_space_type.people() else None ,
+        'People Definition': target_space_type.people()[0].definition().name().get() if target_space_type.people() else None ,
+        'People Number Of People Schedule': target_space_type.defaultScheduleSet().get().numberofPeopleSchedule().get().name().get() if not target_space_type.defaultScheduleSet().isNull() and not target_space_type.defaultScheduleSet().get().numberofPeopleSchedule().isNull() else None ,
+        'People Activity Level Schedule': target_space_type.defaultScheduleSet().get().peopleActivityLevelSchedule().get().name().get() if not target_space_type.defaultScheduleSet().isNull() and not target_space_type.defaultScheduleSet().get().peopleActivityLevelSchedule().isNull() else None ,
+        # Lights
+        'Lights Load Name': target_space_type.lights()[0].name().get() if target_space_type.lights() else None ,
+        'Lights Definition': target_space_type.lights()[0].definition().name().get() if target_space_type.lights() else None ,
+        'Lighting Schedule': target_space_type.defaultScheduleSet().get().lightingSchedule().get().name().get() if not target_space_type.defaultScheduleSet().isNull() and not target_space_type.defaultScheduleSet().get().lightingSchedule().isNull() else None ,
+        # Luminaires
+        'Luminaires Load Name': target_space_type.luminaires()[0].name().get() if target_space_type.luminaires() else None ,
+        'Luminaires Definition': target_space_type.luminaires()[0].definition().name().get() if target_space_type.luminaires() else None ,
+        'Luminaires Schedule': None, #target_space_type.defaultScheduleSet().get().lightingSchedule().get().name().get() if not target_space_type.defaultScheduleSet().isNull() and not target_space_type.defaultScheduleSet().get().lightingSchedule().isNull() else None ,
+        # Electric Equipment
+        'Electric Equipment Load Name': target_space_type.electricEquipment()[0].name().get() if target_space_type.electricEquipment() else None ,
+        'Electric Equipment Definition': target_space_type.electricEquipment()[0].definition().name().get() if target_space_type.electricEquipment() else None ,
+        'Electric Equipment Schedule': target_space_type.defaultScheduleSet().get().electricEquipmentSchedule().get().name().get() if not target_space_type.defaultScheduleSet().isNull() and not target_space_type.defaultScheduleSet().get().electricEquipmentSchedule().isNull() else None ,
+        # Gas Equipment        
+        'Gas Equipment Load Name': target_space_type.gasEquipment()[0].name().get() if target_space_type.gasEquipment() else None ,
+        'Gas Equipment Definition': target_space_type.gasEquipment()[0].definition().name().get() if target_space_type.gasEquipment() else None ,
+        'Gas Equipment Schedule': target_space_type.defaultScheduleSet().get().gasEquipmentSchedule().get().name().get() if not target_space_type.defaultScheduleSet().isNull() and not target_space_type.defaultScheduleSet().get().gasEquipmentSchedule().isNull() else None ,
+        # Steam Equipment        
+        'Steam Equipment Load Name': target_space_type.steamEquipment()[0].name().get() if target_space_type.steamEquipment() else None ,
+        'Steam Equipment Definition': target_space_type.steamEquipment()[0].definition().name().get() if target_space_type.steamEquipment() else None ,
+        'Steam Equipment Schedule': target_space_type.defaultScheduleSet().get().steamEquipmentSchedule().get().name().get() if not target_space_type.defaultScheduleSet().isNull() and not target_space_type.defaultScheduleSet().get().steamEquipmentSchedule().isNull() else None ,
+        # Other Equipment        
+        'Other Equipment Load Name': target_space_type.otherEquipment()[0].name().get() if target_space_type.otherEquipment() else None ,
+        'Other Equipment Definition': target_space_type.otherEquipment()[0].definition().name().get() if target_space_type.otherEquipment() else None ,
+        'Other Equipment Schedule': target_space_type.defaultScheduleSet().get().otherEquipmentSchedule().get().name().get() if not target_space_type.defaultScheduleSet().isNull() and not target_space_type.defaultScheduleSet().get().otherEquipmentSchedule().isNull() else None ,
+        # Internal Mass Definitions
+        'Internal Mass Name': target_space_type.internalMass()[0].name().get() if target_space_type.internalMass() else None,
+        'Internal Mass Definition': target_space_type.internalMass()[0].definition().name().get() if target_space_type.internalMass() else None,
+        # Infiltration
+        'Infiltration Schedule': target_space_type.defaultScheduleSet().get().infiltrationSchedule().get().name().get() if not target_space_type.defaultScheduleSet().isNull() and not target_space_type.defaultScheduleSet().get().infiltrationSchedule().isNull() else None 
+        }
+    
+    return space_type_dict
+
+def get_all_space_types_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+    """
+    Retrieve all spaces types from the OpenStudio model and return their attributes as a list of dictionaries.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - list[dict]: A list of dictionaries, each containing information about a space types.
+    """
+
+    # Get all spaces in the OpenStudio model.
+    all_objects = osm_model.getSpaceTypes()
+
+    all_objects_dicts = []
+
+    for target_object in all_objects:
+        space_type_handle = str(target_object.handle())
+        object_dict = get_space_type_as_dict(osm_model, space_type_handle)
+        all_objects_dicts.append(object_dict)
+
+    return all_objects_dicts
+
 def get_all_space_types_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Retrieve all space types from the OpenStudio model and organize them into a pandas DataFrame.
+    Retrieve all space types from the OpenStudio model using a specified method and return their attributes as a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
@@ -56,59 +158,16 @@ def get_all_space_types_as_dataframe(osm_model: openstudio.model.Model) -> pd.Da
     - pd.DataFrame: DataFrame containing information about all space types.
     """
 
-    # Get all spaces in the OpenStudio model.
-    all_space_types = osm_model.getSpaceTypes()
+    all_objects_dicts = get_all_space_types_as_dicts(osm_model)
 
-    # Define attributes to retrieve in a dictionary
-    object_attr = {
-        'Handle': [str(x.handle()) for x in all_space_types],
-        'Name': [x.nameString() for x in all_space_types],
-        'Rendering Color': [x.renderingColor().get().name().get(
-        ) if not x.renderingColor().isNull() else None for x in all_space_types],
-        'Default Construction Set': [x.defaultConstructionSet().get().name(
-        ).get() if not x.defaultConstructionSet().isNull() else None for x in all_space_types],
-        'Default Schedule Set': [x.defaultScheduleSet().get().name(
-        ).get() if not x.defaultScheduleSet().isNull() else None for x in all_space_types],
-        'Design Specification Outdoor Air': [x.designSpecificationOutdoorAir().get(
-        ).name().get() if not x.designSpecificationOutdoorAir().isNull() else None for x in all_space_types],
-        'Space Infiltration Design Flow Rates': [x.spaceInfiltrationDesignFlowRates(
-        )[0].name().get() if x.spaceInfiltrationDesignFlowRates() else None for x in all_space_types],
-        'Space Infiltration Effective Leakage Area': [x.spaceInfiltrationEffectiveLeakageAreas(
-        )[0].name().get() if x.spaceInfiltrationEffectiveLeakageAreas() else None for x in all_space_types],
-        # People
-        'People Load Name': [x.people()[0].name().get() if x.people() else None for x in all_space_types],
-        'People Definition': [x.people()[0].definition(
-        ).name().get() if x.people() else None for x in all_space_types],
-        'People Number Of People Schedule': [x.defaultScheduleSet().get().numberofPeopleSchedule().get().name(
-        ).get() if not x.defaultScheduleSet().isNull() and not x.defaultScheduleSet().get().numberofPeopleSchedule().isNull() else None for x in all_space_types],
-        'People Activity Level Schedule': [x.defaultScheduleSet().get().peopleActivityLevelSchedule().get().name(
-        ).get() if not x.defaultScheduleSet().isNull() and not x.defaultScheduleSet().get().peopleActivityLevelSchedule().isNull() else None for x in all_space_types],
-        # Lights
-        'Lights Load Name': [x.lights()[0].name().get() if x.lights() else None for x in all_space_types],
-        'Lights Definition': [x.lights()[0].definition().name().get() if x.lights() else None for x in all_space_types],
-        'Lighting Schedule': [x.defaultScheduleSet().get().lightingSchedule().get().name().get(
-        ) if not x.defaultScheduleSet().isNull() and not x.defaultScheduleSet().get().lightingSchedule().isNull() else None for x in all_space_types],
-        # Electric Equipment
-        'Electric Equipment Load Name': [x.electricEquipment(
-        )[0].name().get() if x.electricEquipment() else None for x in all_space_types],
-        'Electric Equipment Definition': [x.electricEquipment(
-        )[0].definition().name().get() if x.electricEquipment() else None for x in all_space_types],
-        'Electric Equipment Schedule': [x.defaultScheduleSet().get().electricEquipmentSchedule().get().name().get(
-        ) if not x.defaultScheduleSet().isNull() and not x.defaultScheduleSet().get().electricEquipmentSchedule().isNull() else None for x in all_space_types],
-        # Infiltration
-        'Infiltration Schedule': [x.defaultScheduleSet().get().infiltrationSchedule().get().name().get(
-        ) if not x.defaultScheduleSet().isNull() and not x.defaultScheduleSet().get().infiltrationSchedule().isNull() else None for x in all_space_types]}
-
-    # Create a DataFrame of all space types.
-    all_space_types_df = pd.DataFrame(columns=object_attr.keys())
-    for key in object_attr.keys():
-        all_space_types_df[key] = object_attr[key]
+    # Create a DataFrame of all spaces.
+    all_space_types_df = pd.DataFrame(all_objects_dicts)
 
     # Sort the DataFrame alphabetically by the Name column and reset indexes
     all_space_types_df = all_space_types_df.sort_values(
         by='Name', ascending=True).reset_index(drop=True)
 
-    print(f"The OSM model contains {all_space_types_df.shape[0]} space types")
+    print(f"The OSM model contains {all_space_types_df.shape[0]} spaces")
 
     return all_space_types_df
 
