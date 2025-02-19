@@ -1,6 +1,8 @@
 import openstudio
 import pandas as pd
 import numpy as np
+import datetime
+import calendar
 
 
 def get_all_default_schedule_set_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
@@ -603,3 +605,101 @@ def create_rule_schedule_day(osm_model: openstudio.model.Model,
     end_date = openstudio.Date(end_date_strftime)
     schedule_rule.setStartDate(start_date)
     schedule_rule.setEndDate(end_date)
+
+
+def calculate_equivalent_full_hours(hours: tuple, minutes: tuple, values: tuple, full_load_value: float = 1) -> float:
+    """
+    Calculates equivalent full load hours based on hourly values.
+
+    Args:
+        hours (tuple): Tuple of hours representing the schedule (24-hour format).
+        minutes (tuple): Tuple of minutes corresponding to each hour in the schedule.
+        values (tuple): Tuple of values as fractions of full load for each corresponding hour.
+        full_load_value (float, optional): The full load value to scale the output. Defaults to 1.
+
+    Returns:
+        float: Equivalent full hours calculated from input values and durations.
+    """
+    # Convert input tuples to NumPy arrays for efficient calculations
+    hours = np.array(list(hours)[:-1] + [24])
+    minutes = np.array(minutes)
+    values = np.array(values)
+
+    # Calculate the current time in hours
+    current_time_in_hours = hours + (minutes / 60.0)
+
+    # Calculate the time differences
+    time_differences = np.diff(np.insert(current_time_in_hours, 0, 0))  # Insert 0 for the start of the day
+
+    # Calculate total time and equivalent full load hours
+    total_time = np.sum(time_differences)  # Should always be 24 hours
+    equivalent_full_hours = np.sum(values * time_differences)
+
+    return equivalent_full_hours  # Return the equivalent full hours
+
+def weekday_count(start_date: str, end_date: str) -> dict:
+    """
+    Counts occurrences of each weekday in the given date range.
+
+    Args:
+        start_date (str): The start date in 'YYYY-MM-DD' format.
+        end_date (str): The end date in 'YYYY-MM-DD' format.
+
+    Returns:
+        dict: A dictionary with weekdays as keys and their counts as values.
+    """
+    # Convert string dates to datetime objects
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+
+    # Initialize a dictionary to hold counts of each weekday
+    number_of_days = {day: 0 for day in calendar.day_name}
+
+    # Iterate through the range of dates
+    for i in range((end_date - start_date).days + 1):  # Include the end date
+        current_date = start_date + datetime.timedelta(days=i)
+        day_name = calendar.day_name[current_date.weekday()]
+        number_of_days[day_name] += 1
+
+    return number_of_days
+
+
+def convert_schedule_to_daily_profile(hours, minutes, values, timestep=1):
+    """
+    Convert a schedule defined by hours, minutes, and values into a daily profile.
+
+    Args:
+        hours: A tuple containing hour values.
+        minutes: A tuple containing minute values.
+        values: A tuple containing corresponding values.
+        timestep: The time interval in hours for the daily time profile (default is 1 hour).
+
+    Returns:
+        A tuple containing two lists:
+            - daily_times_profile: A list of daily time values in hours.
+            - daily_values_profile: A list of daily values corresponding to daily times.
+    """
+    # Convert input tuples to NumPy arrays for efficient calculations
+    hours = np.array(list(hours)[:-1] + [24])[::-1]  # Add 24 as the last hour
+    minutes = np.array(minutes)[::-1]  # Convert minutes to NumPy array
+    values = np.array(values)[::-1]  # Convert values to NumPy array
+
+    # Calculate the current time in hours
+    time_in_hours = hours + (minutes / 60.0)
+
+    # Create daily time array with the specified timestep
+    daily_time = np.arange(0, 24, timestep)  # Use the provided timestep
+
+    # Initialize daily_values with the first value
+    daily_values = np.array([values[0]] * len(daily_time))
+
+    # Assign values based on time_in_hours
+    for i in range(len(time_in_hours)):
+        index = np.where(daily_time < time_in_hours[i])[0]
+        daily_values[index] = values[i]
+
+    # Convert the NumPy arrays to lists for the output
+    daily_times_profile = daily_time.tolist()
+    daily_values_profile = daily_values.tolist()
+
+    return daily_times_profile, daily_values_profile
