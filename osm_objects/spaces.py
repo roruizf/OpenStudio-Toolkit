@@ -110,6 +110,31 @@ def get_all_space_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.
     return all_spaces_df
 
 
+def get_all_thermal_zones_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all thermal zones from the OpenStudio model and organize them into a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing information about all thermal zones.
+    """
+
+    all_objects_dicts = get_all_thermal_zones_objects_as_dicts(osm_model)
+
+    # Create a DataFrame of all thermal zones.
+    all_thermal_zones_df = pd.DataFrame(all_objects_dicts)
+
+    # Sort the DataFrame alphabetically by the Name column and reset indexes
+    all_thermal_zones_df = all_thermal_zones_df.sort_values(
+        by='Name', ascending=True).reset_index(drop=True)
+
+    print(f"The OSM model contains {all_thermal_zones_df.shape[0]} thermal zones")
+
+    return all_thermal_zones_df
+
+
 def update_space_object(osm_model, space_handle: str = None, space_name: str = None, attributes: dict = None):
 
     target_object_dict = get_space_object_as_dict(
