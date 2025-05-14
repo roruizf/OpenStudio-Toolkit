@@ -41,8 +41,14 @@ def get_surface_object_as_dict(osm_model: openstudio.model.Model, handle: str = 
         'Handle': str(target_surface.handle()),
         'Name': target_surface.name().get() if target_surface.name().is_initialized() else None,
         'Surface Type': target_surface.surfaceType(),
-        'Construction Name': target_surface.construction().get().name().get() if not target_surface.construction().isNull() else None,
-        # Add other attributes as needed
+        'Construction Name': target_surface.construction().get().name().get() if not target_surface.construction().isNull() else None,        
+        'Space Name': target_surface.space().get().name().get(),
+        'Outside Boundary Condition': target_surface.outsideBoundaryCondition(),
+        'Outside Boundary Condition Object': target_surface.adjacentSurface().get().name().get() if not target_surface.adjacentSurface().isNull() else None,
+        'Sun Exposure': target_surface.sunExposure(),
+        'Wind Exposure': target_surface.windExposure(),
+        'View Factor to Ground': None,
+        'Number of Vertices': None
     }
 
     return surface_dict

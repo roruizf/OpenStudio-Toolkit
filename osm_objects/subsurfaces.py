@@ -40,9 +40,14 @@ def get_subsurface_object_as_dict(osm_model: openstudio.model.Model, handle: str
     subsurface_dict = {
         'Handle': str(target_subsurface.handle()),
         'Name': target_subsurface.name().get() if target_subsurface.name().is_initialized() else None,
-        'Type': target_subsurface.subSurfaceType(),
+        'Sub Surface Type': target_subsurface.subSurfaceType(),
         'Construction Name': target_subsurface.construction().get().name().get() if not target_subsurface.construction().isNull() else None,
-        # Add other attributes as needed
+        'Surface Name': target_subsurface.parent().get().name().get(),
+        'Outside Boundary Condition Object': target_subsurface.outsideBoundaryCondition(),
+        'View Factor to Ground': None,
+        'Frame and Divider Name': target_subsurface.windowPropertyFrameAndDivider().get().name().get() if not target_subsurface.windowPropertyFrameAndDivider().isNull() else None,
+        'Multiplier': None,
+        'Number of Vertices': None
     }
 
     return subsurface_dict
