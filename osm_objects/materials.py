@@ -1,5 +1,6 @@
 import openstudio
 import pandas as pd
+import numpy as np
 
 def get_standard_opaque_material_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
     """
@@ -239,3 +240,44 @@ def get_all_massless_opaque_material_objects_as_dataframe(osm_model: openstudio.
     print(f"The OSM model contains {all_objects_df.shape[0]} massless opaque materials")
 
     return all_objects_df
+
+
+def get_all_opaque_material_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all opaque material objects from an OpenStudio model as a DataFrame.
+
+    Args:
+        osm_model (openstudio.model.Model): The OpenStudio model to extract materials from.
+
+    Returns:
+        pd.DataFrame: DataFrame containing all opaque materials with their properties.
+    """
+    # Get all standard opaque materials and massless opaque materials
+    all_standard_opaque_materials = osm_model.getStandardOpaqueMaterials()
+    all_standard_opaque_materials_df = get_all_standard_opaque_material_objects_as_dataframe(osm_model)
+    get_all_massless_opaque_materials_df = get_all_massless_opaque_material_objects_as_dataframe(osm_model)
+
+    # Add 'Material Type' column to each DataFrame
+    all_standard_opaque_materials_df['Material Type'] = 'StandardOpaque'
+    get_all_massless_opaque_materials_df['Material Type'] = 'Massless'
+
+    # Calculate Thermal Resistance {m2-K/W}
+    all_standard_opaque_materials_df['Thermal Resistance {m2-K/W}'] = all_standard_opaque_materials_df['Thickness {m}'] / all_standard_opaque_materials_df['Conductivity {W/m-K}']
+
+    # Concatenate vertically
+    all_opaque_materials_df = pd.concat(
+        [all_standard_opaque_materials_df, get_all_massless_opaque_materials_df],
+        ignore_index=True,
+        sort=False
+    )
+
+    # Move 'Material Type' to the third position (index 2)
+    cols = list(all_opaque_materials_df.columns)
+    cols.remove('Material Type')  # Remove from current position
+    cols.insert(1, 'Material Type')  # Insert at position 2 (third position)
+    all_opaque_materials_df = all_opaque_materials_df[cols]
+
+    # Replace NaN with None if desired
+    all_opaque_materials_df = all_opaque_materials_df.replace({np.nan: None})
+
+    return all_opaque_materials_df
