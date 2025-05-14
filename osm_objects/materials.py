@@ -258,8 +258,8 @@ def get_all_opaque_material_objects_as_dataframe(osm_model: openstudio.model.Mod
     get_all_massless_opaque_materials_df = get_all_massless_opaque_material_objects_as_dataframe(osm_model)
 
     # Add 'Material Type' column to each DataFrame
-    all_standard_opaque_materials_df['Material Type'] = 'StandardOpaque'
-    get_all_massless_opaque_materials_df['Material Type'] = 'Massless'
+    all_standard_opaque_materials_df['Material Type'] = 'Standard'
+    get_all_massless_opaque_materials_df['Material Type'] = 'NoMass'
 
     # Calculate Thermal Resistance {m2-K/W}
     all_standard_opaque_materials_df['Thermal Resistance {m2-K/W}'] = all_standard_opaque_materials_df['Thickness {m}'] / all_standard_opaque_materials_df['Conductivity {W/m-K}']
