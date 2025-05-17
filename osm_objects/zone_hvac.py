@@ -1,6 +1,9 @@
 import openstudio
 import pandas as pd
 
+#--
+#-- OS:Sizing:Zone
+#--
 def get_all_sizing_zone_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
     Retrieve all zone Sizing Zone Objects from the OpenStudio model and organize them into a pandas DataFrame.
@@ -63,6 +66,10 @@ def get_all_sizing_zone_objects_as_dataframe(osm_model: openstudio.model.Model) 
         f"The OSM model contains {all_sizing_zones_df.shape[0]} sizing zones")
 
     return all_sizing_zones_df
+
+#--
+#-- OS:ZoneHVAC:EquipmentList
+#--
 
 def get_all_zone_hvac_equipment_list_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
@@ -280,3 +287,108 @@ def get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dataframe(os
     print(f"The OSM model contains {all_air_terminals_df.shape[0]} air terminal single duct parallel PIU reheat objects")
 
     return all_air_terminals_df
+#---
+#--- ZoneHVAC:UnitHeater
+#---
+
+def get_zone_hvac_unit_heater_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+    """
+    Retrieves Zone HVAC Unit Heater information and returns it as a dictionary.
+
+    Args:
+        osm_model (openstudio.model.Model): The OpenStudio model containing the HVAC unit.
+        handle (str, optional): The handle of the HVAC unit. Either handle or name must be provided.
+        name (str, optional): The name of the HVAC unit. Either name or handle must be provided.
+
+    Returns:
+        dict: A dictionary containing the HVAC unit's properties, or an empty dictionary if not found.
+    """
+    if handle is not None and name is not None:
+        raise ValueError(
+            "Only one of 'handle' or 'name' should be provided.")
+    if handle is None and name is None:
+        raise ValueError(
+            "Either 'handle' or 'name' must be provided.")
+
+    if handle is not None:
+        osm_object = osm_model.getZoneHVACUnitHeater(handle)
+        if osm_object is None:
+            print(
+                f"No Zone HVAC Unit Heater object found with the handle: {handle}")
+            return {}
+
+    elif name is not None:
+        osm_object = osm_model.getZoneHVACUnitHeaterByName(name)
+        if not osm_object:
+            print(
+                f"No Zone HVAC Unit Heater object found with the name: {name}")
+            return {}
+
+    target_object = osm_object.get()
+
+    object_dict = {
+                  'Handle': str(target_object.handle()),
+                  'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+                  'Availability Schedule Name': target_object.availabilitySchedule().name().get() if target_object.availabilitySchedule().name().is_initialized() else None,
+                  'Air Inlet Node Name': target_object.inletNode().get().nameString() if target_object.inletNode().is_initialized() else None,
+                  'Air Outlet Node Name': target_object.outletNode().get().nameString() if target_object.outletNode().is_initialized() else None,
+                  'Supply Air Fan Name': target_object.supplyAirFan().nameString(),
+                  'Maximum Supply Air Flow Rate {m3/s}': target_object.maximumSupplyAirFlowRate() if not target_object.isMaximumSupplyAirFlowRateAutosized() else 'Autosize',                  
+                  'Fan Control Type': target_object.fanControlType(),
+                  'Heating Coil Name': target_object.heatingCoil().nameString(),
+                  'Maximum Hot Water Flow Rate {m3/s}': target_object.maximumHotWaterFlowRate() if not target_object.isMaximumHotWaterFlowRateAutosized() else 'Autosize',
+                  'Minimum Hot Water Flow Rate {m3/s}': target_object.minimumHotWaterFlowRate(),
+                  'Heating Convergence Tolerance': target_object.heatingConvergenceTolerance(),
+                  'Availability Manager List Name': None
+    }
+
+    return object_dict
+
+def get_all_zone_hvac_unit_heater_objects_as_dict(osm_model: openstudio.model.Model) -> list[dict]:
+    """
+    Retrieve all Zone HVAC Unit Heater object from the OpenStudio model 
+    and return their attributes as a list of dictionaries.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - list[dict]: A list of dictionaries, each containing information about a Zone HVAC Unit Heater object.
+    """
+
+    # Get all spaces in the OpenStudio model.
+    all_objects = osm_model.getZoneHVACUnitHeaters()
+
+    all_objects_dicts = []
+
+    for target_object in all_objects:
+        space_handle = str(target_object.handle())
+        object_dict = get_zone_hvac_unit_heater_object_as_dict(osm_model, space_handle)
+        all_objects_dicts.append(object_dict)
+
+    return all_objects_dicts
+
+def get_all_zone_hvac_unit_heater_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all Zone HVAC Unit Heater object from the OpenStudio model 
+    and return their attributes as a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing information about all Zone HVAC Unit Heater objects.
+    """
+
+    all_objects_dicts = get_all_zone_hvac_unit_heater_objects_as_dict(osm_model)
+
+    # Create a DataFrame of all Zone HVAC Unit Heater objects.
+    all_objects_df = pd.DataFrame(all_objects_dicts)
+
+    # Sort the DataFrame alphabetically by the Name column and reset indexes
+    all_objects_df = all_objects_df.sort_values(
+        by='Name', ascending=True).reset_index(drop=True)
+
+    print(f"The OSM model contains {all_objects_df.shape[0]} Zone HVAC Unit Heater objects")
+
+    return all_objects_df
