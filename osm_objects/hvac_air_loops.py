@@ -1,9 +1,9 @@
 import openstudio
 import pandas as pd
 
-#---
+#-------------------
 #--- OS:AirLoopHVAC
-#---
+#-------------------
 def get_air_loop_hvac_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
     """
     Retrieves Air Loop HVAC information and returns it as a dictionary.
@@ -116,9 +116,111 @@ def get_all_air_loop_hvac_objects_as_dataframe(osm_model: openstudio.model.Model
 
     return all_air_loop_hvac_df
 
-#---
+#------------------------------------
+#--- OS:AirLoopHVAC:OutdoorAirSystem
+#------------------------------------
+
+def get_air_loop_hvac_outdoor_air_system_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+    """
+    Gets AirLoopHVAC:OutdoorAirSystem information and returns it as a dictionary.
+
+    Args:
+        osm_model (openstudio.model.Model): The OpenStudio model object.
+        handle (str, optional): The handle of the AirLoopHVAC:OutdoorAirSystem object. Either handle or name must be provided.
+        name (str, optional): The name of the HVAC unit. Either name or handle must be provided.
+
+    Returns:
+        dict: A dictionary containing the AirLoopHVAC:OutdoorAirSystem objects's properties, or an empty dictionary if not found.
+    """
+    if handle is not None and name is not None:
+        raise ValueError(
+            "Only one of 'handle' or 'name' should be provided.")
+    if handle is None and name is None:
+        raise ValueError(
+            "Either 'handle' or 'name' must be provided.")
+
+    if handle is not None:
+        osm_object = osm_model.getAirLoopHVACOutdoorAirSystem(handle)
+        if osm_object is None:
+            print(
+                f"No AirLoopHVAC:OutdoorAirSystem object found with the handle: {handle}")
+            return {}
+
+    elif name is not None:
+        osm_object = osm_model.getAirLoopHVACOutdoorAirSystemByName(name)
+        if not osm_object:
+            print(
+                f"No AirLoopHVAC:OutdoorAirSystem object found with the name: {name}")
+            return {}
+
+    target_object = osm_object.get()
+
+    object_dict = {
+        'Handle': str(target_object.handle()),
+        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Controller Name': target_object.getControllerOutdoorAir().name().get() if target_object.getControllerOutdoorAir().name().is_initialized() else None,
+        'Outdoor Air Equipment List Name': None,
+        'Availability Manager List Name': None,
+        'Mixed Air Node Name': None,
+        'Outdoor Air Stream Node Name': None,
+        'Relief Air Stream Node Name': None,
+        'Return Air Stream Node Name': None
+        }
+
+    return object_dict
+
+def get_all_air_loop_hvac_outdoor_air_system_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+    """
+    Gets all AirLoopHVAC:OutdoorAirSystem objects from the OpenStudio model
+    and return their attributes as a list of dictionaries.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - list[dict]: A list of dictionaries, each containing information about a AirLoopHVAC:OutdoorAirSystem objects.
+    """
+
+    # Get all AirLoopHVAC:OutdoorAirSystem objects in the OpenStudio model.
+    all_objects = osm_model.getAirLoopHVACOutdoorAirSystems()
+
+    all_objects_dicts = []
+
+    for target_object in all_objects:
+        object_handle = str(target_object.handle())
+        object_dict = get_air_loop_hvac_outdoor_air_system_object_as_dict(osm_model, object_handle)
+        all_objects_dicts.append(object_dict)
+
+    return all_objects_dicts
+
+def get_all_air_loop_hvac_outdoor_air_system_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Gets all AirLoopHVAC:OutdoorAirSystem objects from the OpenStudio model
+    and return their attributes as a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing information about all AirLoopHVAC:OutdoorAirSystem objects.
+    """
+
+    all_objects_dicts = get_all_air_loop_hvac_outdoor_air_system_objects_as_dicts(osm_model)
+
+    # Create a DataFrame of all AirLoopHVAC:OutdoorAirSystem objects.
+    all_objects_df = pd.DataFrame(all_objects_dicts)
+
+    # Sort the DataFrame alphabetically by the Name column and reset indexes
+    all_objects_df = all_objects_df.sort_values(
+        by='Name', ascending=True).reset_index(drop=True)
+
+    print(f"The OSM model contains {all_objects_df.shape[0]} AirLoopHVAC:OutdoorAirSystem objects")
+
+    return all_objects_df
+
+#---------------------------------
 #--- OS:AirLoopHVAC:UnitarySystem
-#---
+#---------------------------------
 
 def get_air_loop_hvac_unitary_system_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
     """

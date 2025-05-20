@@ -81,9 +81,9 @@ def get_all_coil_heating_dx_variable_refrigerant_flow_objects_as_dataframe(osm_m
 
     return all_coil_heating_dx_vrfs_df
 
-#--
-#-- OS:Fan:ConstantVolume
-#--
+#--------------------------
+#--- OS:Fan:ConstantVolume
+#--------------------------
 
 def get_all_fan_constant_volume_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
@@ -125,6 +125,10 @@ def get_all_fan_constant_volume_objects_as_dataframe(osm_model: openstudio.model
         f"The OSM model contains {all_fan_constant_volume_df.shape[0]} Fan Constant Volume Objects")
 
     return all_fan_constant_volume_df
+
+#-----------------
+#--- OS:Fan:OnOff
+#-----------------
 
 def get_all_fan_on_off_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
@@ -333,21 +337,21 @@ def get_all_air_conditioner_variable_refrigerant_flow_objects_as_dataframe(osm_m
         f"The OSM model contains {all_objects_df.shape[0]} OS:AirConditioner:VariableRefrigerantFlow Objects")
     return all_objects_df
 
-#--
-#-- OS:Coil:Heating:Gas
-#--
+#-----------------------
+#--- OS:Coil:Heating:Gas
+#------------------------
 
 def get_coil_heating_gas_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
     """
-    Retrieves Coil Heating Gas object information and returns it as a dictionary.
+    Gets an OS:Coil:Heating:Gas object information and returns it as a dictionary.
 
     Args:
-        osm_model (openstudio.model.Model): The OpenStudio model containing the HVAC unit.
-        handle (str, optional): The handle of the Coil Heating Gas object. Either handle or name must be provided.
-        name (str, optional): The name of the Coil Heating Gas object. Either name or handle must be provided.
+        osm_model (openstudio.model.Model): The OpenStudio model containing the OS:Coil:Heating:Gas object.
+        handle (str, optional): The handle of the OS:Coil:Heating:Gas object. Either handle or name must be provided.
+        name (str, optional): The name of the OS:Coil:Heating:Gas object. Either name or handle must be provided.
 
     Returns:
-        dict: A dictionary containing the Coil Heating Gas object's properties, or an empty dictionary if not found.
+        dict: A dictionary containing the OS:Coil:Heating:Gas object's properties, or an empty dictionary if not found.
     """
     if handle is not None and name is not None:
         raise ValueError(
@@ -360,14 +364,14 @@ def get_coil_heating_gas_object_as_dict(osm_model: openstudio.model.Model, handl
         osm_object = osm_model.getCoilHeatingGas(handle)
         if osm_object is None:
             print(
-                f"No Coil Heating Gas object found with the handle: {handle}")
+                f"No OS:Coil:Heating:Gas object found with the handle: {handle}")
             return {}
 
     elif name is not None:
         osm_object = osm_model.getCoilHeatingGasByName(name)
         if not osm_object:
             print(
-                f"No Zone Coil Heating Gas object found with the name: {name}")
+                f"No OS:Coil:Heating:Gas object found with the name: {name}")
             return {}
 
     target_object = osm_object.get()
@@ -388,16 +392,16 @@ def get_coil_heating_gas_object_as_dict(osm_model: openstudio.model.Model, handl
 
     return object_dict
 
-def get_all_coil_heating_gas_objects_as_dict(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_coil_heating_gas_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
     """
-    Retrieve all Coil Heating Gas objects from the OpenStudio model 
+    Gets all OS:Coil:Heating:Gas objects from the OpenStudio model 
     and return their attributes as a list of dictionaries.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a Coil Heating Gas object.
+    - list[dict]: A list of dictionaries, each containing information about a OS:Coil:Heating:Gas object.
     """
 
     # Get all spaces in the OpenStudio model.
@@ -424,7 +428,7 @@ def get_all_coil_heating_gas_objects_as_dataframe(osm_model: openstudio.model.Mo
     - pd.DataFrame: DataFrame containing information about all Coil Heating Gas objects.
     """
 
-    all_objects_dicts = get_all_coil_heating_gas_objects_as_dict(osm_model)
+    all_objects_dicts = get_all_coil_heating_gas_objects_as_dicts(osm_model)
 
     # Create a DataFrame of all Coil Heating Gas objects.
     all_objects_df = pd.DataFrame(all_objects_dicts)
@@ -436,3 +440,4 @@ def get_all_coil_heating_gas_objects_as_dataframe(osm_model: openstudio.model.Mo
     print(f"The OSM model contains {all_objects_df.shape[0]} Coil Heating Gas objects")
 
     return all_objects_df
+

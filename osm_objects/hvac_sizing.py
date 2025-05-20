@@ -1,6 +1,9 @@
 import openstudio
 import pandas as pd
 
+#--
+#-- OS:Sizing:Zone
+#--
 
 def get_all_sizing_zone_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
