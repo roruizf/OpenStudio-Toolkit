@@ -1,1 +1,3 @@
 # OpenStudio Toolkit
+
+The OpenStudio Toolkit is a Python library that provides structured access to OpenStudio Model (OSM) elements through a set of straightforward functions. It allows users to extract, analyze, and modify building energy models by transforming OpenStudio objects into Python-friendly data structures, including dictionaries, lists of dictionaries, and Pandas DataFrames. This library is designed to assist modelers in automating and accelerating common OpenStudio modeling tasks. Furthermore, it can eventually serve as a foundation for building more sophisticated and specific help tools, such as APIs or even Google Sheets parser tools.
