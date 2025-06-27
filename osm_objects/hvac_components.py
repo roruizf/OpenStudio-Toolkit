@@ -551,3 +551,114 @@ def get_all_coil_heating_water_objects_as_dataframe(osm_model: openstudio.model.
     print(f"The OSM model contains {all_objects_df.shape[0]} Coil Heating Water objects")
     
     return all_objects_df
+
+#---------------------------
+#--- OOS:Coil:Cooling:Water
+#---------------------------
+
+def get_coil_cooling_water_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+    """
+    Retrieve a single Coil Cooling Water object from the OpenStudio model by handle or name.
+    
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    
+    Returns:
+    - dict: Dictionary containing information about the Coil Cooling Water object.
+    """
+    
+    if handle is not None and name is not None:
+        raise ValueError(
+            "Only one of 'handle' or 'name' should be provided.")
+    if handle is None and name is None:
+        raise ValueError(
+            "Either 'handle' or 'name' must be provided.")
+
+    if handle is not None:
+        osm_object = osm_model.getCoilCoolingWater(handle)
+        if osm_object is None:
+            print(
+                f"No Sizing:System object found with the handle: {handle}")
+            return {}
+
+    elif name is not None:
+        osm_object = osm_model.getCoilCoolingWaterByName(name)
+        if not osm_object:
+            print(
+                f"No Sizing:System object found with the name: {name}")
+            return {}
+
+    target_object = osm_object.get()
+    
+    object_dict = {
+        'Handle': str(target_object.handle()),
+        'Name': target_object.nameString() if target_object.name().is_initialized() else None,
+        'Availability Schedule Name': target_object.availabilitySchedule().name().get() if target_object.availabilitySchedule().name().is_initialized() else None,
+        'Design Water Flow Rate {m3/s}': target_object.designWaterFlowRate() if not target_object.isDesignWaterFlowRateAutosized() else 'autosize',
+        'Design Air Flow Rate {m3/s}': target_object.designAirFlowRate() if not target_object.isDesignWaterFlowRateAutosized else 'autosize',
+        'Design Inlet Water Temperature {C}': target_object.designInletWaterTemperature() if not target_object.isDesignWaterFlowRateAutosized else 'autosize',
+        'Design Inlet Air Temperature {C}': target_object.designInletAirTemperature() if not target_object.isDesignWaterFlowRateAutosized else 'autosize',        
+        'Design Outlet Air Temperature {C}': target_object.designOutletAirTemperature() if not target_object.isDesignWaterFlowRateAutosized else 'autosize',
+        'Design Inlet Air Humidity Ratio {kg-H2O/kg-air}': target_object.designInletAirHumidityRatio() if not target_object.isDesignWaterFlowRateAutosized else 'autosize',
+        'Design Outlet Air Humidity Ratio {kg-H2O/kg-air}': target_object.designOutletAirHumidityRatio() if not target_object.isDesignWaterFlowRateAutosized else 'autosize',
+        'Water Inlet Node Name': target_object.waterInletPort(),
+        'Water Outlet Node Name': target_object.waterOutletPort(),
+        'Air Inlet Node Name': target_object.airInletPort(),
+        'Air Outlet Node Name': target_object.airOutletPort(),
+        'Type of Analysis': None,
+        'Heat Exchanger Configuration': target_object.heatExchangerConfiguration()        
+    }
+    return object_dict 
+
+
+def get_all_coil_cooling_water_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+    """
+    Retrieve all Coil Cooling Water objects from the OpenStudio model and return their attributes as a list of dictionaries.
+    
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    
+    Returns:
+    - list[dict]: A list of dictionaries, each containing information about a Coil Cooling Water object.
+    """
+    
+    all_coil_objects = osm_model.getCoilCoolingWaters()
+    all_coil_dicts = []
+    
+    for coil_object in all_coil_objects:
+        object_handle = str(coil_object.handle())
+        coil_dict = get_coil_cooling_water_object_as_dict(osm_model, handle=object_handle)
+        if coil_dict: 
+            all_coil_dicts.append(coil_dict)
+            
+    return all_coil_dicts
+
+def get_all_coil_cooling_water_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all Coil Cooling Water objects from the OpenStudio model and return their attributes as a pandas DataFrame.
+    
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    
+    Returns:
+    - pd.DataFrame: DataFrame containing information about all Coil Cooling Water objects.
+    """
+    
+    all_coil_dicts = get_all_coil_cooling_water_objects_as_dicts(osm_model)
+    
+    all_coil_df = pd.DataFrame(all_coil_dicts)
+    
+    if not all_coil_df.empty and 'Name' in all_coil_df.columns:
+        all_coil_df = all_coil_df.sort_values(
+            by='Name', ascending=True, na_position='last'
+        ).reset_index(drop=True)
+    elif not all_coil_df.empty and 'Handle' in all_coil_df.columns:
+        all_coil_df = all_coil_df.sort_values(
+            by='Handle', ascending=True
+        ).reset_index(drop=True)
+
+    print(f"The OSM model contains {all_coil_df.shape[0]} Coil Cooling Water objects")
+    
+    return all_coil_df
