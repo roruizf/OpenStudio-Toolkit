@@ -18,8 +18,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "pandas",
-    "openstudio-sdk",
+    "pandas",    
     "pytest"
 ]
 
