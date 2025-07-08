@@ -662,3 +662,134 @@ def get_all_coil_cooling_water_objects_as_dataframe(osm_model: openstudio.model.
     print(f"The OSM model contains {all_coil_df.shape[0]} Coil Cooling Water objects")
     
     return all_coil_df
+
+
+# --------------------------------------------------
+#  ***** OS:Pump:VariableSpeed *********************
+# --------------------------------------------------
+
+
+def get_pump_variable_speed_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+    """
+    Gets a specified OS:Pump:VariableSpeed object from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - handle (str, optional): The handle of the object to get.
+    - name (str, optional): The name of the object to get.
+
+    Returns:
+    - dict: Dictionary containing information about the specified object.
+    """  
+    if handle is not None and name is not None:
+        raise ValueError(
+            "Only one of 'handle' or 'name' should be provided.")
+    if handle is None and name is None:
+        raise ValueError(
+            "Either 'handle' or 'name' must be provided.")
+
+    # Find the object by handle or name
+    if handle is not None:
+        osm_object = osm_model.getPumpVariableSpeed(handle)
+        if osm_object is None:
+            print(f"No object found with the handle: {handle}")
+            return {}
+
+    elif name is not None:
+        osm_object = osm_model.getPumpVariableSpeedByName(name)
+        if not osm_object:
+            print(f"No object found with the name: {name}")
+            return {}
+
+    target_object = osm_object.get()
+
+    # Define attributes to retrieve in a dictionary
+    object_dict = {'Handle': str(target_object.handle()), 
+                   'Name': target_object.nameString() if target_object.name().is_initialized() else None, 
+                   'Inlet Node Name': target_object.inletPort(), 
+                   'Outlet Node Name': target_object.outletPort(), 
+                   'Rated Flow Rate {m3/s}': target_object.ratedFlowRate().get() if target_object.ratedFlowRate().is_initialized() else None, 
+                   'Rated Pump Head {Pa}': target_object.ratedPumpHead(), 
+                   'Rated Power Consumption {W}': target_object.ratedPowerConsumption().get() if target_object.ratedPowerConsumption().is_initialized() else None,
+                   'Motor Efficiency': target_object.motorEfficiency(), 
+                   'Fraction of Motor Inefficiencies to Fluid Stream': target_object.fractionofMotorInefficienciestoFluidStream(), 
+                   'Coefficient 1 of the Part Load Performance Curve': target_object.coefficient1ofthePartLoadPerformanceCurve(), 
+                   'Coefficient 2 of the Part Load Performance Curve': target_object.coefficient2ofthePartLoadPerformanceCurve(), 
+                   'Coefficient 3 of the Part Load Performance Curve': target_object.coefficient3ofthePartLoadPerformanceCurve(), 
+                   'Coefficient 4 of the Part Load Performance Curve': target_object.coefficient4ofthePartLoadPerformanceCurve(), 
+                   'Minimum Flow Rate {m3/s}': target_object.minimumFlowRate(), 
+                   'Pump Control Type': target_object.pumpControlType(), 
+                   'Pump Flow Rate Schedule Name': target_object.pumpFlowRateSchedule().nameString() if target_object.pumpFlowRateSchedule().is_initialized() else None, 
+                   'Pump Curve Name': None, 
+                   'Impeller Diameter {m}': None, 
+                   'VFD Control Type': None, 
+                   'Pump RPM Schedule Name': None, 
+                   'Minimum Pressure Schedule {Pa}': None, 
+                   'Maximum Pressure Schedule {Pa}': None, 
+                   'Minimum RPM Schedule {rev/min}': None, 
+                   'Maximum RPM Schedule {rev/min}': None, 
+                   'Zone Name': None, 
+                   'Skin Loss Radiative Fraction': target_object.skinLossRadiativeFraction(), 
+                   'Design Power Sizing Method': target_object.designPowerSizingMethod(), 
+                   'Design Electric Power per Unit Flow Rate {W/(m3/s)}': target_object.designElectricPowerPerUnitFlowRate(), 
+                   'Design Shaft Power per Unit Flow Rate per Unit Head {W-s/m3-Pa}': target_object.designShaftPowerPerUnitFlowRatePerUnitHead(), 
+                   'Design Minimum Flow Rate Fraction': target_object.designMinimumFlowRateFraction(), 
+                   'End-Use Subcategory': target_object.endUseSubcategory()}
+
+    return object_dict
+
+def get_all_pump_variable_speed_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+    """
+    Gets all OS:Pump:VariableSpeed objects from the OpenStudio model and return their attributes as a list of dictionaries.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - list[dict]: A list of dictionaries, each containing information about a pump variable speed object.
+    """
+
+    # Get all spaces in the OpenStudio model.
+    all_objects = osm_model.getPumpVariableSpeeds()
+
+    all_objects_dicts = []
+
+    for target_object in all_objects:
+        space_handle = str(target_object.handle())
+        object_dict = get_pump_variable_speed_object_as_dict(osm_model, space_handle)
+        all_objects_dicts.append(object_dict)
+
+    return all_objects_dicts
+
+
+def get_all_pump_variable_speed_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Gets all pump variable speed objects from the OpenStudio model and return their attributes as a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing information about all pump variable speed objects.
+    """
+
+    all_objects_dicts = get_all_pump_variable_speed_objects_as_dicts(osm_model)
+
+    # Define the columns for the DataFrame
+    columns = ['Handle', 'Name', 'Inlet Node Name', 'Outlet Node Name', 'Rated Flow Rate {m3/s}', 'Rated Pump Head {Pa}', 'Rated Power Consumption {W}', 'Motor Efficiency', 'Fraction of Motor Inefficiencies to Fluid Stream', 'Coefficient 1 of the Part Load Performance Curve', 'Coefficient 2 of the Part Load Performance Curve', 'Coefficient 3 of the Part Load Performance Curve', 'Coefficient 4 of the Part Load Performance Curve', 'Minimum Flow Rate {m3/s}', 'Pump Control Type', 'Pump Flow Rate Schedule Name', 'Pump Curve Name', 'Impeller Diameter {m}', 'VFD Control Type', 'Pump RPM Schedule Name', 'Minimum Pressure Schedule {Pa}', 'Maximum Pressure Schedule {Pa}', 'Minimum RPM Schedule {rev/min}', 'Maximum RPM Schedule {rev/min}', 'Zone Name', 'Skin Loss Radiative Fraction', 'Design Power Sizing Method', 'Design Electric Power per Unit Flow Rate {W/(m3/s)}', 'Design Shaft Power per Unit Flow Rate per Unit Head {W-s/m3-Pa}', 'Design Minimum Flow Rate Fraction', 'End-Use Subcategory']
+
+    # If all_objects_dicts is None or empty, create an empty DataFrame with the defined columns
+    if not all_objects_dicts:
+        all_objects_df = pd.DataFrame(columns=columns)
+    else:
+        # Create a DataFrame of all pump variable speed objects.
+        all_objects_df = pd.DataFrame(all_objects_dicts)
+
+    # Sort the DataFrame alphabetically by the Name column and reset indexes
+    all_objects_df = all_objects_df.sort_values(
+        by='Name', ascending=True, na_position='first').reset_index(drop=True)
+
+    print(
+        f"The OSM model contains {all_objects_df.shape[0]} pump variable speed objects.")
+
+    return all_objects_df

@@ -103,57 +103,21 @@ def get_all_standard_opaque_material_objects_as_dataframe(osm_model: openstudio.
 
     return all_objects_df
 
-
-def get_massless_opaque_material_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
-    if handle is not None and name is not None:
-        raise ValueError(
-            "Only one of 'handle' or 'name' should be provided.")
-    if handle is None and name is None:
-        raise ValueError(
-            "Either 'handle' or 'name' must be provided.")
-
-    if handle is not None:
-        osm_object = osm_model.getMasslessOpaqueMaterial(
-            handle)
-        if osm_object is None:
-            print(
-                f"No Air Loop HVAC  object found with the handle: {handle}")
-            return {}
-
-    elif name is not None:
-        osm_object = osm_model.getMasslessOpaqueMaterialByName(
-            name)
-        if not osm_object:
-            print(
-                f"No Air Loop HVAC  object found with the name: {name}")
-            return {}
-
-    target_object = osm_object.get()
-
-    object_dict = {
-        'Handle':str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Roughness': target_object.roughness(), 
-        'Thermal Resistance {m2-K/W}': target_object.thermalResistance(),    
-        'Thermal Absorptance': target_object.thermalAbsorptance().get() if target_object.thermalAbsorptance().is_initialized() else None,
-        'Solar Absorptance': target_object.solarAbsorptance().get() if target_object.solarAbsorptance().is_initialized() else None,
-        'Visible Absorptance': target_object.visibleAbsorptance().get() if target_object.visibleAbsorptance().is_initialized() else None
-        }
-
-    return object_dict
-
+# --------------------------------------------------
+#  ***** OS:Material:NoMass ************************
+# --------------------------------------------------
 
 def get_massless_opaque_material_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
     """
-    Retrieve a massless opaque material from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+    Gets a specified OS:Material:NoMass object from the OpenStudio model by either handle or name and return its attributes as a dictionary.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the massless opaque material to retrieve.
-    - name (str, optional): The name of the massless opaque material to retrieve.
+    - handle (str, optional): The handle of the object to get.
+    - name (str, optional): The name of the object to get.
 
     Returns:
-    - dict: Dictionary containing information about the specified massless opaque material.
+    - dict: Dictionary containing information about the specified object.
     """
 
     if handle is not None and name is not None:
@@ -195,7 +159,7 @@ def get_massless_opaque_material_object_as_dict(osm_model: openstudio.model.Mode
 
 def get_all_massless_opaque_material_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
     """
-    Retrieve all massless opaque materials from the OpenStudio model and return their attributes as a list of dictionaries.
+    Gets all OS:Material:NoMass objects from the OpenStudio model and return their attributes as a list of dictionaries.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
@@ -219,13 +183,13 @@ def get_all_massless_opaque_material_objects_as_dicts(osm_model: openstudio.mode
 
 def get_all_massless_opaque_material_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Retrieve all massless opaque materials from the OpenStudio model using a specified method and return their attributes as a pandas DataFrame.
+    Gets all material no mass objects from the OpenStudio model and return their attributes as a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all massless opaque materials.
+    - pd.DataFrame: DataFrame containing information about all material no mass objects.
     """
 
     all_objects_dicts = get_all_massless_opaque_material_objects_as_dicts(osm_model)
@@ -240,6 +204,8 @@ def get_all_massless_opaque_material_objects_as_dataframe(osm_model: openstudio.
     print(f"The OSM model contains {all_objects_df.shape[0]} massless opaque materials")
 
     return all_objects_df
+
+# --------------------------------------------------
 
 
 def get_all_opaque_material_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
