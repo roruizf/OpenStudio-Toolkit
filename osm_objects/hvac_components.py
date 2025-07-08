@@ -793,3 +793,138 @@ def get_all_pump_variable_speed_objects_as_dataframe(osm_model: openstudio.model
         f"The OSM model contains {all_objects_df.shape[0]} pump variable speed objects.")
 
     return all_objects_df
+
+
+# --------------------------------------------------
+#  ***** OS:Chiller:Electric:EIR *******************
+# --------------------------------------------------
+
+
+def get_chiller_electric_eir_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+    """
+    Gets a specified OS:Chiller:Electric:EIR object from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - handle (str, optional): The handle of the object to get.
+    - name (str, optional): The name of the object to get.
+
+    Returns:
+    - dict: Dictionary containing information about the specified object.
+    """  
+    if handle is not None and name is not None:
+        raise ValueError(
+            "Only one of 'handle' or 'name' should be provided.")
+    if handle is None and name is None:
+        raise ValueError(
+            "Either 'handle' or 'name' must be provided.")
+
+    # Find the object by handle or name
+    if handle is not None:
+        osm_object = osm_model.getChillerElectricEIR(handle)
+        if osm_object is None:
+            print(f"No object found with the handle: {handle}")
+            return {}
+
+    elif name is not None:
+        osm_object = osm_model.getChillerElectricEIRByName(name)
+        if not osm_object:
+            print(f"No object found with the name: {name}")
+            return {}
+
+    target_object = osm_object.get()
+
+    # Define attributes to retrieve in a dictionary
+    object_dict = {'Handle': str(target_object.handle()), 
+                   'Name': target_object.nameString(), 
+                   'Reference Capacity {W}': target_object.referenceCapacity().get() if not target_object.isReferenceCapacityAutosized() else 'autosize', 
+                   'Reference COP {W/W}': target_object.referenceCOP(), 
+                   'Reference Leaving Chilled Water Temperature {C}': target_object.referenceLeavingChilledWaterTemperature(), 
+                   'Reference Entering Condenser Fluid Temperature {C}': target_object.referenceEnteringCondenserFluidTemperature(), 
+                   'Reference Chilled Water Flow Rate {m3/s}': target_object.referenceChilledWaterFlowRate().get() if not target_object.isReferenceChilledWaterFlowRateAutosized() else 'autosize', 
+                   'Reference Condenser Fluid Flow Rate {m3/s}': target_object.referenceCondenserFluidFlowRate().get() if not target_object.isReferenceCondenserFluidFlowRateAutosized() else 'autosize', 
+                   'Cooling Capacity Function of Temperature Curve Name': target_object.coolingCapacityFunctionOfTemperature().nameString(), 
+                   'Electric Input to Cooling Output Ratio Function of Temperature Curve Name': target_object.electricInputToCoolingOutputRatioFunctionOfTemperature().nameString(),  
+                   'Electric Input to Cooling Output Ratio Function of Part Load Ratio Curve Name': target_object.electricInputToCoolingOutputRatioFunctionOfPLR().nameString(), 
+                   'Minimum Part Load Ratio': target_object.minimumPartLoadRatio(), 
+                   'Maximum Part Load Ratio': target_object.maximumPartLoadRatio(), 
+                   'Optimum Part Load Ratio': target_object.optimumPartLoadRatio(), 
+                   'Minimum Unloading Ratio': target_object.minimumUnloadingRatio(), 
+                   'Chilled Water Inlet Node Name': target_object.supplyInletPort(), 
+                   'Chilled Water Outlet Node Name': target_object.supplyOutletPort(), 
+                   'Condenser Inlet Node Name': None, 
+                   'Condenser Outlet Node Name': None, 
+                   'Condenser Type': target_object.condenserType(), 
+                   'Condenser Fan Power Ratio {W/W}': target_object.condenserFanPowerRatio(), 
+                   'Fraction of Compressor Electric Consumption Rejected by Condenser': None, 
+                   'Leaving Chilled Water Lower Temperature Limit {C}': target_object.leavingChilledWaterLowerTemperatureLimit(), 
+                   'Chiller Flow Mode': target_object.chillerFlowMode(), 
+                   'Design Heat Recovery Water Flow Rate {m3/s}': target_object.designHeatRecoveryWaterFlowRate().get() if not target_object.isDesignHeatRecoveryWaterFlowRateAutosized() else 'autosize', 
+                   'Heat Recovery Inlet Node Name': None, 
+                   'Heat Recovery Outlet Node Name': None, 
+                   'Sizing Factor': target_object.sizingFactor(), 
+                   'Basin Heater Capacity {W/K}': target_object.basinHeaterCapacity(), 
+                   'Basin Heater Setpoint Temperature {C}': target_object.basinHeaterSetpointTemperature(), 
+                   'Basin Heater Operating Schedule Name': target_object.basinHeaterSchedule().get() if target_object.basinHeaterSchedule().is_initialized() else None, 
+                   'Condenser Heat Recovery Relative Capacity Fraction': target_object.condenserHeatRecoveryRelativeCapacityFraction(), 
+                   'Heat Recovery Inlet High Temperature Limit Schedule Name': None, 
+                   'Heat Recovery Leaving Temperature Setpoint Node Name': target_object.heatRecoveryLeavingTemperatureSetpointNode().get() if target_object.heatRecoveryLeavingTemperatureSetpointNode().is_initialized() else None, 
+                   'End-Use Subcategory': target_object.endUseSubcategory()}
+
+    return object_dict
+
+def get_all_chiller_electric_eir_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+    """
+    Gets all OS:Chiller:Electric:EIR objects from the OpenStudio model and return their attributes as a list of dictionaries.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - list[dict]: A list of dictionaries, each containing information about a chiller electric eir object.
+    """
+
+    # Get all spaces in the OpenStudio model.
+    all_objects = osm_model.getChillerElectricEIRs()
+
+    all_objects_dicts = []
+
+    for target_object in all_objects:
+        space_handle = str(target_object.handle())
+        object_dict = get_chiller_electric_eir_object_as_dict(osm_model, space_handle)
+        all_objects_dicts.append(object_dict)
+
+    return all_objects_dicts
+
+
+def get_all_chiller_electric_eir_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Gets all chiller electric eir objects from the OpenStudio model and return their attributes as a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing information about all chiller electric eir objects.
+    """
+
+    all_objects_dicts = get_all_chiller_electric_eir_objects_as_dicts(osm_model)
+
+    # Define the columns for the DataFrame
+    columns = ['Handle', 'Name', 'Reference Capacity {W}', 'Reference COP {W/W}', 'Reference Leaving Chilled Water Temperature {C}', 'Reference Entering Condenser Fluid Temperature {C}', 'Reference Chilled Water Flow Rate {m3/s}', 'Reference Condenser Fluid Flow Rate {m3/s}', 'Cooling Capacity Function of Temperature Curve Name', 'Electric Input to Cooling Output Ratio Function of Temperature Curve Name', 'Electric Input to Cooling Output Ratio Function of Part Load Ratio Curve Name', 'Minimum Part Load Ratio', 'Maximum Part Load Ratio', 'Optimum Part Load Ratio', 'Minimum Unloading Ratio', 'Chilled Water Inlet Node Name', 'Chilled Water Outlet Node Name', 'Condenser Inlet Node Name', 'Condenser Outlet Node Name', 'Condenser Type', 'Condenser Fan Power Ratio {W/W}', 'Fraction of Compressor Electric Consumption Rejected by Condenser', 'Leaving Chilled Water Lower Temperature Limit {C}', 'Chiller Flow Mode', 'Design Heat Recovery Water Flow Rate {m3/s}', 'Heat Recovery Inlet Node Name', 'Heat Recovery Outlet Node Name', 'Sizing Factor', 'Basin Heater Capacity {W/K}', 'Basin Heater Setpoint Temperature {C}', 'Basin Heater Operating Schedule Name', 'Condenser Heat Recovery Relative Capacity Fraction', 'Heat Recovery Inlet High Temperature Limit Schedule Name', 'Heat Recovery Leaving Temperature Setpoint Node Name', 'End-Use Subcategory']
+
+    # If all_objects_dicts is None or empty, create an empty DataFrame with the defined columns
+    if not all_objects_dicts:
+        all_objects_df = pd.DataFrame(columns=columns)
+    else:
+        # Create a DataFrame of all chiller electric eir objects.
+        all_objects_df = pd.DataFrame(all_objects_dicts)
+
+    # Sort the DataFrame alphabetically by the Name column and reset indexes
+    all_objects_df = all_objects_df.sort_values(
+        by='Name', ascending=True, na_position='first').reset_index(drop=True)
+
+    print(
+        f"The OSM model contains {all_objects_df.shape[0]} chiller electric eir objects.")
+
+    return all_objects_df
