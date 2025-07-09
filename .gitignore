@@ -15,5 +15,4 @@ build/
 venv/
 
 # Other rules can go here
-examples/
 tests/
