@@ -15,5 +15,5 @@ build/
 venv/
 
 # Other rules can go here
-*.ipynb
-**/tests/
+examples/
+tests/

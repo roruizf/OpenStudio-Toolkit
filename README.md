@@ -65,19 +65,9 @@ Key internal parts include:
 *   **Setup**: Potentially for initial setup or configuration.
     *   `setup.py`
 
-## Entry Points and Scripts
-
-The project includes several ways to interact with the core library:
-
-*   **Main Script**: `main.py` serves as a primary entry point, likely orchestrating higher-level operations using the toolkit.
-*   **Bin Scripts**: The `bin` directory contains standalone scripts, such as `bin/spaces.py`, which might perform specific command-line tasks related to spaces.
-*   **Jupyter Notebooks**: These notebooks demonstrate specific workflows and provide interactive examples of how to use the `openstudio_toolkit` library.
-    *   `[SizingZone] Sizing HVAC Zones.ipynb`
-    *   `[Surfaces] Rename-Surfaces-Based-on-Space-Names.ipynb`
-
-## Testing Framework
+<!-- ## Testing Framework (not yet implemented)
 
 The `tests` directory contains unit tests to ensure the correctness and stability of the `openstudio_toolkit` library. The structure mirrors the `src` directory, with separate test files for each module.
 
 *   **OSM Objects Tests**: Tests for the `osm_objects` module.
-*   **Utilities Tests**: Tests for the `utils` module.
+*   **Utilities Tests**: Tests for the `utils` module. -->
