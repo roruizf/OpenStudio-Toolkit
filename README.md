@@ -62,8 +62,6 @@ Key internal parts include:
     *   `excel_utils.py`
 *   **OSM Utilities**: General utility functions specifically for OpenStudio models that don't fit into a specific object category.
     *   `osm_utils.py`
-*   **Setup**: Potentially for initial setup or configuration.
-    *   `setup.py`
 
 <!-- ## Testing Framework (not yet implemented)
 
