@@ -1,7 +1,7 @@
 import openstudio
 import pandas as pd
 import numpy as np
-from osm_objects.schedules import *
+from openstudio_toolkit.osm_objects.schedules import *
 
 
 def get_all_space_types_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
