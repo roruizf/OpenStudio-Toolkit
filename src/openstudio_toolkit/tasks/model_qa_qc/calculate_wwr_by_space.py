@@ -1,4 +1,4 @@
-# src/openstudio_toolkit/tasks/model_qa_qc/calculate_wwr.py
+# src/openstudio_toolkit/tasks/model_qa_qc/calculate_wwr_by_space.py
 
 import openstudio
 import pandas as pd
@@ -49,8 +49,8 @@ def run(osm_model: openstudio.model.Model) -> pd.DataFrame:
     all_surfaces_df = surfaces.get_all_surface_objects_as_dataframe(osm_model)
     all_subsurfaces_df = subsurfaces.get_all_subsurface_objects_as_dataframe(osm_model)
 
-    all_surfaces_df['Surface Gross Area'] = [s.grossArea() for s in osm_model.getSurfaces()]
-    all_subsurfaces_df['Sub Surface Gross Area'] = [ss.grossArea() for ss in osm_model.getSubSurfaces()]
+    all_surfaces_df['Surface Gross Area'] = all_surfaces_df['Handle'].apply(lambda handle: osm_model.getSurface(handle).get().grossArea())
+    all_subsurfaces_df['Sub Surface Gross Area'] = all_subsurfaces_df['Handle'].apply(lambda handle: osm_model.getSubSurface(handle).get().grossArea())
 
     subsurface_space_map = {
         s.nameString(): s.space().get().nameString() 
