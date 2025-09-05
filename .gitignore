@@ -16,3 +16,5 @@ venv/
 
 # Other rules can go here
 tests/
+
+.ipynb_checkpoints/
