@@ -1,4 +1,4 @@
-# src/openstudio_toolkit/tasks/model_setup/set_space_surfacearea_height_volume.py
+# src/openstudio_toolkit/tasks/model_setup/set_space_data.py
 
 import openstudio
 import pandas as pd
@@ -22,9 +22,11 @@ def validator(osm_model: openstudio.model.Model, spaces_data: List[Dict[str, Any
     if not spaces_data:
         return {"status": "ERROR", "messages": ["ERROR: The input 'spaces_data' list is empty."]}
 
+    # Check if all dicts have a required key (Name or Handle)
     if not all('Name' in d or 'Handle' in d for d in spaces_data):
         return {"status": "ERROR", "messages": ["ERROR: Each dictionary in 'spaces_data' must have a 'Name' or 'Handle' key."]}
 
+    # Check that spaces from the data exist in the model
     missing_spaces = []
     for space_dict in spaces_data:
         space_name = space_dict.get('Name')
@@ -49,24 +51,25 @@ def run(osm_model: openstudio.model.Model, spaces_data: List[Dict[str, Any]]) ->
     Returns:
         openstudio.model.Model: The modified OpenStudio model object.
     """
-    print("INFO: Starting 'Set Space Surface Area, Height, and Volume' task...")
+    print("INFO: Starting 'Set Space Data' task...")
     
     updated_count = 0
     for space_dict in spaces_data:
         space_name = space_dict.get('Name')
-        if not space_name: continue
+        if not space_name: continue # Skip if no name provided
 
         space_obj = osm_model.getSpaceByName(space_name)
         if space_obj.is_initialized():
             space = space_obj.get()
             
-            if 'Floor Area {m2}' in space_dict:
+            # Update properties only if they exist in the dictionary and are different
+            if 'Floor Area {m2}' in space_dict and space.floorArea() != space_dict['Floor Area {m2}']:
                 space.setFloorArea(space_dict['Floor Area {m2}'])
 
-            if 'Volume {m3}' in space_dict:
+            if 'Volume {m3}' in space_dict and space.volume() != space_dict['Volume {m3}']:
                 space.setVolume(space_dict['Volume {m3}'])
 
-            if 'Ceiling Height {m}' in space_dict:
+            if 'Ceiling Height {m}' in space_dict and space.ceilingHeight() != space_dict['Ceiling Height {m}']:
                 space.setCeilingHeight(space_dict['Ceiling Height {m}'])
             
             updated_count += 1
