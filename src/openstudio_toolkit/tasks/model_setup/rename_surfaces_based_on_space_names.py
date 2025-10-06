@@ -57,20 +57,62 @@ def run(osm_model: openstudio.model.Model) -> openstudio.model.Model:
     """Renames all surfaces based on their space and boundary condition."""
     print("INFO: Starting rename surfaces task...")
     
+    # Step 1: Data Collection & Enrichment
+    # -------------------------------------
+    # Get all surface objects from the model and load them into a pandas DataFrame.
     surfaces_df = surfaces.get_all_surface_objects_as_dataframe(osm_model)
+    
+    # Create a dictionary mapping each surface's handle to its gross area.
+    # This is done once for efficiency instead of querying the model for each row.
+    gross_area_map = {
+        str(surface.handle()): surface.grossArea() 
+        for surface in osm_model.getSurfaces()
+    }
+    # Add the gross area as a new column to the DataFrame.
+    surfaces_df['Gross Area {m2}'] = surfaces_df['Handle'].map(gross_area_map)
+
+    # Create a similar map for the azimuth of each surface.
+    azimuth_map = {
+        str(surface.handle()): surface.azimuth() 
+        for surface in osm_model.getSurfaces()
+    }
+    # Add the azimuth as a new column.
+    surfaces_df['Azimuth'] = surfaces_df['Handle'].map(azimuth_map)
+
+    # Step 2: Sorting for Deterministic Naming
+    # ----------------------------------------
+    # Sort the DataFrame by multiple criteria. This is a critical step to ensure
+    # that the naming convention is consistent and repeatable every time the task is run.
+    # Area and Azimuth are sorted in descending order to handle larger surfaces first.
+    surfaces_df = surfaces_df.sort_values(
+        by=['Space Name', 'Surface Type', 'Outside Boundary Condition', 'Sun Exposure', 'Wind Exposure', 'Gross Area {m2}', 'Azimuth'],
+        ascending=[True, True, True, True, True, False, False]
+    ).reset_index(drop=True)
+    
+    # Rename default columns for clarity.
     surfaces_df = surfaces_df.rename(columns={'Handle': 'Surface Handle', 'Name': 'Surface Name'})
 
-    # 1. Generate base names
+    # Step 3: Generate New Names
+    # --------------------------
+    # Generate a list of new, descriptive names based on the sorted data.
+    # These initial names may contain duplicates (e.g., multiple identical windows).
     base_names = _generate_new_surface_names(surfaces_df)
     
-    # 2. De-duplicate names
+    # Process the base names to ensure every name is unique by appending a suffix if needed.
     final_names = _deduplicate_names(base_names)
+    
+    # Add the final, unique names as a new column to the DataFrame.
     surfaces_df['New Surface Name'] = final_names
 
-    # 3. Apply changes to the model
+    # Step 4: Apply Changes to the OpenStudio Model
+    # ---------------------------------------------
+    # Iterate through the DataFrame and update each surface in the actual model.
     for index, row in surfaces_df.iterrows():
+        # Get the surface object from the model using its handle.
         surface = osm_model.getSurface(row['Surface Handle']).get()
         new_name = row['New Surface Name']
+        
+        # Only apply the change if the new name is different from the old one.
         if surface.nameString() != new_name:
             surface.setName(new_name)
             

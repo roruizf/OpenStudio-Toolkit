@@ -8,15 +8,51 @@ from openstudio_toolkit.osm_objects import surfaces, subsurfaces
 def _get_and_prepare_dataframes(osm_model: openstudio.model.Model) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Sub-task: Extracts and prepares the initial dataframes for surfaces and subsurfaces."""
     
-    # Prepare Subsurfaces DataFrame
+    # ==========================================================================
+    # 1. Prepare Subsurfaces DataFrame
+    # ==========================================================================
+    
+    # Get all subsurface objects from the model into a pandas DataFrame.
     subsurfaces_df = subsurfaces.get_all_subsurface_objects_as_dataframe(osm_model)
-    subsurfaces_df = subsurfaces_df.rename(columns={'Handle': 'Sub Surface Handle', 'Name': 'Sub Surface Name'})
-    subsurfaces_df = subsurfaces_df.sort_values(by='Sub Surface Handle', ascending=True).reset_index(drop=True)
 
-    # Prepare Surfaces DataFrame
+    # --- Data Enrichment ---
+    # Create a dictionary mapping each subsurface handle to its gross area for efficiency.
+    gross_area_map = {
+        str(subsurface.handle()): subsurface.grossArea() 
+        for subsurface in osm_model.getSubSurfaces()
+    }
+    # Add the gross area as a new column to the DataFrame.
+    subsurfaces_df['Gross Area {m2}'] = subsurfaces_df['Handle'].map(gross_area_map)
+
+    # Create a similar map for the azimuth of each subsurface.
+    azimuth_map = {
+        str(subsurface.handle()): subsurface.azimuth() 
+        for subsurface in osm_model.getSubSurfaces()
+    }
+    # Add the azimuth as a new column.
+    subsurfaces_df['Azimuth'] = subsurfaces_df['Handle'].map(azimuth_map)
+
+    # --- Sorting and Formatting ---
+    # Sort the DataFrame to ensure a consistent and deterministic order for renaming.
+    # Area and Azimuth are sorted in descending order.
+    subsurfaces_df = subsurfaces_df.sort_values(
+        by=['Surface Name', 'Sub Surface Type', 'Outside Boundary Condition Object','Gross Area {m2}', 'Azimuth'], 
+        ascending=[True, True, True, False, False]
+    ).reset_index(drop=True)
+    
+    # Rename default columns for better clarity in subsequent steps.
+    subsurfaces_df = subsurfaces_df.rename(columns={'Handle': 'Sub Surface Handle', 'Name': 'Sub Surface Name'})
+
+    # ==========================================================================
+    # 2. Prepare Surfaces DataFrame
+    # ==========================================================================
+    
+    # Get all parent surface objects from the model into a DataFrame.
+    # This is needed to look up parent surface properties later.
     surfaces_df = surfaces.get_all_surface_objects_as_dataframe(osm_model)
+    
+    # Rename columns to avoid naming conflicts during merges.
     surfaces_df = surfaces_df.rename(columns={'Handle': 'Surface Handle', 'Name': 'Surface Name'})
-    surfaces_df = surfaces_df.sort_values(by='Surface Name', ascending=True).reset_index(drop=True)
 
     return subsurfaces_df, surfaces_df
 
