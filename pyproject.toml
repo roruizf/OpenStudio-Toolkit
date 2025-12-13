@@ -26,3 +26,17 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/roruizf/OpenStudio-Toolkit"
 "Bug Tracker" = "https://github.com/roruizf/OpenStudio-Toolkit/issues"
+
+[tool.setuptools]
+# Include non-Python files specified in package-data
+include-package-data = true
+
+[tool.setuptools.packages.find]
+# Look for packages under the src/ directory
+where = ["src"]
+
+[tool.setuptools.package-data]
+# Include all files in the resources/measures directory
+openstudio_toolkit = [
+    "resources/measures/**/*",
+]

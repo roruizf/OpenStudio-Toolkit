@@ -1,0 +1,15 @@
+🚀 Starting Space Type Wizard Test...
+📦 Seed Model Created. Initial Space Types: 0
+
+🔍 Running Validator...
+Validation Result: {'status': 'READY', 'messages': ['OK: All validations passed']}
+
+⚡ Running Measure (calling OpenStudio CLI)...
+INFO: Starting Space Type and Construction Set Wizard task...
+INFO: Space Type and Construction Set Wizard task completed successfully
+
+✅ Execution Successful!
+📊 Stats:
+   - Generated Space Types: 0
+   - Construction Sets: 0
+⚠️ Warning: Measure ran but no space types were found.
