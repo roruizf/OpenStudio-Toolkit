@@ -4,7 +4,7 @@ import tempfile
 import subprocess
 import shutil
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 
 class MeasureRunner:
@@ -42,7 +42,8 @@ class MeasureRunner:
         measure_dir: str,
         arguments: Dict[str, Any],
         output_path: Optional[str] = None,
-        run_simulation: bool = False
+        run_simulation: bool = False,
+        extra_output_files: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         Executes the measure workflow.
@@ -54,9 +55,13 @@ class MeasureRunner:
             arguments: Arguments to pass to the measure.
             output_path: Path for output OSM file. If None, uses a temporary file.
             run_simulation: Whether to run full simulation. If False, uses --measures_only.
+            extra_output_files: Optional list of output files to extract from the run directory
+                               (e.g., ["report.html", "run/000_view_model/report.html"]).
 
         Returns:
-            Dict containing 'osm_path' with the path to resulting OSM file.
+            Dict containing:
+            - 'osm_path': Path to resulting OSM file
+            - 'extra_files': Dict mapping requested filenames to their extracted paths (if extra_output_files specified)
 
         Raises:
             RuntimeError: If measure execution fails.
@@ -125,7 +130,46 @@ class MeasureRunner:
             # Copy result to final location
             shutil.copy2(source_output, final_output_path)
 
-            return {"osm_path": final_output_path}
+            # Handle extra output files if requested
+            result_dict = {"osm_path": final_output_path}
+
+            if extra_output_files:
+                extra_files_dict = {}
+                for file_pattern in extra_output_files:
+                    # Search for file in temp directory
+                    found_file = self._find_file_in_temp(temp_path, file_pattern)
+                    if found_file:
+                        # Create a persistent copy in a temp location
+                        persistent_path = tempfile.mktemp(suffix=Path(file_pattern).suffix)
+                        shutil.copy2(found_file, persistent_path)
+                        extra_files_dict[file_pattern] = persistent_path
+
+                result_dict["extra_files"] = extra_files_dict
+
+            return result_dict
+
+    def _find_file_in_temp(self, temp_path: Path, file_pattern: str) -> Optional[Path]:
+        """
+        Search for a file in the temporary directory.
+
+        Args:
+            temp_path: Root temporary directory path.
+            file_pattern: File pattern to search for (e.g., "report.html" or "run/000_view_model/report.html").
+
+        Returns:
+            Path to the found file, or None if not found.
+        """
+        # First, try exact path match
+        exact_path = temp_path / file_pattern
+        if exact_path.exists():
+            return exact_path
+
+        # If not found, search recursively for filename
+        filename = Path(file_pattern).name
+        for found_file in temp_path.rglob(filename):
+            return found_file
+
+        return None
 
     def _generate_osw(self, osm_path: str, measure_dir: str, measure_args: Dict[str, Any]) -> Dict[str, Any]:
         """
