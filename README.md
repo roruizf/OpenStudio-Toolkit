@@ -186,6 +186,13 @@ Tasks are pre-built, validated workflows for common modeling operations. Each ta
 |------|-------------|
 | `calculate_wwr_by_space` | Calculate window-to-wall ratio for each space |
 
+### Measures
+
+| Task | Description |
+|------|-------------|
+| `apply_space_type_and_construction_set_wizard` | Applies Space Types and Construction Sets based on Building Type, Climate Zone, and Template (ASHRAE/DOE standards) |
+| `create_view_model_html` | Generates a standalone HTML report with 3D geometry visualization and model statistics |
+
 ### Simulation Setup
 
 | Task | Description |
