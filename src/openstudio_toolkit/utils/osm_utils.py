@@ -1,80 +1,81 @@
 import os
-from typing import Optional
+import logging
 import openstudio
+from typing import Optional
 
+# Configure logger
+logger = logging.getLogger(__name__)
 
 def load_osm_file_as_model(osm_file_path: str, version_translator: Optional[bool] = True) -> openstudio.model.Model:
-    """Loads an OSM file into an OpenStudio model.
+    """
+    Load an OpenStudio Model (.osm) file from a specified path.
 
-    Args:
-        osm_file_path: The path to the OSM file. This can be a relative path
-            or an absolute path.
-        version_translator: Whether to use the OpenStudio version translator.
-            This is necessary if the OSM file is in a version of OpenStudio
-            that is different from the version of OpenStudio that is being used
-            to load the file. Defaults to True.
+    Parameters:
+    - osm_file_path (str): Absolute or relative path to the .osm file.
+    - version_translator (bool, optional): If True, uses the VersionTranslator to handle version differences. 
+                                           Defaults to True.
 
     Returns:
-        An OpenStudio model containing the data from the OSM file.
-    """
-    # Get the absolute path to the OSM file.
-    osm_file_path = os.path.abspath(osm_file_path)
+    - openstudio.model.Model: The loaded OpenStudio Model object.
 
+    Raises:
+    - RuntimeError: If the model fails to load or is uninitialized.
+    """
+    abs_path = os.path.abspath(osm_file_path)
+    
     if version_translator:
         translator = openstudio.osversion.VersionTranslator()
-        osm_model = translator.loadModel(osm_file_path).get()
+        loaded_model = translator.loadModel(abs_path)
     else:
-        osm_model = openstudio.model.Model.load(osm_file_path).get()
+        loaded_model = openstudio.model.Model.load(abs_path)
 
-    print(
-        f"The OSM read file contains data for the {osm_model.building().get().name()}")
-    # Return the OpenStudio model.
-    return osm_model
-
+    if loaded_model.is_initialized():
+        osm_model = loaded_model.get()
+        # Log building name if available
+        building_name = osm_model.building().get().name().get() if osm_model.building().is_initialized() else "Unnamed Building"
+        logger.info(f"Loaded OSM model for building: {building_name}")
+        return osm_model
+    else:
+        err_msg = f"Failed to load OpenStudio model from path: {abs_path}"
+        logger.error(err_msg)
+        raise RuntimeError(err_msg)
 
 def save_model_as_osm_file(osm_model: openstudio.model.Model, osm_file_path: str, new_file_name: Optional[str] = None) -> None:
     """
-    Saves an OpenStudio model to a specified OSM file path.
+    Save an OpenStudio Model object to a file.
 
-    Args:
-        osm_model: An OpenStudio model to be saved.
-        osm_file_path: The path where the OSM file will be saved.
-        new_file_name: An optional name for the new OSM file.
+    Parameters:
+    - osm_model (openstudio.model.Model): The model object to save.
+    - osm_file_path (str): The destination directory path or full file path.
+    - new_file_name (str, optional): Overriding name for the saved file.
 
     Returns:
-        None
+    - None
     """
-    # Extract the folder from the provided OSM file path.
     osm_file_folder = os.path.split(osm_file_path)[0]
-
-    # Determine the new OSM file name if not specified.
+    
     if new_file_name is not None:
-        new_osm_file_name = new_file_name
+        target_name = new_file_name
     else:
-        new_osm_file_name = os.path.split(osm_file_path)[-1]
+        target_name = os.path.split(osm_file_path)[-1]
 
-    # Save the model to the new OSM file.    
-    osm_model.save(os.path.join(osm_file_folder, new_osm_file_name), overwrite=True)
-
+    save_path = os.path.join(osm_file_folder, target_name)
+    osm_model.save(save_path, overwrite=True)
+    logger.info(f"Model saved as OSM at: {save_path}")
 
 def convert_osm_to_idf(osm_model: openstudio.model.Model, idf_file_path: str) -> None:
     """
-    Converts an OpenStudio model to an EnergyPlus IDF file.
+    Convert an OpenStudio Model to an EnergyPlus IDF file using the ForwardTranslator.
 
-    Args:
-        osm_model: The OpenStudio model to be converted.
-        idf_file_path: The path where the IDF file will be saved.
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model to convert.
+    - idf_file_path (str): The path where the generated IDF will be saved.
 
     Returns:
-        None: This function saves the IDF file to the specified path.
+    - None
     """
-    # Create a ForwardTranslator to convert the model to IDF
     ft = openstudio.energyplus.ForwardTranslator()
-
-    # Translate the OpenStudio model to an EnergyPlus model (IDF)
     idf_model = ft.translateModel(osm_model)
 
-    # Save the translated model as an IDF file
     idf_model.save(idf_file_path, True)
-
-    print(f"IDF file created successfully at: {idf_file_path}")
+    logger.info(f"IDF file successfully generated at: {idf_file_path}")

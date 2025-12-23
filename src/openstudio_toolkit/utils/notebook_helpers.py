@@ -1,7 +1,9 @@
-# src/openstudio_toolkit/utils/notebook_helpers.py
-
 import os
+import logging
 from typing import Tuple, Optional
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 def get_osm_path(
     use_gdrive: bool,
@@ -9,51 +11,61 @@ def get_osm_path(
     local_path: Optional[str] = None
 ) -> Tuple[str, str]:
     """
-    Handles file access for notebooks in both Colab and local environments.
+    Coordinate file access for OpenStudio models in both Google Colab and local environments.
 
-    Args:
-        use_gdrive (bool): In Colab, if True, uses Google Drive. If False, prompts for upload.
-                           This argument is ignored in a local environment.
-        gdrive_path (str, optional): The full path to the .osm file in Google Drive.
-        local_path (str, optional): The full path to the .osm file on your local machine.
+    Parameters:
+    - use_gdrive (bool): If True and in Colab, mounts Google Drive to access files.
+    - gdrive_path (str, optional): The full path to the .osm file within Google Drive.
+    - local_path (str, optional): The full path to the .osm file on the local machine.
 
     Returns:
-        Tuple[str, str]: A tuple containing:
-            - The absolute path to the final .osm file.
-            - The absolute path to the directory containing the file.
+    - Tuple[str, str]: A tuple containing (absolute_path_to_osm, absolute_path_to_directory).
+
+    Raises:
+    - ValueError: If necessary paths are missing for the detected environment.
+    - FileNotFoundError: If the specified file cannot be located.
     """
     try:
         from google.colab import drive, files
-        IN_COLAB = True
+        in_colab = True
     except ImportError:
-        IN_COLAB = False
+        in_colab = False
 
-    if not IN_COLAB:
-        # --- Local Environment Logic ---
-        print("INFO: Running in a local environment.")
+    if not in_colab:
+        # --- Local Environment ---
+        logger.info("Running in a local environment.")
         if not local_path:
-            raise ValueError("ERROR: 'local_path' must be provided when running locally.")
+            raise ValueError("The 'local_path' must be provided when running in a local environment.")
+        
         if not os.path.exists(local_path):
-            raise FileNotFoundError(f"ERROR: File not found at local path: {local_path}")
+            raise FileNotFoundError(f"OSM file not found at local path: {local_path}")
         
         osm_file_path = os.path.abspath(local_path)
         project_folder_path = os.path.dirname(osm_file_path)
     else:
-        # --- Colab Environment Logic ---
+        # --- Google Colab Environment ---
         if use_gdrive:
-            if not gdrive_path: raise ValueError("'gdrive_path' is required when 'use_gdrive' is True.")
-            print("INFO: Mounting Google Drive...")
+            if not gdrive_path:
+                raise ValueError("The 'gdrive_path' is required when 'use_gdrive' is True.")
+            
+            logger.info("Mounting Google Drive for file access...")
             drive.mount('/content/drive', force_remount=True)
-            if not os.path.exists(gdrive_path): raise FileNotFoundError(f"File not found in GDrive: {gdrive_path}")
+            
+            if not os.path.exists(gdrive_path):
+                raise FileNotFoundError(f"OSM file not found in Google Drive: {gdrive_path}")
+                
             osm_file_path = gdrive_path
             project_folder_path = os.path.dirname(gdrive_path)
         else:
-            print("INFO: Please use the button below to upload your .osm file.")
+            logger.info("Requesting file upload in Colab...")
             project_folder_path = '/content'
             uploaded = files.upload()
-            if not uploaded: raise FileNotFoundError("No file was uploaded.")
+            
+            if not uploaded:
+                raise FileNotFoundError("File upload was cancelled or failed.")
+                
             file_name = next(iter(uploaded))
             osm_file_path = os.path.join(project_folder_path, file_name)
 
-    print(f"✅ Success! Using model: {osm_file_path}")
+    logger.info(f"Model path resolved: {osm_file_path}")
     return osm_file_path, project_folder_path

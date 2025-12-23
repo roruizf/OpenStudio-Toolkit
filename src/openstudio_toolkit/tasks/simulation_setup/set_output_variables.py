@@ -1,35 +1,43 @@
-# src/openstudio_toolkit/tasks/simulation_setup/set_output_variables.py
-
 import openstudio
-from typing import Dict, List, Literal
+import logging
+from typing import Dict, List, Literal, Any
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 def validator(
     osm_model: openstudio.model.Model,
     variable_names: List[str],
     reporting_frequency: str
-) -> Dict[str, List[str]]:
+) -> Dict[str, Any]:
     """
-    Validates that the inputs for setting output variables are correct.
+    Validate that the input parameters for setting output variables are correct and consistent.
 
-    Args:
-        osm_model (openstudio.model.Model): The OpenStudio model object.
-        variable_names (List[str]): The list of variable names to add.
-        reporting_frequency (str): The frequency to report.
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - variable_names (List[str]): List of EnergyPlus variable names to request.
+    - reporting_frequency (str): The desired reporting frequency (e.g., 'Hourly').
 
     Returns:
-        Dict[str, List[str]]: A dictionary with validation status and messages.
+    - Dict[str, Any]: A dictionary containing the validation 'status' and 'messages'.
     """
     messages = []
     
     if not variable_names:
-        return {"status": "ERROR", "messages": ["ERROR: The 'variable_names' list cannot be empty."]}
+        msg = "ERROR: The 'variable_names' list cannot be empty."
+        logger.error(msg)
+        return {"status": "ERROR", "messages": [msg]}
 
-    # --- LIST OF VALID FREQUENCIES ---
+    # Valid EnergyPlus frequencies
     valid_frequencies = ["Detailed", "Timestep", "Hourly", "Daily", "Monthly", "RunPeriod", "Annual"]
     if reporting_frequency not in valid_frequencies:
-        return {"status": "ERROR", "messages": [f"ERROR: '{reporting_frequency}' is not a valid reporting frequency. Choose from: {valid_frequencies}"]}
+        msg = f"ERROR: '{reporting_frequency}' is not a valid frequency. Choose from: {valid_frequencies}"
+        logger.error(msg)
+        return {"status": "ERROR", "messages": [msg]}
 
-    messages.append(f"OK: Ready to set {len(variable_names)} output variables with '{reporting_frequency}' frequency.")
+    msg = f"OK: Validated request for {len(variable_names)} variables at '{reporting_frequency}' frequency."
+    logger.info(msg)
+    messages.append(msg)
     return {"status": "READY", "messages": messages}
 
 def run(
@@ -40,24 +48,23 @@ def run(
     remove_existing: bool = False
 ) -> openstudio.model.Model:
     """
-    Sets Output:Variable objects in the OpenStudio model for simulation.
+    Configure Output:Variable objects in the OpenStudio model for simulation results.
 
-    Args:
-        osm_model (openstudio.model.Model): The OpenStudio model to modify.
-        variable_names (List[str]): A list of the output variable names to add.
-        reporting_frequency (str): The reporting frequency.
-        key_value (str, optional): The key value to filter results. Defaults to "*".
-        remove_existing (bool, optional): If True, all existing Output:Variable objects
-                                          will be removed. Defaults to False.
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object to modify.
+    - variable_names (List[str]): List of output variable names to add.
+    - reporting_frequency (str): The reporting frequency level.
+    - key_value (str, optional): The key value filter (e.g., specific object name or '*'). Defaults to "*".
+    - remove_existing (bool, optional): If True, all existing Output:Variable objects are removed first. Defaults to False.
 
     Returns:
-        openstudio.model.Model: The modified OpenStudio model object.
+    - openstudio.model.Model: The updated OpenStudio Model object.
     """
-    print("INFO: Starting 'Set Output Variables' task...")
+    logger.info("Starting 'Set Output Variables' task...")
     
     if remove_existing:
         existing_vars = osm_model.getOutputVariables()
-        print(f"INFO: 'remove_existing' is True. Removing {len(existing_vars)} existing output variables.")
+        logger.info(f"Removing {len(existing_vars)} existing output variables.")
         for var in existing_vars:
             var.remove()
 
@@ -68,5 +75,5 @@ def run(
         output_var.setReportingFrequency(reporting_frequency)
         added_count += 1
         
-    print(f"INFO: Task finished. {added_count} new output variables were set.")
+    logger.info(f"Task finished. {added_count} Output:Variable objects were configured.")
     return osm_model

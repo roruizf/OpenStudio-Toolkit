@@ -1,141 +1,89 @@
 import openstudio
 import pandas as pd
+import logging
+from typing import List, Dict, Any, Optional
 
+from openstudio_toolkit.utils import helpers
 
-def get_space_object_as_dict(osm_model: openstudio.model.Model, space_handle: str = None, space_name: str = None) -> dict:
+# Configure logger
+logger = logging.getLogger(__name__)
+
+# --------------------------------------------------
+#  ***** OS:Space **********************************
+# --------------------------------------------------
+
+def get_space_object_as_dict(
+    osm_model: openstudio.model.Model, 
+    handle: Optional[str] = None, 
+    name: Optional[str] = None, 
+    _object_ref: Optional[openstudio.model.Space] = None
+) -> Dict[str, Any]:
     """
-    Retrieve a space from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+    Retrieve attributes of an OS:Space from the OpenStudio Model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - space_handle (str, optional): The handle of the space to retrieve.
-    - space_name (str, optional): The name of the space to retrieve.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.Space, optional): Direct object reference.
 
     Returns:
-    - dict: Dictionary containing information about the specified space.
+    - Dict[str, Any]: A dictionary containing space attributes.
     """
+    target_object = helpers.fetch_object(
+        osm_model, "Space", handle, name, _object_ref)
 
-    if space_handle is not None and space_name is not None:
-        raise ValueError(
-            "Only one of 'space_handle' or 'space_name' should be provided.")
-    if space_handle is None and space_name is None:
-        raise ValueError(
-            "Either 'space_handle' or 'space_name' must be provided.")
+    if target_object is None:
+        return {}
 
-    # Find the space by handle or name
-    if space_handle is not None:
-        space_object = osm_model.getSpace(space_handle)
-        if space_object.isNull():
-            print(f"No space found with the handle: {space_handle}")
-            return {}
-
-    elif space_name is not None:
-        space_object = osm_model.getSpaceByName(space_name)
-        if space_object.isNull():
-            print(f"No space found with the name: {space_name}")
-            return {}
-
-    target_space = space_object.get()
-
-    # Define attributes to retrieve in a dictionary
-    space_dict = {
-        'Handle': str(target_space.handle()),
-        'Name': target_space.name().get() if target_space.name().is_initialized() else None,
-        'Space Type Name': target_space.spaceType().get().name().get() if target_space.spaceType().is_initialized() else None,
-        'Default Construction Set Name': target_space.defaultConstructionSet().get().name().get() if target_space.defaultConstructionSet().is_initialized() else None,
-        'Default Schedule Set Name': target_space.defaultScheduleSet().get().name().get() if target_space.defaultScheduleSet().is_initialized() else None,
-        'Direction of Relative North {deg}': target_space.directionofRelativeNorth(),
-        'X Origin {m}': target_space.xOrigin(),
-        'Y Origin {m}': target_space.yOrigin(),
-        'Z Origin {m}': target_space.zOrigin(),
-        'Building Story Name': target_space.buildingStory().get().name().get() if target_space.buildingStory().is_initialized() else None,
-        'Thermal Zone Name': target_space.thermalZone().get().name().get() if target_space.thermalZone().is_initialized() else None,
-        'Part of Total Floor Area': target_space.partofTotalFloorArea(),
-        'Design Specification Outdoor Air Object Name': target_space.designSpecificationOutdoorAir().get().name().get() if target_space.designSpecificationOutdoorAir().is_initialized() else None,
-        'Building Unit Name': target_space.buildingUnit().get().name().get() if target_space.buildingUnit().is_initialized() else None,
-        'Volume {m3}': target_space.volume(),
-        'Ceiling Height {m}': target_space.ceilingHeight(),
-        'Floor Area {m2}': target_space.floorArea()
+    return {
+        'Handle': str(target_object.handle()),
+        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Space",
+        'Space Type Name': target_object.spaceType().get().name().get() if target_object.spaceType().is_initialized() else None,
+        'Default Construction Set Name': target_object.defaultConstructionSet().get().name().get() if target_object.defaultConstructionSet().is_initialized() else None,
+        'Default Schedule Set Name': target_object.defaultScheduleSet().get().name().get() if target_object.defaultScheduleSet().is_initialized() else None,
+        'Direction of Relative North {deg}': target_object.directionofRelativeNorth(),
+        'X Origin {m}': target_object.xOrigin(),
+        'Y Origin {m}': target_object.yOrigin(),
+        'Z Origin {m}': target_object.zOrigin(),
+        'Building Story Name': target_object.buildingStory().get().name().get() if target_object.buildingStory().is_initialized() else None,
+        'Thermal Zone Name': target_object.thermalZone().get().name().get() if target_object.thermalZone().is_initialized() else None,
+        'Part of Total Floor Area': target_object.partofTotalFloorArea(),
+        'Design Specification Outdoor Air Object Name': target_object.designSpecificationOutdoorAir().get().name().get() if target_object.designSpecificationOutdoorAir().is_initialized() else None,
+        'Building Unit Name': target_object.buildingUnit().get().name().get() if target_object.buildingUnit().is_initialized() else None,
+        'Volume {m3}': target_object.volume(),
+        'Ceiling Height {m}': target_object.ceilingHeight(),
+        'Floor Area {m2}': target_object.floorArea()
     }
 
-    return space_dict
-
-
-def get_all_space_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_space_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Retrieve all spaces from the OpenStudio model and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:Space objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a space.
+    - List[Dict[str, Any]]: A list of dictionaries containing space attributes.
     """
-
-    # Get all spaces in the OpenStudio model.
     all_objects = osm_model.getSpaces()
-
-    all_objects_dicts = []
-
-    for target_object in all_objects:
-        space_handle = str(target_object.handle())
-        object_dict = get_space_object_as_dict(osm_model, space_handle)
-        all_objects_dicts.append(object_dict)
-
-    return all_objects_dicts
-
+    return [get_space_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
 
 def get_all_space_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Retrieve all spaces from the OpenStudio model using a specified method and return their attributes as a pandas DataFrame.
+    Retrieve all OS:Space objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all spaces.
+    - pd.DataFrame: A DataFrame containing all Space attributes.
     """
-
     all_objects_dicts = get_all_space_objects_as_dicts(osm_model)
+    df = pd.DataFrame(all_objects_dicts)
 
-    # Create a DataFrame of all spaces.
-    all_spaces_df = pd.DataFrame(all_objects_dicts)
+    if not df.empty and 'Name' in df.columns:
+        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
 
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_spaces_df = all_spaces_df.sort_values(
-        by='Name', ascending=True).reset_index(drop=True)
-
-    print(f"The OSM model contains {all_spaces_df.shape[0]} spaces")
-
-    return all_spaces_df
-
-
-def get_all_thermal_zones_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    """
-    Retrieve all thermal zones from the OpenStudio model and organize them into a pandas DataFrame.
-
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - pd.DataFrame: DataFrame containing information about all thermal zones.
-    """
-
-    all_objects_dicts = get_all_thermal_zones_objects_as_dicts(osm_model)
-
-    # Create a DataFrame of all thermal zones.
-    all_thermal_zones_df = pd.DataFrame(all_objects_dicts)
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_thermal_zones_df = all_thermal_zones_df.sort_values(
-        by='Name', ascending=True).reset_index(drop=True)
-
-    print(f"The OSM model contains {all_thermal_zones_df.shape[0]} thermal zones")
-
-    return all_thermal_zones_df
-
-
-def update_space_object(osm_model, space_handle: str = None, space_name: str = None, attributes: dict = None):
-
-    target_object_dict = get_space_object_as_dict(
-        osm_model, space_handle, space_name)
+    logger.info(f"Retrieved {len(df)} Space objects from the model.")
+    return df

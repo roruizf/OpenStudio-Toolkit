@@ -1,21 +1,30 @@
 import openstudio
 import pandas as pd
+import logging
+from typing import List, Dict, Any, Optional
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 #-----------------------------
 #--- OS:Controller:OutdoorAir
 #-----------------------------
 
-def get_controller_outdoor_air_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+def get_controller_outdoor_air_object_as_dict(
+    osm_model: openstudio.model.Model, 
+    handle: Optional[str] = None, 
+    name: Optional[str] = None
+) -> Dict[str, Any]:
     """
-    Gets Controller:OutdoorAir information and returns it as a dictionary.
+    Retrieve attributes of an OS:Controller:OutdoorAir object from the OpenStudio Model.
 
-    Args:
-        osm_model (openstudio.model.Model): The OpenStudio model object.
-        handle (str, optional): The handle of the Controller:OutdoorAir object. Either handle or name must be provided.
-        name (str, optional): The name of the HVAC unit. Either name or handle must be provided.
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
 
     Returns:
-        dict: A dictionary containing the Controller:OutdoorAir objects's properties, or an empty dictionary if not found.
+    - Dict[str, Any]: A dictionary containing Controller:OutdoorAir attributes.
     """
     if handle is not None and name is not None:
         raise ValueError(
@@ -27,14 +36,14 @@ def get_controller_outdoor_air_object_as_dict(osm_model: openstudio.model.Model,
     if handle is not None:
         osm_object = osm_model.getControllerOutdoorAir(handle)
         if osm_object is None:
-            print(
+            logger.warning(
                 f"No Controller:OutdoorAir object found with the handle: {handle}")
             return {}
 
     elif name is not None:
         osm_object = osm_model.getControllerOutdoorAirByName(name)
         if not osm_object:
-            print(
+            logger.warning(
                 f"No Controller:OutdoorAir object found with the name: {name}")
             return {}
 
@@ -72,16 +81,15 @@ def get_controller_outdoor_air_object_as_dict(osm_model: openstudio.model.Model,
     return object_dict
 
 
-def get_all_controller_outdoor_air_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_controller_outdoor_air_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Gets all Controller:OutdoorAir objects from the OpenStudio model
-    and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:Controller:OutdoorAir objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a Controller:OutdoorAir objects.
+    - List[Dict[str, Any]]: A list of dictionaries containing Controller:OutdoorAir attributes.
     """
 
     # Get all Controller:OutdoorAir objects in the OpenStudio model.
@@ -98,14 +106,13 @@ def get_all_controller_outdoor_air_objects_as_dicts(osm_model: openstudio.model.
 
 def get_all_controller_outdoor_air_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Gets all Controller:OutdoorAir objects from the OpenStudio model
-    and return their attributes as a pandas DataFrame.
+    Retrieve all OS:Controller:OutdoorAir objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all Controller:OutdoorAir objects.
+    - pd.DataFrame: A DataFrame containing all Controller:OutdoorAir attributes.
     """
 
     all_objects_dicts = get_all_controller_outdoor_air_objects_as_dicts(osm_model)
@@ -117,6 +124,6 @@ def get_all_controller_outdoor_air_objects_as_dataframe(osm_model: openstudio.mo
     all_objects_df = all_objects_df.sort_values(
         by='Name', ascending=True).reset_index(drop=True)
 
-    print(f"The OSM model contains {all_objects_df.shape[0]} Controller:OutdoorAir objects")
+    logger.info(f"The OSM model contains {all_objects_df.shape[0]} Controller:OutdoorAir objects")
 
     return all_objects_df

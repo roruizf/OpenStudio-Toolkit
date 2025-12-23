@@ -15,7 +15,7 @@ build/
 venv/
 
 # Other rules can go here
-tests/
+# tests/
 
 .ipynb_checkpoints/
 
@@ -23,5 +23,5 @@ tests/
 test_output/
 *_output/
 *.osm.bak
-test_*.py
+# test_*.py
 test_*.html

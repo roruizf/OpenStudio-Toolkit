@@ -1,65 +1,80 @@
 import re
+import logging
 import pandas as pd
-from typing import Union
+from typing import Optional
 
-def extract_table_by_name_from_energyplus_results_html(html_file_path: str, table_name: str) -> Union[pd.DataFrame, str, None]:
+# Configure logger
+logger = logging.getLogger(__name__)
+
+def extract_table_by_name_from_energyplus_results_html(html_file_path: str, table_name: str) -> Optional[pd.DataFrame]:
     """
-    Reads an EnergyPlus results HTML file, finds the table immediately following the
-    specified table name (enclosed within <b> tags), and extracts it as a pandas DataFrame.
+    Extract a specific table from an EnergyPlus results HTML file based on its title.
 
-    Args:
-        html_file_path (str): The path to the EnergyPlus results HTML file.
-        table_name (str): The exact text name of the table as it appears in the
-                           EnergyPlus HTML file (e.g., 'Zone Sensible Cooling').
-                           The function will search for this name enclosed within <b> tags.
+    This function searches for the specified table name enclosed in <b> tags and parses 
+    the immediately following <table> element into a pandas DataFrame.
+
+    Parameters:
+    - html_file_path (str): Path to the EnergyPlus 'eplusout.htm' file.
+    - table_name (str): The exact text name of the table (e.g., 'Zone Sensible Cooling').
 
     Returns:
-        pandas.DataFrame or str or None: The extracted table as a DataFrame,
-                                        an error message (str) if the table is not found,
-                                        or None if some unexpected error occurs.
+    - Optional[pd.DataFrame]: The extracted table as a DataFrame, or None if not found or parsing fails.
     """
     table_label = f'<b>{table_name}</b>'
 
     try:
+        if not os.path.exists(html_file_path):
+            logger.error(f"EnergyPlus HTML file not found: {html_file_path}")
+            return None
+            
         with open(html_file_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
-    except FileNotFoundError:
-        return "Error: HTML file not found at the specified path."
+    except Exception as e:
+        logger.error(f"Error reading HTML file: {str(e)}")
+        return None
 
-    # Find the position after the specified table name (within <b> tags)
+    # Locate the table label
     start_index = html_content.find(table_label)
     if start_index == -1:
-        return f"Error: Table with name '{table_name}' not found in the HTML."
-    start_index += len(table_label) # Move past the label
+        logger.warning(f"Table title '{table_name}' not found in HTML.")
+        return None
+        
+    start_index += len(table_label)
     start_index = html_content.find('<table', start_index)
     if start_index == -1:
-        return f"Error: Table not found immediately after '{table_name}'."
+        logger.warning(f"No table element found following title '{table_name}'.")
+        return None
 
-    # Find the end of the table
+    # Locate the end of the table
     end_index = html_content.find('</table>', start_index)
     if end_index == -1:
-        return "Error: Closing '</table>' tag not found."
+        logger.error(f"Closing </table> tag missing for table '{table_name}'.")
+        return None
 
     table_html = html_content[start_index:end_index + len('</table>')]
 
-    # Extract table rows
+    # Extract rows using regex
     rows = re.findall(r'<tr.*?>(.*?)</tr>', table_html, re.DOTALL)
     if not rows:
-        return "Error: No rows found in the table."
+        logger.warning(f"No rows found in table '{table_name}'.")
+        return None
 
     data = []
     headers = []
     for i, row_html in enumerate(rows):
-        # Extract cells, handling both th (header) and td (data)
+        # Extract cells (th or td)
         cells = re.findall(r'<(th|td).*?>(.*?)</\1>', row_html, re.DOTALL)
-        row_data = [cell[1].strip() for cell in cells]
+        row_values = [cell[1].strip() for cell in cells]
+        
         if i == 0:
-            headers = row_data
-        elif row_data:
-            data.append(row_data)
+            headers = row_values
+        elif row_values:
+            data.append(row_values)
 
     if not data:
-        return "Error: No data found in the table."
+        logger.warning(f"Table '{table_name}' contains no data rows.")
+        return None
 
     df = pd.DataFrame(data, columns=headers if headers else None)
+    logger.info(f"Successfully extracted table '{table_name}' with {len(df)} rows.")
     return df

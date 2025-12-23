@@ -1,5 +1,10 @@
 import openstudio
 import pandas as pd
+import logging
+from typing import List, Dict, Any, Optional
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 #--
 #-- OS:ZoneHVAC:EquipmentList
@@ -7,13 +12,13 @@ import pandas as pd
 
 def get_all_zone_hvac_equipment_list_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Retrieve all zone HVAC Equipment List from the OpenStudio model and organize them into a pandas DataFrame.
+    Retrieve all OS:ZoneHVAC:EquipmentList objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all thermal zones.
+    - pd.DataFrame: A DataFrame containing all ZoneHVAC:EquipmentList attributes.
     """
     all_zone_hvac_equipment_lists = osm_model.getZoneHVACEquipmentLists()
 
@@ -59,7 +64,7 @@ def get_all_zone_hvac_equipment_list_objects_as_dataframe(osm_model: openstudio.
         all_zone_hvac_equipment_lists_df.loc[index, f'Zone Equipment Sequential Cooling Fraction Schedule Name {i+1}'] = zone_hvac_equipment_list.sequentialCoolingFractionSchedule(zone_hvac_equipment_list.equipment()[i]).get().name().get() if not zone_hvac_equipment_list.sequentialCoolingFractionSchedule(zone_hvac_equipment_list.equipment()[i]).isNull() else None
         all_zone_hvac_equipment_lists_df.loc[index, f'Zone Equipment Sequential Heating Fraction Schedule Name {i+1}'] = zone_hvac_equipment_list.sequentialHeatingFractionSchedule(zone_hvac_equipment_list.equipment()[i]).get().name().get() if not zone_hvac_equipment_list.sequentialHeatingFractionSchedule(zone_hvac_equipment_list.equipment()[i]).isNull() else None
 
-    print(
+    logger.info(
         f"The OSM model contains {all_zone_hvac_equipment_lists_df.shape[0]} thermal zones")
 
     return all_zone_hvac_equipment_lists_df
@@ -68,13 +73,13 @@ def get_all_zone_hvac_equipment_list_objects_as_dataframe(osm_model: openstudio.
 
 def get_all_zone_hvac_terminal_unit_variant_refrigerant_flow_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Retrieve all zone HVAC Variant Refrigerant Flow from the OpenStudio model and organize them into a pandas DataFrame.
+    Retrieve all OS:ZoneHVAC:TerminalUnit:VariableRefrigerantFlow objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all thermal zones.
+    - pd.DataFrame: A DataFrame containing all VRF terminal unit attributes.
     """
 
     all_zone_hvac_vrfs = osm_model.getZoneHVACTerminalUnitVariableRefrigerantFlows()
@@ -118,7 +123,7 @@ def get_all_zone_hvac_terminal_unit_variant_refrigerant_flow_objects_as_datafram
     all_zone_hvac_vrfs_df = all_zone_hvac_vrfs_df.sort_values(
         by='Name', ascending=True).reset_index(drop=True)
 
-    print(
+    logger.info(
         f"The OSM model contains {all_zone_hvac_vrfs_df.shape[0]} thermal zones")
 
     return all_zone_hvac_vrfs_df
@@ -136,7 +141,7 @@ def get_air_terminal_single_duct_parallel_piu_reheat_object_as_dict(osm_model: o
         osm_object = osm_model.getAirTerminalSingleDuctParallelPIUReheat(
             handle)
         if osm_object is None:
-            print(
+            logger.warning(
                 f"No air terminal single duct parallel PIU reheat object found with the handle: {handle}")
             return {}
 
@@ -144,7 +149,7 @@ def get_air_terminal_single_duct_parallel_piu_reheat_object_as_dict(osm_model: o
         osm_object = osm_model.getAirTerminalSingleDuctParallelPIUReheatByName(
             name)
         if not osm_object:
-            print(
+            logger.warning(
                 f"No air terminal single duct parallel PIU reheat object found with the name: {name}")
             return {}
 
@@ -172,16 +177,15 @@ def get_air_terminal_single_duct_parallel_piu_reheat_object_as_dict(osm_model: o
 
     return object_dict
 
-def get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dict(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dict(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Retrieve all air terminal single duct parallel PIU reheat objects from the OpenStudio model 
-    and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:AirTerminal:SingleDuct:ParallelPIU:Reheat objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about an air terminal single duct parallel PIU reheat object.
+    - List[Dict[str, Any]]: A list of dictionaries containing air terminal attributes.
     """
 
     # Get all spaces in the OpenStudio model.
@@ -199,14 +203,13 @@ def get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dict(osm_mod
 
 def get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Retrieve all air terminal single duct parallel PIU reheat objects from the OpenStudio model 
-    and return their attributes as a pandas DataFrame.
+    Retrieve all OS:AirTerminal:SingleDuct:ParallelPIU:Reheat objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all air terminal single duct parallel PIU reheat objects.
+    - pd.DataFrame: A DataFrame containing all air terminal attributes.
     """
 
     all_objects_dicts = get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dict(osm_model)
@@ -218,7 +221,7 @@ def get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dataframe(os
     all_air_terminals_df = all_air_terminals_df.sort_values(
         by='Name', ascending=True).reset_index(drop=True)
 
-    print(f"The OSM model contains {all_air_terminals_df.shape[0]} air terminal single duct parallel PIU reheat objects")
+    logger.info(f"The OSM model contains {all_air_terminals_df.shape[0]} air terminal single duct parallel PIU reheat objects")
 
     return all_air_terminals_df
 
@@ -226,17 +229,21 @@ def get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dataframe(os
 #--- ZoneHVAC:UnitHeater
 #------------------------
 
-def get_zone_hvac_unit_heater_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+def get_zone_hvac_unit_heater_object_as_dict(
+    osm_model: openstudio.model.Model, 
+    handle: Optional[str] = None, 
+    name: Optional[str] = None
+) -> Dict[str, Any]:
     """
-    Gets ZoneHVAC:UnitHeater information and returns it as a dictionary.
+    Retrieve attributes of an OS:ZoneHVAC:UnitHeater object from the OpenStudio Model.
 
-    Args:
-        osm_model (openstudio.model.Model): The OpenStudio model object.
-        handle (str, optional): The handle of the ZoneHVAC:UnitHeater object. Either handle or name must be provided.
-        name (str, optional): The name of the HVAC unit. Either name or handle must be provided.
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
 
     Returns:
-        dict: A dictionary containing the ZoneHVAC:UnitHeater objects's properties, or an empty dictionary if not found.
+    - Dict[str, Any]: A dictionary containing unit heater attributes.
     """
     if handle is not None and name is not None:
         raise ValueError(
@@ -248,14 +255,14 @@ def get_zone_hvac_unit_heater_object_as_dict(osm_model: openstudio.model.Model, 
     if handle is not None:
         osm_object = osm_model.getZoneHVACUnitHeater(handle)
         if osm_object is None:
-            print(
+            logger.warning(
                 f"No Zone HVAC Unit Heater object found with the handle: {handle}")
             return {}
 
     elif name is not None:
         osm_object = osm_model.getZoneHVACUnitHeaterByName(name)
         if not osm_object:
-            print(
+            logger.warning(
                 f"No Zone HVAC Unit Heater object found with the name: {name}")
             return {}
 
@@ -279,16 +286,15 @@ def get_zone_hvac_unit_heater_object_as_dict(osm_model: openstudio.model.Model, 
 
     return object_dict
 
-def get_all_zone_hvac_unit_heater_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_zone_hvac_unit_heater_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Gets all ZoneHVAC:UnitHeater objects from the OpenStudio model 
-    and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:ZoneHVAC:UnitHeater objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a ZoneHVAC:UnitHeater objects.
+    - List[Dict[str, Any]]: A list of dictionaries containing unit heater attributes.
     """
 
     # Get all spaces in the OpenStudio model.
@@ -305,14 +311,13 @@ def get_all_zone_hvac_unit_heater_objects_as_dicts(osm_model: openstudio.model.M
 
 def get_all_zone_hvac_unit_heater_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Gets all ZoneHVAC:UnitHeater object from the OpenStudio model 
-    and return their attributes as a pandas DataFrame.
+    Retrieve all OS:ZoneHVAC:UnitHeater objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all ZoneHVAC:UnitHeater objects.
+    - pd.DataFrame: A DataFrame containing all unit heater attributes.
     """
 
     all_objects_dicts = get_all_zone_hvac_unit_heater_objects_as_dicts(osm_model)
@@ -324,7 +329,7 @@ def get_all_zone_hvac_unit_heater_objects_as_dataframe(osm_model: openstudio.mod
     all_objects_df = all_objects_df.sort_values(
         by='Name', ascending=True).reset_index(drop=True)
 
-    print(f"The OSM model contains {all_objects_df.shape[0]} ZoneHVAC:UnitHeater objects")
+    logger.info(f"The OSM model contains {all_objects_df.shape[0]} ZoneHVAC:UnitHeater objects")
 
     return all_objects_df
 
@@ -332,17 +337,21 @@ def get_all_zone_hvac_unit_heater_objects_as_dataframe(osm_model: openstudio.mod
 #--- OS:ZoneHVAC:FourPipeFanCoil
 #-------------------------------
 
-def get_four_pipe_fan_coil_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+def get_four_pipe_fan_coil_object_as_dict(
+    osm_model: openstudio.model.Model, 
+    handle: Optional[str] = None, 
+    name: Optional[str] = None
+) -> Dict[str, Any]:
     """
-    Gets ZoneHVAC:FourPipeFanCoil information and returns it as a dictionary.
+    Retrieve attributes of an OS:ZoneHVAC:FourPipeFanCoil object from the OpenStudio Model.
 
-    Args:
-        osm_model (openstudio.model.Model): The OpenStudio model object.
-        handle (str, optional): The handle of the ZoneHVAC:FourPipeFanCoil object. Either handle or name must be provided.
-        name (str, optional): The name of the HVAC unit. Either name or handle must be provided.
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
 
     Returns:
-        dict: A dictionary containing the ZoneHVAC:FourPipeFanCoil objects's properties, or an empty dictionary if not found.
+    - Dict[str, Any]: A dictionary containing fan coil attributes.
     """
     if handle is not None and name is not None:
         raise ValueError(
@@ -354,14 +363,14 @@ def get_four_pipe_fan_coil_object_as_dict(osm_model: openstudio.model.Model, han
     if handle is not None:
         osm_object = osm_model.getZoneHVACFourPipeFanCoil(handle)
         if osm_object is None:
-            print(
+            logger.warning(
                 f"No ZoneHVAC:FourPipeFanCoil object found with the handle: {handle}")
             return {}
 
     elif name is not None:
         osm_object = osm_model.getZoneHVACFourPipeFanCoilByName(name)
         if not osm_object:
-            print(
+            logger.warning(
                 f"No ZoneHVAC:FourPipeFanCoil object found with the name: {name}")
             return {}
 
@@ -396,16 +405,15 @@ def get_four_pipe_fan_coil_object_as_dict(osm_model: openstudio.model.Model, han
 
     return object_dict
 
-def get_all_four_pipe_fan_coil_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_four_pipe_fan_coil_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Gets all ZoneHVAC:FourPipeFanCoil objects from the OpenStudio model
-    and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:ZoneHVAC:FourPipeFanCoil objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a ZoneHVAC:FourPipeFanCoil objects.
+    - List[Dict[str, Any]]: A list of dictionaries containing fan coil attributes.
     """
 
     # Get all ZoneHVAC:FourPipeFanCoil objects in the OpenStudio model.
@@ -422,14 +430,13 @@ def get_all_four_pipe_fan_coil_objects_as_dicts(osm_model: openstudio.model.Mode
 
 def get_all_four_pipe_fan_coil_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Gets all ZoneHVAC:FourPipeFanCoil objects from the OpenStudio model
-    and return their attributes as a pandas DataFrame.
+    Retrieve all OS:ZoneHVAC:FourPipeFanCoil objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all ZoneHVAC:FourPipeFanCoil objects.
+    - pd.DataFrame: A DataFrame containing all fan coil attributes.
     """
 
     all_objects_dicts = get_all_four_pipe_fan_coil_objects_as_dicts(osm_model)
@@ -441,6 +448,6 @@ def get_all_four_pipe_fan_coil_objects_as_dataframe(osm_model: openstudio.model.
     all_objects_df = all_objects_df.sort_values(
         by='Name', ascending=True).reset_index(drop=True)
 
-    print(f"The OSM model contains {all_objects_df.shape[0]} ZoneHVAC:FourPipeFanCoil objects")
+    logger.info(f"The OSM model contains {all_objects_df.shape[0]} ZoneHVAC:FourPipeFanCoil objects")
 
     return all_objects_df

@@ -1,15 +1,21 @@
 import openstudio
 import pandas as pd
 
+import logging
+from typing import List, Dict, Any, Optional
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
 def get_building_object_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Retrieve building object from the OpenStudio model and organize it as a pandas DataFrame.
+    Retrieve attributes of the Building object from the OpenStudio Model and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about the building object.
+    - pd.DataFrame: A DataFrame containing all Building attributes.
     """
 
     # Get building in the OpenStudio model.
@@ -43,4 +49,5 @@ def get_building_object_as_dataframe(osm_model: openstudio.model.Model) -> pd.Da
     building_df = building_df.sort_values(
         by='Name', ascending=True).reset_index(drop=True)
 
+    logger.info(f"Retrieved Building object from the model.")
     return building_df

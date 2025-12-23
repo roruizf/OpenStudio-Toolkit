@@ -1,105 +1,79 @@
 import openstudio
 import pandas as pd
+import logging
+from typing import List, Dict, Any, Optional
+
+from openstudio_toolkit.utils import helpers
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
 # --------------------------------------------------
 #  ***** OS:Output:Variable ************************
 # --------------------------------------------------
 
-
-def get_output_variable_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+def get_output_variable_object_as_dict(
+    osm_model: openstudio.model.Model, 
+    handle: Optional[str] = None, 
+    name: Optional[str] = None, 
+    _object_ref: Optional[openstudio.model.OutputVariable] = None
+) -> Dict[str, Any]:
     """
-    Gets a specified OS:Output:Variable object from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+    Retrieve attributes of an OS:Output:Variable from the OpenStudio Model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the object to get.
-    - name (str, optional): The name of the object to get.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.OutputVariable, optional): Direct object reference.
 
     Returns:
-    - dict: Dictionary containing information about the specified object.
+    - Dict[str, Any]: A dictionary containing output variable attributes.
     """
-    if handle is not None and name is not None:
-        raise ValueError(
-            "Only one of 'handle' or 'name' should be provided.")
-    if handle is None and name is None:
-        raise ValueError(
-            "Either 'handle' or 'name' must be provided.")
+    target_object = helpers.fetch_object(
+        osm_model, "OutputVariable", handle, name, _object_ref)
 
-    # Find the object by handle or name
-    if handle is not None:
-        osm_object = osm_model.getOutputVariable(handle)
-        if osm_object is None:
-            print(f"No object found with the handle: {handle}")
-            return {}
+    if target_object is None:
+        return {}
 
-    elif name is not None:
-        osm_object = osm_model.getOutputVariableByName(name)
-        if not osm_object:
-            print(f"No object found with the name: {name}")
-            return {}
-
-    target_object = osm_object.get()
-
-    # Define attributes to retrieve in a dictionary
-    object_dict = {
+    return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Output Variable",
         'Key Value': target_object.keyValue(), 
         'Variable Name': target_object.variableName(), 
-        'Reporting Frequency': target_object.reportingFrequency()}    
-    return object_dict
+        'Reporting Frequency': target_object.reportingFrequency()
+    }
 
-def get_all_output_variable_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_output_variable_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Gets all OS:Output:Variable objects from the OpenStudio model and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:Output:Variable objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a output variable object.
+    - List[Dict[str, Any]]: A list of dictionaries containing output variable attributes.
     """
-
-    # Get all spaces in the OpenStudio model.
     all_objects = osm_model.getOutputVariables()
-
-    all_objects_dicts = []
-
-    for target_object in all_objects:
-        space_handle = str(target_object.handle())
-        object_dict = get_output_variable_object_as_dict(osm_model, space_handle)
-        all_objects_dicts.append(object_dict)
-
-    return all_objects_dicts
-
+    return [get_output_variable_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
 
 def get_all_output_variable_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Gets all output variable objects from the OpenStudio model and return their attributes as a pandas DataFrame.
+    Retrieve all OS:Output:Variable objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all output variable objects.
+    - pd.DataFrame: A DataFrame containing all Output:Variable attributes.
     """
-
     all_objects_dicts = get_all_output_variable_objects_as_dicts(osm_model)
+    df = pd.DataFrame(all_objects_dicts)
 
-    # Define the columns for the DataFrame
-    columns = ['Handle', 'Name', 'Key Value', 'Variable Name', 'Reporting Frequency']
+    if df.empty:
+        df = pd.DataFrame(columns=['Handle', 'Name', 'Key Value', 'Variable Name', 'Reporting Frequency'])
+    elif 'Name' in df.columns:
+        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
 
-    # If all_objects_dicts is None or empty, create an empty DataFrame with the defined columns
-    if not all_objects_dicts:
-        all_objects_df = pd.DataFrame(columns=columns)
-    else:
-        # Create a DataFrame of all output variable objects.
-        all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_objects_df = all_objects_df.sort_values(
-        by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    print(
-        f"The OSM model contains {all_objects_df.shape[0]} output variable objects.")
-
-    return all_objects_df
+    logger.info(f"Retrieved {len(df)} Output:Variable objects from the model.")
+    return df

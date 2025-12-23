@@ -1,114 +1,95 @@
 import openstudio
 import pandas as pd
+import logging
+from typing import List, Dict, Any, Optional
 
+from openstudio_toolkit.utils import helpers
 
-def get_thermal_zone_object_as_dict(osm_model: openstudio.model.Model, zone_handle: str = None, zone_name: str = None) -> dict:
+# Configure logger
+logger = logging.getLogger(__name__)
+
+# --------------------------------------------------
+#  ***** OS:ThermalZone ****************************
+# --------------------------------------------------
+
+def get_thermal_zone_object_as_dict(
+    osm_model: openstudio.model.Model, 
+    handle: Optional[str] = None, 
+    name: Optional[str] = None, 
+    _object_ref: Optional[openstudio.model.ThermalZone] = None
+) -> Dict[str, Any]:
     """
-    Retrieve a thermal zone from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+    Retrieve attributes of an OS:ThermalZone from the OpenStudio Model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - zone_handle (str, optional): The handle of the thermal zone to retrieve.
-    - zone_name (str, optional): The name of the thermal zone to retrieve.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.ThermalZone, optional): Direct object reference.
 
     Returns:
-    - dict: Dictionary containing information about the specified thermal zone.
+    - Dict[str, Any]: A dictionary containing thermal zone attributes.
     """
+    target_object = helpers.fetch_object(
+        osm_model, "ThermalZone", handle, name, _object_ref)
 
-    if zone_handle is not None and zone_name is not None:
-        raise ValueError(
-            "Only one of 'zone_handle' or 'zone_name' should be provided.")
-    if zone_handle is None and zone_name is None:
-        raise ValueError(
-            "Either 'zone_handle' or 'zone_name' must be provided.")
+    if target_object is None:
+        return {}
 
-    # Find the thermal zone by handle or name
-    if zone_handle is not None:
-        zone_object = osm_model.getThermalZone(zone_handle)
-        if zone_object.isNull():
-            print(f"No thermal zone found with the handle: {zone_handle}")
-            return {}
-
-    elif zone_name is not None:
-        zone_object = osm_model.getThermalZoneByName(zone_name)
-        if zone_object.isNull():
-            print(f"No thermal zone found with the name: {zone_name}")
-            return {}
-
-    target_zone = zone_object.get()
-
-    # Define attributes to retrieve in a dictionary
-    zone_dict = {
-        'Handle': str(target_zone.handle()),
-        'Name': target_zone.name().get() if target_zone.name().is_initialized() else None,
-        'Multiplier': target_zone.multiplier(),
-        'Ceiling Height {m}': target_zone.ceilingHeight().get() if target_zone.ceilingHeight().is_initialized() else None,
-        'Volume {m3}': target_zone.airVolume(),
-        'Floor Area {m2}': target_zone.floorArea(),        
-        'Zone Inside Convection Algorithm': target_zone.zoneInsideConvectionAlgorithm().get() if target_zone.zoneInsideConvectionAlgorithm().is_initialized() else None,
-        'Zone Outside Convection Algorithm': target_zone.zoneOutsideConvectionAlgorithm().get() if target_zone.zoneOutsideConvectionAlgorithm().is_initialized() else None,
-        'Zone Conditioning Equipment List Name': target_zone.zoneConditioningEquipmentListName(),
-        'Zone Air Inlet Port List': str(target_zone.inletPortList().handle()) if not target_zone.inletPortList().handle().isNull() else None,
-        'Zone Air Exhaust Port List': str(target_zone.exhaustPortList().handle()) if not target_zone.exhaustPortList().handle().isNull() else None,
-        'Zone Air Node Name': target_zone.zoneAirNode().name().get() if target_zone.zoneAirNode().name().is_initialized() else None,
-        'Zone Return Air Port List': str(target_zone.returnPortList().handle()) if not target_zone.returnPortList().handle().isNull() else None,
-        'Primary Daylighting Control Name': target_zone.primaryDaylightingControl().get().name().get() if (target_zone.primaryDaylightingControl().is_initialized() and target_zone.primaryDaylightingControl().get().name().is_initialized) else None,
-        'Fraction of Zone Controlled by Primary Daylighting Control': target_zone.fractionofZoneControlledbyPrimaryDaylightingControl(),
-        'Secondary Daylighting Control Name': target_zone.secondaryDaylightingControl().get().name().get() if (target_zone.secondaryDaylightingControl().is_initialized() and target_zone.secondaryDaylightingControl().get().name().is_initialized()) else None,
-        'Fraction of Zone Controlled by Secondary Daylighting Control': target_zone.fractionofZoneControlledbySecondaryDaylightingControl(),
-        'Illuminance Map Name': target_zone.illuminanceMap().get().name().get() if (target_zone.illuminanceMap().is_initialized() and target_zone.illuminanceMap().get().name().is_initialized) else None,
-        'Group Rendering Name': target_zone.renderingColor().get().name().get() if (target_zone.renderingColor().is_initialized() and target_zone.renderingColor().get().name().is_initialized) else None,
-        'Thermostat Name': target_zone.thermostat().get().name().get() if(target_zone.thermostat().is_initialized() and target_zone.thermostat().get().name().is_initialized()) else None,
-        'Use Ideal Air Loads': target_zone.useIdealAirLoads(),
-        'Humidistat Name': target_zone.zoneControlHumidistat().get().name().get() if target_zone.zoneControlHumidistat().is_initialized() else None,
-        'Daylighting Controls Availability Schedule Name': target_zone.daylightingControlsAvailabilitySchedule().get().name().get() if target_zone.daylightingControlsAvailabilitySchedule().is_initialized() else None
+    return {
+        'Handle': str(target_object.handle()),
+        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Thermal Zone",
+        'Multiplier': target_object.multiplier(),
+        'Ceiling Height {m}': target_object.ceilingHeight().get() if target_object.ceilingHeight().is_initialized() else None,
+        'Volume {m3}': target_object.airVolume(),
+        'Floor Area {m2}': target_object.floorArea(),        
+        'Zone Inside Convection Algorithm': target_object.zoneInsideConvectionAlgorithm().get() if target_object.zoneInsideConvectionAlgorithm().is_initialized() else None,
+        'Zone Outside Convection Algorithm': target_object.zoneOutsideConvectionAlgorithm().get() if target_object.zoneOutsideConvectionAlgorithm().is_initialized() else None,
+        'Zone Conditioning Equipment List Name': target_object.zoneConditioningEquipmentListName(),
+        'Zone Air Inlet Port List Handle': str(target_object.inletPortList().handle()) if target_object.inletPortList().handle() else None,
+        'Zone Air Exhaust Port List Handle': str(target_object.exhaustPortList().handle()) if target_object.exhaustPortList().handle() else None,
+        'Zone Air Node Name': target_object.zoneAirNode().name().get() if target_object.zoneAirNode().name().is_initialized() else None,
+        'Zone Return Air Port List Handle': str(target_object.returnPortList().handle()) if target_object.returnPortList().handle() else None,
+        'Primary Daylighting Control Name': target_object.primaryDaylightingControl().get().name().get() if (target_object.primaryDaylightingControl().is_initialized() and target_object.primaryDaylightingControl().get().name().is_initialized()) else None,
+        'Fraction of Zone Controlled by Primary Daylighting Control': target_object.fractionofZoneControlledbyPrimaryDaylightingControl(),
+        'Secondary Daylighting Control Name': target_object.secondaryDaylightingControl().get().name().get() if (target_object.secondaryDaylightingControl().is_initialized() and target_object.secondaryDaylightingControl().get().name().is_initialized()) else None,
+        'Fraction of Zone Controlled by Secondary Daylighting Control': target_object.fractionofZoneControlledbySecondaryDaylightingControl(),
+        'Illuminance Map Name': target_object.illuminanceMap().get().name().get() if (target_object.illuminanceMap().is_initialized() and target_object.illuminanceMap().get().name().is_initialized()) else None,
+        'Group Rendering Name': target_object.renderingColor().get().name().get() if (target_object.renderingColor().is_initialized() and target_object.renderingColor().get().name().is_initialized()) else None,
+        'Thermostat Name': target_object.thermostat().get().name().get() if(target_object.thermostat().is_initialized() and target_object.thermostat().get().name().is_initialized()) else None,
+        'Use Ideal Air Loads': target_object.useIdealAirLoads(),
+        'Humidistat Name': target_object.zoneControlHumidistat().get().name().get() if target_object.zoneControlHumidistat().is_initialized() else None,
+        'Daylighting Controls Availability Schedule Name': target_object.daylightingControlsAvailabilitySchedule().get().name().get() if target_object.daylightingControlsAvailabilitySchedule().is_initialized() else None
     }
 
-    return zone_dict
-
-def get_all_thermal_zones_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_thermal_zones_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Retrieve all thermal zones from the OpenStudio model and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:ThermalZone objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a thermal zone.
+    - List[Dict[str, Any]]: A list of dictionaries containing thermal zone attributes.
     """
-
-    # Get all thermal zones in the OpenStudio model.
     all_objects = osm_model.getThermalZones()
-
-    all_objects_dicts = []
-
-    for target_object in all_objects:
-        thermal_zone_handle = str(target_object.handle())
-        object_dict = get_thermal_zone_object_as_dict(osm_model, thermal_zone_handle)
-        all_objects_dicts.append(object_dict)
-
-    return all_objects_dicts
+    return [get_thermal_zone_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
 
 def get_all_thermal_zones_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Retrieve all thermal zones from the OpenStudio model and organize them into a pandas DataFrame.
+    Retrieve all OS:ThermalZone objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all thermal zones.
+    - pd.DataFrame: A DataFrame containing all ThermalZone attributes.
     """
-
     all_objects_dicts = get_all_thermal_zones_objects_as_dicts(osm_model)
+    df = pd.DataFrame(all_objects_dicts)
 
-    # Create a DataFrame of all thermal zones.
-    all_thermal_zones_df = pd.DataFrame(all_objects_dicts)
+    if not df.empty and 'Name' in df.columns:
+        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
 
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_thermal_zones_df = all_thermal_zones_df.sort_values(
-        by='Name', ascending=True).reset_index(drop=True)
-
-    print(f"The OSM model contains {all_thermal_zones_df.shape[0]} thermal zones")
-
-    return all_thermal_zones_df
+    logger.info(f"Retrieved {len(df)} ThermalZone objects from the model.")
+    return df

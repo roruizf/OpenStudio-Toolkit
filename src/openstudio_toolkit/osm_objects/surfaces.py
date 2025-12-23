@@ -1,117 +1,82 @@
 import openstudio
 import pandas as pd
+import logging
+from typing import List, Dict, Any, Optional
 
-def get_surface_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+from openstudio_toolkit.utils import helpers
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
+# --------------------------------------------------
+#  ***** OS:Surface ********************************
+# --------------------------------------------------
+
+def get_surface_object_as_dict(
+    osm_model: openstudio.model.Model, 
+    handle: Optional[str] = None, 
+    name: Optional[str] = None, 
+    _object_ref: Optional[openstudio.model.Surface] = None
+) -> Dict[str, Any]:
     """
-    Retrieve a surface object from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+    Retrieve attributes of an OS:Surface from the OpenStudio Model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the surface to retrieve.
-    - name (str, optional): The name of the surface to retrieve.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.Surface, optional): Direct object reference.
 
     Returns:
-    - dict: Dictionary containing information about the specified surface.
+    - Dict[str, Any]: A dictionary containing surface attributes.
     """
-    # Define the methods to retrieve surfaces by handle and name
-    get_surface_by_handle = osm_model.getSurface
-    get_surface_by_name = osm_model.getSurfaceByName
+    target_object = helpers.fetch_object(
+        osm_model, "Surface", handle, name, _object_ref)
 
-    if handle is not None and name is not None:
-        raise ValueError("Only one of 'handle' or 'name' should be provided.")
-    if handle is None and name is None:
-        raise ValueError("Either 'handle' or 'name' must be provided.")
+    if target_object is None:
+        return {}
 
-    # Find the surface by handle or name
-    if handle is not None:
-        surface_obj = get_surface_by_handle(handle)
-        if surface_obj.isNull():
-            print(f"No surface found with the handle: {handle}")
-            return {}
-    elif name is not None:
-        surface_obj = get_surface_by_name(name)
-        if surface_obj.isNull():
-            print(f"No surface found with the name: {name}")
-            return {}
-
-    target_surface = surface_obj.get()
-
-    # Define attributes to retrieve
-    surface_dict = {
-        'Handle': str(target_surface.handle()),
-        'Name': target_surface.name().get() if target_surface.name().is_initialized() else None,
-        'Surface Type': target_surface.surfaceType(),
-        'Construction Name': target_surface.construction().get().name().get() if not target_surface.construction().isNull() else None,        
-        'Space Name': target_surface.space().get().name().get(),
-        'Outside Boundary Condition': target_surface.outsideBoundaryCondition(),
-        'Outside Boundary Condition Object': target_surface.adjacentSurface().get().name().get() if not target_surface.adjacentSurface().isNull() else None,
-        'Sun Exposure': target_surface.sunExposure(),
-        'Wind Exposure': target_surface.windExposure(),
-        'View Factor to Ground': None,
-        'Number of Vertices': None
+    return {
+        'Handle': str(target_object.handle()),
+        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Surface",
+        'Surface Type': target_object.surfaceType(),
+        'Construction Name': target_object.construction().get().name().get() if target_object.construction().is_initialized() else None,        
+        'Space Name': target_object.space().get().name().get() if target_object.space().is_initialized() else None,
+        'Outside Boundary Condition': target_object.outsideBoundaryCondition(),
+        'Adjacent Surface Name': target_object.adjacentSurface().get().name().get() if target_object.adjacentSurface().is_initialized() else None,
+        'Sun Exposure': target_object.sunExposure(),
+        'Wind Exposure': target_object.windExposure(),
+        'Number of Vertices': len(target_object.vertices())
     }
 
-    return surface_dict
-
-
-def get_all_surface_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_surface_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Retrieve all surface objects from the OpenStudio model and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:Surface objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a surface object.
+    - List[Dict[str, Any]]: A list of dictionaries containing surface attributes.
     """
-
-    # Get all surface objects in the OpenStudio model.
-    all_surfaces = osm_model.getSurfaces()
-
-    all_surfaces_dicts = []
-
-    for target_surface in all_surfaces:
-        object_handle = str(target_surface.handle())
-        object_dict = get_surface_object_as_dict(osm_model, handle=object_handle)
-        all_surfaces_dicts.append(object_dict)
-
-    return all_surfaces_dicts
+    all_objects = osm_model.getSurfaces()
+    return [get_surface_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
 
 def get_all_surface_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all OS:Surface objects and organize them into a pandas DataFrame.
 
-    # Get all surfaces in the OpenStudio model.
-    all_surfaces = osm_model.getSurfaces()
-    # Define attributtes to retrieve in a dictionary
-    object_attr = {
-        'Handle': [str(x.handle()) for x in all_surfaces],
-        'Name': [x.name().get() for x in all_surfaces],
-        'Surface Type': [x.surfaceType() for x in all_surfaces],
-        'Construction Name': [x.construction().get().name().get() if not x.construction().isNull() else None for x in all_surfaces],
-        'Space Name': [x.space().get().name().get()
-                       for x in all_surfaces],
-        'Outside Boundary Condition': [x.outsideBoundaryCondition() for x in all_surfaces],
-        'Outside Boundary Condition Object': [x.adjacentSurface().get().name(
-        ).get() if not x.adjacentSurface().isNull() else None for x in all_surfaces],
-        'Sun Exposure': [x.sunExposure() for x in all_surfaces],
-        'Wind Exposure': [x.windExposure() for x in all_surfaces],
-        'View Factor to Ground': None,
-        'Number of Vertices': None
-        # 'X,Y,Z Vertex 1 {m}': None,
-        # 'X,Y,Z Vertex 2 {m}': None,
-        # 'X,Y,Z Vertex 3 {m}': None,
-        # 'X,Y,Z Vertex 4 {m}': None,
-        # 'X,Y,Z Vertex 5 {m}': None,
-        # 'X,Y,Z Vertex 6 {m}': None
-    }
-    # Create a DataFrame of all spaces.
-    all_surfaces_df = pd.DataFrame(columns=object_attr.keys())
-    for key in object_attr.keys():
-        all_surfaces_df[key] = object_attr[key]
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
-    # Sort the DataFrame alphabetically by the SpaceName column and reset indexes
-    all_surfaces_df = all_surfaces_df.sort_values(
-        by='Name', ascending=True).reset_index(drop=True)
+    Returns:
+    - pd.DataFrame: A DataFrame containing all Surface attributes.
+    """
+    all_objects_dicts = get_all_surface_objects_as_dicts(osm_model)
+    df = pd.DataFrame(all_objects_dicts)
 
-    print(f"The OSM model contains {all_surfaces_df.shape[0]} surfaces")
+    if not df.empty and 'Name' in df.columns:
+        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
 
-    return all_surfaces_df
+    logger.info(f"Retrieved {len(df)} Surface objects from the model.")
+    return df

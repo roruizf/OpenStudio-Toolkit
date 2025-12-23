@@ -1,310 +1,206 @@
 import openstudio
 import pandas as pd
+import logging
+from typing import Dict, Any, List, Optional
+from openstudio_toolkit.utils import helpers
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 # --------------------------------------------------
 #  ***** OS:Exterior:FuelEquipment:Definition ******
 # --------------------------------------------------
 
-
-def get_exterior_fuel_equipment_definition_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+def get_exterior_fuel_equipment_definition_object_as_dict(
+    osm_model: openstudio.model.Model, 
+    handle: Optional[str] = None, 
+    name: Optional[str] = None, 
+    _object_ref: Optional[openstudio.model.ExteriorFuelEquipmentDefinition] = None
+) -> Dict[str, Any]:
     """
-    Gets a specified OS:Exterior:FuelEquipment:Definition object from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+    Retrieve attributes of an OS:Exterior:FuelEquipment:Definition from the OpenStudio Model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the object to get.
-    - name (str, optional): The name of the object to get.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.ExteriorFuelEquipmentDefinition, optional): Direct object reference.
 
     Returns:
-    - dict: Dictionary containing information about the specified object.
+    - Dict[str, Any]: A dictionary containing exterior fuel equipment definition attributes.
     """  
-    if handle is not None and name is not None:
-        raise ValueError(
-            "Only one of 'handle' or 'name' should be provided.")
-    if handle is None and name is None:
-        raise ValueError(
-            "Either 'handle' or 'name' must be provided.")
+    target_object = helpers.fetch_object(
+        osm_model, "ExteriorFuelEquipmentDefinition", handle, name, _object_ref)
 
-    # Find the object by handle or name
-    if handle is not None:
-        osm_object = osm_model.getExteriorFuelEquipmentDefinition(handle)
-        if osm_object is None:
-            print(f"No object found with the handle: {handle}")
-            return {}
+    if target_object is None:
+        return {}
 
-    elif name is not None:
-        osm_object = osm_model.getExteriorFuelEquipmentDefinitionByName(name)
-        if not osm_object:
-            print(f"No object found with the name: {name}")
-            return {}
+    return {
+        'Handle': str(target_object.handle()), 
+        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Exterior Fuel Equipment Definition", 
+        'Design Level {W}': target_object.designLevel()
+    }
 
-    target_object = osm_object.get()
-
-    # Define attributes to retrieve in a dictionary
-    object_dict = {'Handle':  str(target_object.handle()), 
-                   'Name': target_object.nameString(), 
-                   'Design Level {W}': target_object.designLevel()}
-
-    return object_dict
-
-def get_all_exterior_fuel_equipment_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_exterior_fuel_equipment_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Gets all OS:Exterior:FuelEquipment:Definition objects from the OpenStudio model and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:Exterior:FuelEquipment:Definition objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a space.
+    - List[Dict[str, Any]]: A list of dictionaries containing exterior fuel equipment definition attributes.
     """
-
-    # Get all spaces in the OpenStudio model.
     all_objects = osm_model.getExteriorFuelEquipmentDefinitions()
-
-    all_objects_dicts = []
-
-    for target_object in all_objects:
-        space_handle = str(target_object.handle())
-        object_dict = get_exterior_fuel_equipment_definition_object_as_dict(osm_model, space_handle)
-        all_objects_dicts.append(object_dict)
-
-    return all_objects_dicts
-
+    return [get_exterior_fuel_equipment_definition_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
 
 def get_all_exterior_fuel_equipment_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Gets all exterior fuel equipment definition objects from the OpenStudio model and return their attributes as a pandas DataFrame.
+    Retrieve all OS:Exterior:FuelEquipment:Definition objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all exterior fuel equipment definition objects.
+    - pd.DataFrame: A DataFrame containing all exterior fuel equipment definition attributes.
     """
-
     all_objects_dicts = get_all_exterior_fuel_equipment_definition_objects_as_dicts(osm_model)
+    df = pd.DataFrame(all_objects_dicts)
 
-    # Define the columns for the DataFrame
-    columns = ['Handle', 'Name', 'Design Level {W}']
+    if not df.empty and 'Name' in df.columns:
+        df = df.sort_values(by='Name', ascending=True, na_position='first').reset_index(drop=True)
 
-    # If all_objects_dicts is None or empty, create an empty DataFrame with the defined columns
-    if not all_objects_dicts:
-        all_objects_df = pd.DataFrame(columns=columns)
-    else:
-        # Create a DataFrame of all exterior fuel equipment definition objects.
-        all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_objects_df = all_objects_df.sort_values(
-        by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    print(
-        f"The OSM model contains {all_objects_df.shape[0]} exterior fuel equipment definition objects.")
-
-    return all_objects_df
-
+    logger.info(f"Retrieved {len(df)} ExteriorFuelEquipmentDefinition objects from the model.")
+    return df
 
 # --------------------------------------------------
 #  ***** OS:Exterior:WaterEquipment:Definition *****
 # --------------------------------------------------
 
-
-def get_exterior_water_equipment_definition_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+def get_exterior_water_equipment_definition_object_as_dict(
+    osm_model: openstudio.model.Model, 
+    handle: Optional[str] = None, 
+    name: Optional[str] = None, 
+    _object_ref: Optional[openstudio.model.ExteriorWaterEquipmentDefinition] = None
+) -> Dict[str, Any]:
     """
-    Gets a specified OS:Exterior:WaterEquipment:Definition object from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+    Retrieve attributes of an OS:Exterior:WaterEquipment:Definition from the OpenStudio Model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the object to get.
-    - name (str, optional): The name of the object to get.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.ExteriorWaterEquipmentDefinition, optional): Direct object reference.
 
     Returns:
-    - dict: Dictionary containing information about the specified object.
+    - Dict[str, Any]: A dictionary containing exterior water equipment definition attributes.
     """  
-    if handle is not None and name is not None:
-        raise ValueError(
-            "Only one of 'handle' or 'name' should be provided.")
-    if handle is None and name is None:
-        raise ValueError(
-            "Either 'handle' or 'name' must be provided.")
+    target_object = helpers.fetch_object(
+        osm_model, "ExteriorWaterEquipmentDefinition", handle, name, _object_ref)
 
-    # Find the object by handle or name
-    if handle is not None:
-        osm_object = osm_model.getExteriorWaterEquipmentDefinition(handle)
-        if osm_object is None:
-            print(f"No object found with the handle: {handle}")
-            return {}
+    if target_object is None:
+        return {}
 
-    elif name is not None:
-        osm_object = osm_model.getExteriorWaterEquipmentDefinitionByName(name)
-        if not osm_object:
-            print(f"No object found with the name: {name}")
-            return {}
+    return {
+        'Handle': str(target_object.handle()), 
+        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Exterior Water Equipment Definition", 
+        'Design Level {m3/s}': target_object.designLevel()
+    }
 
-    target_object = osm_object.get()
-
-    # Define attributes to retrieve in a dictionary
-    object_dict = {'Handle':  str(target_object.handle()), 
-                   'Name': target_object.nameString(), 
-                   'Design Level {m3/s}': target_object.designLevel()}
-
-    return object_dict
-
-def get_all_exterior_water_equipment_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_exterior_water_equipment_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Gets all OS:Exterior:WaterEquipment:Definition objects from the OpenStudio model and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:Exterior:WaterEquipment:Definition objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a space.
+    - List[Dict[str, Any]]: A list of dictionaries containing exterior water equipment definition attributes.
     """
-
-    # Get all spaces in the OpenStudio model.
     all_objects = osm_model.getExteriorWaterEquipmentDefinitions()
-
-    all_objects_dicts = []
-
-    for target_object in all_objects:
-        space_handle = str(target_object.handle())
-        object_dict = get_exterior_water_equipment_definition_object_as_dict(osm_model, space_handle)
-        all_objects_dicts.append(object_dict)
-
-    return all_objects_dicts
-
+    return [get_exterior_water_equipment_definition_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
 
 def get_all_exterior_water_equipment_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Gets all exterior water equipment definition objects from the OpenStudio model and return their attributes as a pandas DataFrame.
+    Retrieve all OS:Exterior:WaterEquipment:Definition objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all exterior water equipment definition objects.
+    - pd.DataFrame: A DataFrame containing all exterior water equipment definition attributes.
     """
-
     all_objects_dicts = get_all_exterior_water_equipment_definition_objects_as_dicts(osm_model)
+    df = pd.DataFrame(all_objects_dicts)
 
-    # Define the columns for the DataFrame
-    columns = ['Handle', 'Name', 'Design Level {m3/s}']
+    if not df.empty and 'Name' in df.columns:
+        df = df.sort_values(by='Name', ascending=True, na_position='first').reset_index(drop=True)
 
-    # If all_objects_dicts is None or empty, create an empty DataFrame with the defined columns
-    if not all_objects_dicts:
-        all_objects_df = pd.DataFrame(columns=columns)
-    else:
-        # Create a DataFrame of all exterior water equipment definition objects.
-        all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_objects_df = all_objects_df.sort_values(
-        by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    print(
-        f"The OSM model contains {all_objects_df.shape[0]} exterior water equipment definition objects.")
-
-    return all_objects_df
-
+    logger.info(f"Retrieved {len(df)} ExteriorWaterEquipmentDefinition objects from the model.")
+    return df
 
 # --------------------------------------------------
 #  ***** OS:Exterior:Lights:Definition *************
 # --------------------------------------------------
 
-
-def get_exterior_lights_definition_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None) -> dict:
+def get_exterior_lights_definition_object_as_dict(
+    osm_model: openstudio.model.Model, 
+    handle: Optional[str] = None, 
+    name: Optional[str] = None, 
+    _object_ref: Optional[openstudio.model.ExteriorLightsDefinition] = None
+) -> Dict[str, Any]:
     """
-    Gets a specified OS:Exterior:Lights:Definition object from the OpenStudio model by either handle or name and return its attributes as a dictionary.
+    Retrieve attributes of an OS:Exterior:Lights:Definition from the OpenStudio Model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the object to get.
-    - name (str, optional): The name of the object to get.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.ExteriorLightsDefinition, optional): Direct object reference.
 
     Returns:
-    - dict: Dictionary containing information about the specified object.
+    - Dict[str, Any]: A dictionary containing exterior lights definition attributes.
     """  
-    if handle is not None and name is not None:
-        raise ValueError(
-            "Only one of 'handle' or 'name' should be provided.")
-    if handle is None and name is None:
-        raise ValueError(
-            "Either 'handle' or 'name' must be provided.")
+    target_object = helpers.fetch_object(
+        osm_model, "ExteriorLightsDefinition", handle, name, _object_ref)
 
-    # Find the object by handle or name
-    if handle is not None:
-        osm_object = osm_model.getExteriorLightsDefinition(handle)
-        if osm_object is None:
-            print(f"No object found with the handle: {handle}")
-            return {}
+    if target_object is None:
+        return {}
 
-    elif name is not None:
-        osm_object = osm_model.getExteriorLightsDefinitionByName(name)
-        if not osm_object:
-            print(f"No object found with the name: {name}")
-            return {}
+    return {
+        'Handle': str(target_object.handle()), 
+        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Exterior Lights Definition", 
+        'Design Level {W}': target_object.designLevel()
+    }
 
-    target_object = osm_object.get()
-
-    # Define attributes to retrieve in a dictionary
-    object_dict = {'Handle':  str(target_object.handle()), 
-                   'Name': target_object.nameString(), 
-                   'Design Level {W}': target_object.designLevel()}
-
-    return object_dict
-
-def get_all_exterior_lights_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
+def get_all_exterior_lights_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """
-    Gets all OS:Exterior:Lights:Definition objects from the OpenStudio model and return their attributes as a list of dictionaries.
+    Retrieve attributes for all OS:Exterior:Lights:Definition objects in the model.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - list[dict]: A list of dictionaries, each containing information about a space.
+    - List[Dict[str, Any]]: A list of dictionaries containing exterior lights definition attributes.
     """
-
-    # Get all spaces in the OpenStudio model.
     all_objects = osm_model.getExteriorLightsDefinitions()
-
-    all_objects_dicts = []
-
-    for target_object in all_objects:
-        space_handle = str(target_object.handle())
-        object_dict = get_exterior_lights_definition_object_as_dict(osm_model, space_handle)
-        all_objects_dicts.append(object_dict)
-
-    return all_objects_dicts
-
+    return [get_exterior_lights_definition_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
 
 def get_all_exterior_lights_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
-    Gets all exterior lights definition objects from the OpenStudio model and return their attributes as a pandas DataFrame.
+    Retrieve all OS:Exterior:Lights:Definition objects and organize them into a pandas DataFrame.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-    - pd.DataFrame: DataFrame containing information about all exterior lights definition objects.
+    - pd.DataFrame: A DataFrame containing all exterior lights definition attributes.
     """
-
     all_objects_dicts = get_all_exterior_lights_definition_objects_as_dicts(osm_model)
+    df = pd.DataFrame(all_objects_dicts)
 
-    # Define the columns for the DataFrame
-    columns = ['Handle', 'Name', 'Design Level {W}']
+    if not df.empty and 'Name' in df.columns:
+        df = df.sort_values(by='Name', ascending=True, na_position='first').reset_index(drop=True)
 
-    # If all_objects_dicts is None or empty, create an empty DataFrame with the defined columns
-    if not all_objects_dicts:
-        all_objects_df = pd.DataFrame(columns=columns)
-    else:
-        # Create a DataFrame of all exterior lights definition objects.
-        all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_objects_df = all_objects_df.sort_values(
-        by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    print(
-        f"The OSM model contains {all_objects_df.shape[0]} exterior lights definition objects.")
-
-    return all_objects_df
+    logger.info(f"Retrieved {len(df)} ExteriorLightsDefinition objects from the model.")
+    return df

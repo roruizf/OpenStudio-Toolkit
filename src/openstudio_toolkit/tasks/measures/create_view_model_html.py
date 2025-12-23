@@ -2,129 +2,130 @@ import openstudio
 import tempfile
 import os
 import shutil
+import logging
 from pathlib import Path
 from typing import Dict, Any
 from importlib.resources import files
 
 from openstudio_toolkit.utils.measure_runner import MeasureRunner
 
+# Configure logger
+logger = logging.getLogger(__name__)
 
 def _get_measure_dir() -> Path:
-    """Get the view_model measure directory path."""
-    return Path(str(files('openstudio_toolkit.resources.measures').joinpath('view_model')))
+    """
+    Get the view_model measure directory path using internal package resources.
 
+    Returns:
+    - Path: Absolute path to the view_model measure directory.
+    """
+    return Path(str(files('openstudio_toolkit.resources.measures').joinpath('view_model')))
 
 def validator(osm_model: openstudio.model.Model) -> Dict[str, Any]:
     """
-    Validates that the view_model measure resource exists.
+    Validate that the view_model measure resource exists and is properly structured.
 
-    Args:
-        osm_model: The OpenStudio Model object.
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
 
     Returns:
-        Dict with 'status' ('READY', 'ERROR') and 'messages' (list of strings).
+    - Dict[str, Any]: Status dictionary with 'status' ('READY' or 'ERROR') and 'messages'.
     """
     messages = []
 
-    # Check if measure resource exists using importlib.resources
+    # Check if measure resource exists
     try:
         measure_dir = _get_measure_dir()
-
         if not measure_dir.exists():
-            messages.append(
-                "ERROR: Measure resource 'view_model' not found")
-            return {"status": "ERROR", "messages": messages}
+            msg = "ERROR: Measure resource 'view_model' not found."
+            logger.error(msg)
+            return {"status": "ERROR", "messages": [msg]}
     except Exception as e:
-        messages.append(f"ERROR: Could not locate measure resource: {e}")
-        return {"status": "ERROR", "messages": messages}
+        msg = f"ERROR: Could not locate measure resource: {e}"
+        logger.error(msg)
+        return {"status": "ERROR", "messages": [msg]}
 
     runner = MeasureRunner()
     if not runner.verify_measure_content(str(measure_dir)):
-        messages.append(
-            "ERROR: Measure resource is invalid (missing measure.xml)")
-        return {"status": "ERROR", "messages": messages}
+        msg = "ERROR: Measure resource is invalid (missing measure.xml)."
+        logger.error(msg)
+        return {"status": "ERROR", "messages": [msg]}
 
-    messages.append("OK: All validations passed")
-    return {"status": "READY", "messages": messages}
-
+    logger.info("view_model measure validation successful.")
+    return {"status": "READY", "messages": ["OK: All validations passed."]}
 
 def run(osm_model: openstudio.model.Model, output_path: str) -> str:
     """
-    Executes the view_model measure to generate an HTML report.
+    Execute the view_model measure to generate an interactive HTML model visualization.
 
-    IMPORTANT: This task returns a string (path to HTML) instead of a Model object.
+    IMPORTANT: This task returns the path to the generated HTML file.
 
-    Args:
-        osm_model: The OpenStudio Model object.
-        output_path: Path where the HTML report should be saved.
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - output_path (str): File path where the resulting HTML report will be saved.
 
     Returns:
-        String path to the generated HTML report.
+    - str: The absolute path to the generated HTML report.
 
     Raises:
-        RuntimeError: If measure execution fails.
+    - RuntimeError: If measure execution or resource handling fails.
     """
-    print("INFO: Starting View Model HTML generation task...")
+    logger.info("Starting View Model HTML generation task...")
 
-    # Validate
+    # Validate resource
     validation = validator(osm_model)
     if validation["status"] != "READY":
         raise RuntimeError(f"Validation failed: {validation['messages']}")
 
-    # Get measure directory using importlib.resources
     measure_dir = _get_measure_dir()
 
-    # Save current model to temporary OSM file
+    # Save current model to temporary OSM
     with tempfile.NamedTemporaryFile(suffix='.osm', delete=False) as temp_file:
         temp_osm_path = temp_file.name
 
-    # CRITICAL FIX: Remove weather file if initialized
-    # The view_model measure crashes if weather file object is present
+    # CRITICAL: Remove weather file object if present (known issue with view_model measure crash)
     if osm_model.weatherFile().is_initialized():
-        print("INFO: Removing weather file object (required for view_model measure)")
+        logger.info("Temporarily removing weather file object for view_model compatibility.")
         osm_model.weatherFile().get().remove()
 
     osm_model.save(temp_osm_path, True)
 
     try:
-        # Run the measure with extra_output_files to capture report.html
+        # Run the measure
         runner = MeasureRunner()
         result = runner.run(
             model_path=temp_osm_path,
             measure_dir=str(measure_dir),
-            arguments={},  # view_model measure has no arguments
-            run_simulation=False,  # CRITICAL: Measures only mode
-            extra_output_files=["report.html",
-                                "run/000_view_model/report.html"]
+            arguments={},
+            run_simulation=False,
+            extra_output_files=["report.html", "run/000_view_model/report.html"]
         )
 
-        # Extract the HTML file from extra_files
+        # Extract HTML output from extra files
         if "extra_files" not in result or not result["extra_files"]:
-            raise RuntimeError("HTML report was not generated by the measure")
+            raise RuntimeError("HTML report was not generated by the measure.")
 
-        # Get the first found HTML file
         html_temp_path = None
-        for pattern, path in result["extra_files"].items():
+        for _, path in result["extra_files"].items():
             if path and os.path.exists(path):
                 html_temp_path = path
                 break
 
         if not html_temp_path:
-            raise RuntimeError("Could not find generated HTML report")
+            raise RuntimeError("Could not find generated HTML report in output directory.")
 
-        # Copy to final output location
+        # Move to requested output path
         shutil.copy2(html_temp_path, output_path)
 
-        # Clean up temporary HTML
+        # Cleanup intermediate HTML
         if os.path.exists(html_temp_path):
             os.unlink(html_temp_path)
 
-        print(
-            f"INFO: View Model HTML report generated successfully: {output_path}")
+        logger.info(f"View Model HTML report generated successfully: {output_path}")
         return output_path
 
     finally:
-        # Clean up temporary OSM file
+        # Clean up temporary OSM files
         if os.path.exists(temp_osm_path):
             os.unlink(temp_osm_path)
         if 'result' in locals() and os.path.exists(result["osm_path"]):

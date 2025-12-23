@@ -118,7 +118,7 @@ translator = openstudio.osversion.VersionTranslator()
 osm_model = translator.loadModel("path/to/model.osm").get()
 
 # Extract spaces as a DataFrame
-spaces_df = spaces.get_spaces_as_df(osm_model)
+spaces_df = spaces.get_spaces_as_dataframe(osm_model)
 print(spaces_df.head())
 
 # Run a pre-built task to normalize space names
