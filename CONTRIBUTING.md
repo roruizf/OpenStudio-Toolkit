@@ -1,6 +1,6 @@
-# Antigravity Project Guidelines: OpenStudio-Toolkit
+# OpenStudio-Toolkit Contribution Guidelines
 
-This document defines the rules, patterns, and constraints for Antigravity, Claude, and other AI agents when modifying the OpenStudio-Toolkit.
+This document defines the architectural patterns, coding standards, and constraints for all contributors (developers and AI agents) working on the OpenStudio-Toolkit.
 
 ---
 
