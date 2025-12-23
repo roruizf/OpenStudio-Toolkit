@@ -38,7 +38,7 @@ def get_subsurface_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed SubSurface",
+        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
         'Sub Surface Type': target_object.subSurfaceType(),
         'Construction Name': target_object.construction().get().name().get() if target_object.construction().is_initialized() else None,
         'Surface Name': target_object.surface().get().name().get() if target_object.surface().is_initialized() else None,

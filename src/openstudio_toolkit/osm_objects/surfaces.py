@@ -38,7 +38,7 @@ def get_surface_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Surface",
+        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
         'Surface Type': target_object.surfaceType(),
         'Construction Name': target_object.construction().get().name().get() if target_object.construction().is_initialized() else None,        
         'Space Name': target_object.space().get().name().get() if target_object.space().is_initialized() else None,
