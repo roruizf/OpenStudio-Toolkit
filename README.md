@@ -118,7 +118,7 @@ translator = openstudio.osversion.VersionTranslator()
 osm_model = translator.loadModel("path/to/model.osm").get()
 
 # Extract spaces as a DataFrame
-spaces_df = spaces.get_spaces_as_dataframe(osm_model)
+spaces_df = spaces.get_all_space_objects_as_dataframe(osm_model)
 print(spaces_df.head())
 
 # Run a pre-built task to normalize space names
@@ -138,10 +138,10 @@ if validation["status"] == "READY":
 |--------|-------------|
 | `building` | Building-level properties and methods |
 | `building_stories` | Story definitions and attributes |
-| `spaces` | Space geometry and properties |
+| `spaces` | Space geometry and absolute orientations (8-point) |
 | `thermal_zones` | Thermal zone definitions |
-| `surfaces` | Wall, floor, roof, and ceiling surfaces |
-| `subsurfaces` | Windows, doors, and skylights |
+| `surfaces` | Wall, floor, roof, and ceiling surfaces with azimuth and orientation (4/8-point) |
+| `subsurfaces` | Windows, doors, and skylights with azimuth and orientation (4/8-point) |
 | `space_types` | Space type assignments and properties |
 | `materials` | Material definitions |
 | `constructions` | Construction assemblies |
