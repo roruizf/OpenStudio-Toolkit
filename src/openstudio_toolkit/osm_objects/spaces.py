@@ -8,6 +8,8 @@ from openstudio_toolkit.utils import helpers
 # Configure logger
 logger = logging.getLogger(__name__)
 
+import math
+
 # --------------------------------------------------
 #  ***** OS:Space **********************************
 # --------------------------------------------------
@@ -51,6 +53,7 @@ def get_space_object_as_dict(
         'Part of Total Floor Area': target_object.partofTotalFloorArea(),
         'Design Specification Outdoor Air Object Name': target_object.designSpecificationOutdoorAir().get().name().get() if target_object.designSpecificationOutdoorAir().is_initialized() else None,
         'Building Unit Name': target_object.buildingUnit().get().name().get() if target_object.buildingUnit().is_initialized() else None,
+        'Orientation': calculate_space_orientation(target_object),
         'Volume {m3}': target_object.volume(),
         'Ceiling Height {m}': target_object.ceilingHeight(),
         'Floor Area {m2}': target_object.floorArea()
@@ -248,3 +251,81 @@ def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: List[Dict
         "errors": errors,
         "messages": messages
     }
+
+def calculate_space_orientation(space: openstudio.model.Space) -> str:
+    """
+    Determine a single representative absolute orientation for a space based on the area-weighted 
+    outward normal vectors of its exterior surfaces, accounting for building rotation.
+    """
+    total_x = 0.0
+    total_y = 0.0
+    exterior_found = False
+    
+    # Area-by-cardinal direction trackers (Absolute)
+    orientations_area = {
+        "North": 0.0,
+        "Northeast": 0.0,
+        "East": 0.0,
+        "Southeast": 0.0,
+        "South": 0.0,
+        "Southwest": 0.0,
+        "West": 0.0,
+        "Northwest": 0.0
+    }
+
+    # Total Rotation (Space + Building) in degrees clockwise
+    space_rot = space.directionofRelativeNorth()
+    building_rot = space.model().getBuilding().northAxis()
+    total_rot_deg = (space_rot + building_rot) % 360
+    rad = math.radians(total_rot_deg)
+
+    for surface in space.surfaces():
+        if surface.outsideBoundaryCondition() == "Outdoors" and surface.surfaceType().lower() == "wall":
+            exterior_found = True
+            area = surface.grossArea()
+            normal = surface.outwardNormal()
+            
+            # Rotate local normal vector to Absolute North coordinates
+            # CW rotation: (x', y') = (x cos theta + y sin theta, -x sin theta + y cos theta)
+            abs_x = normal.x() * math.cos(rad) + normal.y() * math.sin(rad)
+            abs_y = -normal.x() * math.sin(rad) + normal.y() * math.cos(rad)
+            
+            # Accumulate vector components
+            total_x += abs_x * area
+            total_y += abs_y * area
+            
+            # Categorize this specific surface for the tie-breaker
+            abs_az_surf = math.degrees(math.atan2(abs_x, abs_y)) % 360
+            
+            if (abs_az_surf >= 337.5) or (abs_az_surf < 22.5): orientations_area["North"] += area
+            elif 22.5 <= abs_az_surf < 67.5: orientations_area["Northeast"] += area
+            elif 67.5 <= abs_az_surf < 112.5: orientations_area["East"] += area
+            elif 112.5 <= abs_az_surf < 157.5: orientations_area["Southeast"] += area
+            elif 157.5 <= abs_az_surf < 202.5: orientations_area["South"] += area
+            elif 202.5 <= abs_az_surf < 247.5: orientations_area["Southwest"] += area
+            elif 247.5 <= abs_az_surf < 292.5: orientations_area["West"] += area
+            elif 292.5 <= abs_az_surf < 337.5: orientations_area["Northwest"] += area
+
+    if not exterior_found:
+        return "Interior"
+
+    # Final Resultant Azimuth
+    vector_magnitude = math.sqrt(total_x**2 + total_y**2)
+    
+    # Tie-breaker for balanced exposures
+    if vector_magnitude < 0.01:
+        max_orient = max(orientations_area, key=orientations_area.get)
+        return max_orient if orientations_area[max_orient] > 0 else "Interior"
+
+    # Resultant absolute azimuth
+    res_azimuth = math.degrees(math.atan2(total_x, total_y)) % 360
+    
+    if (res_azimuth >= 337.5) or (res_azimuth < 22.5): return "North"
+    elif 22.5 <= res_azimuth < 67.5: return "Northeast"
+    elif 67.5 <= res_azimuth < 112.5: return "East"
+    elif 112.5 <= res_azimuth < 157.5: return "Southeast"
+    elif 157.5 <= res_azimuth < 202.5: return "South"
+    elif 202.5 <= res_azimuth < 247.5: return "Southwest"
+    elif 247.5 <= res_azimuth < 292.5: return "West"
+    elif 292.5 <= res_azimuth < 337.5: return "Northwest"
+    return "Unknown"

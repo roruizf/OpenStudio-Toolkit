@@ -75,106 +75,169 @@ def get_all_building_stories_objects_as_dataframe(osm_model: openstudio.model.Mo
     logger.info(f"Retrieved {len(df)} building story objects from the model.")
     return df
 
-def create_new_building_stories_objects(osm_model: openstudio.model.Model, building_stories_to_create_df: pd.DataFrame) -> None:
+def create_new_building_stories_objects(osm_model: openstudio.model.Model, building_stories_to_create: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Create new BuildingStory objects based on a DataFrame.
+    Create new BuildingStory objects based on a list of dictionaries.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - building_stories_to_create_df (pd.DataFrame): DataFrame of story data to create.
+    - building_stories_to_create (List[Dict[str, Any]]): List of story data to create.
+        Each dictionary can contain:
+        - 'Name': New name.
+        - 'Nominal Z Coordinate {m}': Float.
+        - 'Nominal Floor to Floor Height {m}': Float.
+        - 'Nominal Floor to Ceiling Height {m}': Float.
+        - 'Default Construction Set Name': Name.
+        - 'Default Schedule Set Name': Name.
+        - 'Group Rendering Name': Name.
 
     Returns:
-    - None
+    - Dict[str, Any]: Status dictionary.
     """
-    df = building_stories_to_create_df.replace(np.nan, None)
     count = 0
+    errors = 0
+    messages = []
 
-    for _, row in df.iterrows():
-        new_story = openstudio.model.BuildingStory(osm_model)
-        if row['Name']:
-            new_story.setName(row['Name'])
+    for entry in building_stories_to_create:
+        try:
+            new_story = openstudio.model.BuildingStory(osm_model)
+            if entry.get('Name'):
+                new_story.setName(str(entry['Name']))
 
-        if row['Nominal Z Coordinate {m}'] is not None:
-            new_story.setNominalZCoordinate(row['Nominal Z Coordinate {m}'])
+            if entry.get('Nominal Z Coordinate {m}') is not None:
+                new_story.setNominalZCoordinate(float(entry['Nominal Z Coordinate {m}']))
 
-        if row['Nominal Floor to Floor Height {m}'] is not None:
-            new_story.setNominalFloortoFloorHeight(row['Nominal Floor to Floor Height {m}'])
+            if entry.get('Nominal Floor to Floor Height {m}') is not None:
+                new_story.setNominalFloortoFloorHeight(float(entry['Nominal Floor to Floor Height {m}']))
 
-        if row['Default Construction Set Name']:
-            const_set_opt = osm_model.getDefaultConstructionSetByName(row['Default Construction Set Name'])
-            if const_set_opt.is_initialized():
-                new_story.setDefaultConstructionSet(const_set_opt.get())
+            if entry.get('Default Construction Set Name'):
+                const_set_opt = osm_model.getDefaultConstructionSetByName(str(entry['Default Construction Set Name']))
+                if const_set_opt.is_initialized():
+                    new_story.setDefaultConstructionSet(const_set_opt.get())
 
-        if row['Default Schedule Set Name']:
-            sched_set_opt = osm_model.getDefaultScheduleSetByName(row['Default Schedule Set Name'])
-            if sched_set_opt.is_initialized():
-                new_story.setDefaultScheduleSet(sched_set_opt.get())
+            if entry.get('Default Schedule Set Name'):
+                sched_set_opt = osm_model.getDefaultScheduleSetByName(str(entry['Default Schedule Set Name']))
+                if sched_set_opt.is_initialized():
+                    new_story.setDefaultScheduleSet(sched_set_opt.get())
 
-        if row['Group Rendering Name']:
-            render_opt = osm_model.getRenderingColorByName(row['Group Rendering Name'])
-            if render_opt.is_initialized():
-                new_story.setRenderingColor(render_opt.get())
-            else:
-                new_color = openstudio.model.RenderingColor(osm_model)
-                new_color.setName(row['Group Rendering Name'])
-                new_story.setRenderingColor(new_color)
+            if entry.get('Group Rendering Name'):
+                render_opt = osm_model.getRenderingColorByName(str(entry['Group Rendering Name']))
+                if render_opt.is_initialized():
+                    new_story.setRenderingColor(render_opt.get())
+                else:
+                    new_color = openstudio.model.RenderingColor(osm_model)
+                    new_color.setName(str(entry['Group Rendering Name']))
+                    new_story.setRenderingColor(new_color)
 
-        if row['Nominal Floor to Ceiling Height {m}'] is not None:
-            new_story.setNominalFloortoCeilingHeight(row['Nominal Floor to Ceiling Height {m}'])
-        
-        count += 1
+            if entry.get('Nominal Floor to Ceiling Height {m}') is not None:
+                new_story.setNominalFloortoCeilingHeight(float(entry['Nominal Floor to Ceiling Height {m}']))
+            
+            count += 1
+        except Exception as e:
+            msg = f"Failed to create building story: {e}"
+            logger.error(msg)
+            messages.append(msg)
+            errors += 1
 
-    logger.info(f"Successfully created {count} new BuildingStory objects.")
+    status = "SUCCESS" if errors == 0 else ("PARTIAL_SUCCESS" if count > 0 else "ERROR")
+    logger.info(f"Successfully created {count} new BuildingStory objects. Errors: {errors}")
+    
+    return {
+        "status": status,
+        "created_count": count,
+        "errors": errors,
+        "messages": messages
+    }
 
-def update_building_stories_objects(osm_model: openstudio.model.Model, building_stories_to_update_df: pd.DataFrame) -> None:
+def update_building_stories_objects(osm_model: openstudio.model.Model, building_stories_to_update: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Update attributes of existing BuildingStory objects based on a DataFrame.
+    Update attributes of existing BuildingStory objects based on a list of dictionaries.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - building_stories_to_update_df (pd.DataFrame): DataFrame containing updated story data.
+    - building_stories_to_update (List[Dict[str, Any]]): List containing updated story data.
+        Each dictionary should contain:
+        - 'Handle' or 'Name' (Identifier)
+        Optional:
+        - 'Name': New name.
+        - 'Nominal Z Coordinate {m}': Float.
+        - 'Nominal Floor to Floor Height {m}': Float.
+        - 'Nominal Floor to Ceiling Height {m}': Float.
+        - 'Default Construction Set Name': Name.
+        - 'Default Schedule Set Name': Name.
+        - 'Group Rendering Name': Name.
 
     Returns:
-    - None
+    - Dict[str, Any]: Status dictionary.
     """
-    df = building_stories_to_update_df.replace(np.nan, None)
     count = 0
+    errors = 0
+    messages = []
 
-    for _, row in df.iterrows():
-        target_story = helpers.fetch_object(osm_model, "BuildingStory", row.get('Handle'), row.get('Name'))
+    for entry in building_stories_to_update:
+        # Identify target story
+        target_story = helpers.fetch_object(osm_model, "BuildingStory", entry.get('Handle'), entry.get('Name'))
         if not target_story:
+            identifier = entry.get('Handle') if entry.get('Handle') else entry.get('Name')
+            msg = f"Building story '{identifier}' not found."
+            logger.warning(msg)
+            messages.append(msg)
+            errors += 1
             continue
 
-        if row.get('Name'):
-            target_story.setName(row['Name'])
+        try:
+            changes_made = False
+            if entry.get('Name') and entry['Name'] != target_story.name().get():
+                target_story.setName(str(entry['Name']))
+                changes_made = True
 
-        if row.get('Nominal Z Coordinate {m}') is not None:
-            target_story.setNominalZCoordinate(row['Nominal Z Coordinate {m}'])
+            if entry.get('Nominal Z Coordinate {m}') is not None:
+                target_story.setNominalZCoordinate(float(entry['Nominal Z Coordinate {m}']))
+                changes_made = True
 
-        if row.get('Nominal Floor to Floor Height {m}') is not None:
-            target_story.setNominalFloortoFloorHeight(row['Nominal Floor to Floor Height {m}'])
+            if entry.get('Nominal Floor to Floor Height {m}') is not None:
+                target_story.setNominalFloortoFloorHeight(float(entry['Nominal Floor to Floor Height {m}']))
+                changes_made = True
 
-        if row.get('Nominal Floor to Ceiling Height {m}') is not None:
-            target_story.setNominalFloortoCeilingHeight(row['Nominal Floor to Ceiling Height {m}'])
+            if entry.get('Nominal Floor to Ceiling Height {m}') is not None:
+                target_story.setNominalFloortoCeilingHeight(float(entry['Nominal Floor to Ceiling Height {m}']))
+                changes_made = True
 
-        if row.get('Default Construction Set Name'):
-            const_opt = osm_model.getDefaultConstructionSetByName(row['Default Construction Set Name'])
-            if const_opt.is_initialized():
-                target_story.setDefaultConstructionSet(const_opt.get())
+            if entry.get('Default Construction Set Name'):
+                const_opt = osm_model.getDefaultConstructionSetByName(str(entry['Default Construction Set Name']))
+                if const_opt.is_initialized():
+                    target_story.setDefaultConstructionSet(const_opt.get())
+                    changes_made = True
 
-        if row.get('Default Schedule Set Name'):
-            sched_opt = osm_model.getDefaultScheduleSetByName(row['Default Schedule Set Name'])
-            if sched_opt.is_initialized():
-                target_story.setDefaultScheduleSet(sched_opt.get())
+            if entry.get('Default Schedule Set Name'):
+                sched_opt = osm_model.getDefaultScheduleSetByName(str(entry['Default Schedule Set Name']))
+                if sched_opt.is_initialized():
+                    target_story.setDefaultScheduleSet(sched_opt.get())
+                    changes_made = True
 
-        if row.get('Group Rendering Name'):
-            render_opt = osm_model.getRenderingColorByName(row['Group Rendering Name'])
-            if render_opt.is_initialized():
-                target_story.setRenderingColor(render_opt.get())
-        
-        count += 1
+            if entry.get('Group Rendering Name'):
+                render_opt = osm_model.getRenderingColorByName(str(entry['Group Rendering Name']))
+                if render_opt.is_initialized():
+                    target_story.setRenderingColor(render_opt.get())
+                    changes_made = True
+            
+            if changes_made:
+                count += 1
+        except Exception as e:
+            msg = f"Failed to update building story '{target_story.nameString()}': {e}"
+            logger.error(msg)
+            messages.append(msg)
+            errors += 1
 
-    logger.info(f"Successfully updated {count} BuildingStory objects.")
+    status = "SUCCESS" if errors == 0 else ("PARTIAL_SUCCESS" if count > 0 else "ERROR")
+    logger.info(f"Successfully updated {count} BuildingStory objects. Errors: {errors}")
+    
+    return {
+        "status": status,
+        "updated_count": count,
+        "errors": errors,
+        "messages": messages
+    }
 
 def assign_spaces_to_building_stories(osm_model: openstudio.model.Model, space_story_mapping: List[Dict[str, str]]) -> Dict[str, Any]:
     """

@@ -21,7 +21,7 @@ def load_osm_file_as_model(osm_file_path: str, version_translator: Optional[bool
     Raises:
     - RuntimeError: If the model fails to load or is uninitialized.
     """
-    abs_path = os.path.abspath(osm_file_path)
+    abs_path = openstudio.path(os.path.abspath(osm_file_path))
     
     if version_translator:
         translator = openstudio.osversion.VersionTranslator()
@@ -59,7 +59,7 @@ def save_model_as_osm_file(osm_model: openstudio.model.Model, osm_file_path: str
     else:
         target_name = os.path.split(osm_file_path)[-1]
 
-    save_path = os.path.join(osm_file_folder, target_name)
+    save_path = openstudio.path(os.path.join(osm_file_folder, target_name))
     osm_model.save(save_path, overwrite=True)
     logger.info(f"Model saved as OSM at: {save_path}")
 
@@ -77,5 +77,6 @@ def convert_osm_to_idf(osm_model: openstudio.model.Model, idf_file_path: str) ->
     ft = openstudio.energyplus.ForwardTranslator()
     idf_model = ft.translateModel(osm_model)
 
-    idf_model.save(idf_file_path, True)
-    logger.info(f"IDF file successfully generated at: {idf_file_path}")
+    save_path = openstudio.path(os.path.abspath(idf_file_path))
+    idf_model.save(save_path, True)
+    logger.info(f"IDF file successfully generated at: {save_path}")

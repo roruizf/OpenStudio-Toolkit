@@ -75,74 +75,125 @@ def get_all_building_unit_objects_as_dataframe(osm_model: openstudio.model.Model
     logger.info(f"Retrieved {len(df)} building unit objects from the model.")
     return df
 
-def create_new_building_unit_objects(osm_model: openstudio.model.Model, building_units_to_create_df: pd.DataFrame) -> None:
+def create_new_building_unit_objects(osm_model: openstudio.model.Model, building_units_to_create: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Create new BuildingUnit objects based on a DataFrame.
+    Create new BuildingUnit objects based on a list of dictionaries.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - building_units_to_create_df (pd.DataFrame): DataFrame of unit data to create.
+    - building_units_to_create (List[Dict[str, Any]]): List of unit data to create.
+        Each dict can contain:
+        - 'Name': New name.
+        - 'Building Unit Type': String (e.g. 'Residential', 'Commercial').
+        - 'Rendering Color': Name of the rendering color.
 
     Returns:
-    - None
+    - Dict[str, Any]: Status dictionary.
     """
-    df = building_units_to_create_df.replace(np.nan, None)
     count = 0
+    errors = 0
+    messages = []
 
-    for _, row in df.iterrows():
-        new_unit = openstudio.model.BuildingUnit(osm_model)
-        if row.get('Name'):
-            new_unit.setName(row['Name'])
+    for entry in building_units_to_create:
+        try:
+            new_unit = openstudio.model.BuildingUnit(osm_model)
+            if entry.get('Name'):
+                new_unit.setName(str(entry['Name']))
 
-        if row.get('Building Unit Type'):
-            new_unit.setBuildingUnitType(str(row['Building Unit Type']))
+            if entry.get('Building Unit Type'):
+                new_unit.setBuildingUnitType(str(entry['Building Unit Type']))
 
-        if row.get('Rendering Color'):
-            render_opt = osm_model.getRenderingColorByName(row['Rendering Color'])
-            if render_opt.is_initialized():
-                new_unit.setRenderingColor(render_opt.get())
-            else:
-                new_color = openstudio.model.RenderingColor(osm_model)
-                new_color.setName(row['Rendering Color'])
-                new_unit.setRenderingColor(new_color)
-        
-        count += 1
+            if entry.get('Rendering Color'):
+                render_opt = osm_model.getRenderingColorByName(str(entry['Rendering Color']))
+                if render_opt.is_initialized():
+                    new_unit.setRenderingColor(render_opt.get())
+                else:
+                    new_color = openstudio.model.RenderingColor(osm_model)
+                    new_color.setName(str(entry['Rendering Color']))
+                    new_unit.setRenderingColor(new_color)
+            
+            count += 1
+        except Exception as e:
+            msg = f"Failed to create building unit: {e}"
+            logger.error(msg)
+            messages.append(msg)
+            errors += 1
 
-    logger.info(f"Successfully created {count} new BuildingUnit objects.")
+    status = "SUCCESS" if errors == 0 else ("PARTIAL_SUCCESS" if count > 0 else "ERROR")
+    logger.info(f"Successfully created {count} new BuildingUnit objects. Errors: {errors}")
+    
+    return {
+        "status": status,
+        "created_count": count,
+        "errors": errors,
+        "messages": messages
+    }
 
-def update_building_unit_objects(osm_model: openstudio.model.Model, building_units_to_update_df: pd.DataFrame) -> None:
+def update_building_unit_objects(osm_model: openstudio.model.Model, building_units_to_update: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Update attributes of existing BuildingUnit objects based on a DataFrame.
+    Update attributes of existing BuildingUnit objects based on a list of dictionaries.
 
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - building_units_to_update_df (pd.DataFrame): DataFrame containing updated unit data.
+    - building_units_to_update (List[Dict[str, Any]]): List containing updated unit data.
+        Each dict should contain:
+        - 'Handle' or 'Name' (Identifier)
+        Optional:
+        - 'Name': New name.
+        - 'Building Unit Type': String.
+        - 'Rendering Color': Name.
 
     Returns:
-    - None
+    - Dict[str, Any]: Status dictionary.
     """
-    df = building_units_to_update_df.replace(np.nan, None)
     count = 0
+    errors = 0
+    messages = []
 
-    for _, row in df.iterrows():
-        target_unit = helpers.fetch_object(osm_model, "BuildingUnit", row.get('Handle'), row.get('Name'))
+    for entry in building_units_to_update:
+        # Use generalized Identifier approach
+        target_unit = helpers.fetch_object(osm_model, "BuildingUnit", entry.get('Handle'), entry.get('Name'))
         if not target_unit:
+            identifier = entry.get('Handle') if entry.get('Handle') else entry.get('Name')
+            msg = f"Building unit '{identifier}' not found."
+            logger.warning(msg)
+            messages.append(msg)
+            errors += 1
             continue
 
-        if row.get('Name'):
-            target_unit.setName(row['Name'])
+        try:
+            changes_made = False
+            if entry.get('Name') and entry['Name'] != target_unit.name().get():
+                target_unit.setName(str(entry['Name']))
+                changes_made = True
 
-        if row.get('Building Unit Type'):
-            target_unit.setBuildingUnitType(str(row['Building Unit Type']))
+            if entry.get('Building Unit Type'):
+                target_unit.setBuildingUnitType(str(entry['Building Unit Type']))
+                changes_made = True
 
-        if row.get('Rendering Color'):
-            render_opt = osm_model.getRenderingColorByName(row['Rendering Color'])
-            if render_opt.is_initialized():
-                target_unit.setRenderingColor(render_opt.get())
-        
-        count += 1
+            if entry.get('Rendering Color'):
+                render_opt = osm_model.getRenderingColorByName(str(entry['Rendering Color']))
+                if render_opt.is_initialized():
+                    target_unit.setRenderingColor(render_opt.get())
+                    changes_made = True
+            
+            if changes_made:
+                count += 1
+        except Exception as e:
+            msg = f"Failed to update building unit '{target_unit.nameString()}': {e}"
+            logger.error(msg)
+            messages.append(msg)
+            errors += 1
 
-    logger.info(f"Successfully updated {count} BuildingUnit objects.")
+    status = "SUCCESS" if errors == 0 else ("PARTIAL_SUCCESS" if count > 0 else "ERROR")
+    logger.info(f"Successfully updated {count} BuildingUnit objects. Errors: {errors}")
+    
+    return {
+        "status": status,
+        "updated_count": count,
+        "errors": errors,
+        "messages": messages
+    }
 
 def assign_spaces_to_building_units(osm_model: openstudio.model.Model, space_unit_mapping: List[Dict[str, str]]) -> Dict[str, Any]:
     """
