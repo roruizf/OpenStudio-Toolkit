@@ -99,8 +99,8 @@ def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: List[Dict
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
     - spaces_data (List[Dict[str, Any]]): List of dictionaries containing space data to update.
-        Each dictionary should contain:
-        - 'Handle': The space handle (preferred identifier) OR 'Name' (alternative identifier).
+        Each dict MUST contain:
+        - 'Handle': The space handle (required identifier).
         Optional attributes to update:
         - 'Name': New name for the space.
         - 'Space Type Name': Name of the SpaceType to assign.
@@ -121,15 +121,20 @@ def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: List[Dict
     logger.info("Starting batch update of spaces...")
 
     for entry in spaces_data:
-        # 1. Identify Target Space
+        # 1. Identify Target Space (ONLY via Handle)
         handle = entry.get('Handle')
-        name = entry.get('Name')
         
-        target_space = helpers.fetch_object(osm_model, "Space", handle, name)
+        if not handle:
+            msg = "Skipping entry: 'Handle' is required for updates."
+            logger.warning(msg)
+            messages.append(msg)
+            errors += 1
+            continue
+
+        target_space = helpers.fetch_object(osm_model, "Space", handle=handle)
         
         if not target_space:
-            identifier = handle if handle else name
-            msg = f"Skipping entry: Space '{identifier}' not found."
+            msg = f"Skipping entry: Space with handle '{handle}' not found."
             logger.warning(msg)
             messages.append(msg)
             errors += 1

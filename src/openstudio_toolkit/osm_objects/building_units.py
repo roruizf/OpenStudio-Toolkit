@@ -84,7 +84,7 @@ def create_new_building_unit_objects(osm_model: openstudio.model.Model, building
     - building_units_to_create (List[Dict[str, Any]]): List of unit data to create.
         Each dict can contain:
         - 'Name': New name.
-        - 'Building Unit Type': String (e.g. 'Residential', 'Commercial').
+        - 'Building Unit Type': String (e.g. 'Residential', 'NonResidential
         - 'Rendering Color': Name of the rendering color.
 
     Returns:
@@ -136,8 +136,8 @@ def update_building_unit_objects(osm_model: openstudio.model.Model, building_uni
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
     - building_units_to_update (List[Dict[str, Any]]): List containing updated unit data.
-        Each dict should contain:
-        - 'Handle' or 'Name' (Identifier)
+        Each dict MUST contain:
+        - 'Handle': Identification handle (required).
         Optional:
         - 'Name': New name.
         - 'Building Unit Type': String.
@@ -151,11 +151,19 @@ def update_building_unit_objects(osm_model: openstudio.model.Model, building_uni
     messages = []
 
     for entry in building_units_to_update:
-        # Use generalized Identifier approach
-        target_unit = helpers.fetch_object(osm_model, "BuildingUnit", entry.get('Handle'), entry.get('Name'))
+        # Identification is strictly via Handle
+        handle = entry.get('Handle')
+        if not handle:
+            msg = "Skipping entry: 'Handle' is required for updates."
+            logger.warning(msg)
+            messages.append(msg)
+            errors += 1
+            continue
+
+        target_unit = helpers.fetch_object(osm_model, "BuildingUnit", handle=handle)
+        
         if not target_unit:
-            identifier = entry.get('Handle') if entry.get('Handle') else entry.get('Name')
-            msg = f"Building unit '{identifier}' not found."
+            msg = f"Building unit with handle '{handle}' not found."
             logger.warning(msg)
             messages.append(msg)
             errors += 1

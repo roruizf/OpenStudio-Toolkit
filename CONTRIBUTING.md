@@ -46,6 +46,7 @@ Wrappers for OpenStudio SDK objects to provide pythonic accessors/mutators.
         "messages": List[str]
     }
     ```
+- **Identification Pattern**: For `update_*_data` operations, `Handle` is the MANDATORY identifier to ensure safe renaming and consistent object referencing.
 - **Import Pattern**: Use `importlib.resources` for non-code assets (NEVER `pkg_resources`).
 - **Language**: English ONLY for code, comments, and commits.
 

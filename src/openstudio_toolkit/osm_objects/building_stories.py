@@ -156,8 +156,8 @@ def update_building_stories_objects(osm_model: openstudio.model.Model, building_
     Parameters:
     - osm_model (openstudio.model.Model): The OpenStudio Model object.
     - building_stories_to_update (List[Dict[str, Any]]): List containing updated story data.
-        Each dictionary should contain:
-        - 'Handle' or 'Name' (Identifier)
+        Each dictionary MUST contain:
+        - 'Handle': Identification handle (required).
         Optional:
         - 'Name': New name.
         - 'Nominal Z Coordinate {m}': Float.
@@ -175,11 +175,19 @@ def update_building_stories_objects(osm_model: openstudio.model.Model, building_
     messages = []
 
     for entry in building_stories_to_update:
-        # Identify target story
-        target_story = helpers.fetch_object(osm_model, "BuildingStory", entry.get('Handle'), entry.get('Name'))
+        # Identification is strictly via Handle
+        handle = entry.get('Handle')
+        if not handle:
+            msg = "Skipping entry: 'Handle' is required for updates."
+            logger.warning(msg)
+            messages.append(msg)
+            errors += 1
+            continue
+
+        target_story = helpers.fetch_object(osm_model, "BuildingStory", handle=handle)
+        
         if not target_story:
-            identifier = entry.get('Handle') if entry.get('Handle') else entry.get('Name')
-            msg = f"Building story '{identifier}' not found."
+            msg = f"Building story with handle '{handle}' not found."
             logger.warning(msg)
             messages.append(msg)
             errors += 1
