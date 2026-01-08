@@ -4,8 +4,6 @@ import os
 import logging
 from pathlib import Path
 from typing import Dict, Any, List
-from importlib.resources import files
-
 from openstudio_toolkit.utils.measure_runner import MeasureRunner
 
 # Configure logger
@@ -92,7 +90,7 @@ def validator(
 
     # Check if measure resource exists
     try:
-        measure_dir = Path(str(files('openstudio_toolkit.resources.measures').joinpath('SpaceTypeAndConstructionSetWizard')))
+        measure_dir = Path(__file__).parent.parent.parent / "resources" / "measures" / "SpaceTypeAndConstructionSetWizard"
         if not measure_dir.exists():
             msg = "ERROR: Measure resource 'SpaceTypeAndConstructionSetWizard' not found."
             logger.error(msg)
@@ -157,7 +155,7 @@ def run(
     }
 
     # Get measure directory
-    measure_dir = Path(str(files('openstudio_toolkit.resources.measures').joinpath('SpaceTypeAndConstructionSetWizard')))
+    measure_dir = Path(__file__).parent.parent.parent / "resources" / "measures" / "SpaceTypeAndConstructionSetWizard"
 
     # Save current model to temporary OSM file
     with tempfile.NamedTemporaryFile(suffix='.osm', delete=False) as temp_file:
