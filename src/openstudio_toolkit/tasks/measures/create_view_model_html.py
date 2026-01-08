@@ -5,7 +5,7 @@ import shutil
 import logging
 from pathlib import Path
 from typing import Dict, Any
-from importlib.resources import files
+# from importlib.resources import files (Removed for Python 3.8 compatibility)
 
 from openstudio_toolkit.utils.measure_runner import MeasureRunner
 
@@ -19,7 +19,9 @@ def _get_measure_dir() -> Path:
     Returns:
     - Path: Absolute path to the view_model measure directory.
     """
-    return Path(str(files('openstudio_toolkit.resources.measures').joinpath('view_model')))
+    # Resources are at src/openstudio_toolkit/resources/measures/view_model
+    # Current file is at src/openstudio_toolkit/tasks/measures/create_view_model_html.py
+    return Path(__file__).parent.parent.parent / "resources" / "measures" / "view_model"
 
 def validator(osm_model: openstudio.model.Model) -> Dict[str, Any]:
     """

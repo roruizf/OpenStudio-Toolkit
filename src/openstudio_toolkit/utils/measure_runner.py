@@ -109,9 +109,18 @@ class MeasureRunner:
                 logger.error(f"STDOUT: {result.stdout}")
                 logger.error(f"STDERR: {result.stderr}")
                 raise RuntimeError(f"Measure execution failed. See logs for details.")
+            else:
+                logger.info(f"OpenStudio CLI completed successfully.")
+                logger.debug(f"STDOUT: {result.stdout}")
+                if result.stderr:
+                    logger.warning(f"STDERR (non-fatal): {result.stderr}")
 
             # Finalize output OSM path
-            final_output_path = output_path or tempfile.mktemp(suffix='.osm')
+            if output_path:
+                final_output_path = output_path
+            else:
+                fd, final_output_path = tempfile.mkstemp(suffix='.osm')
+                os.close(fd)
 
             # Retrieve result model
             run_output_osm = temp_path / "run" / "in.osm"
