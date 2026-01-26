@@ -49,11 +49,9 @@ def get_subsurface_object_as_dict(
         'Construction Name': target_object.construction().get().name().get() if target_object.construction().is_initialized() else None,
         'Surface Name': target_object.surface().get().name().get() if target_object.surface().is_initialized() else None,
         'Outside Boundary Condition Object': target_object.outsideBoundaryCondition(),
-        'Frame and Divider Name': target_object.windowPropertyFrameAndDivider().get().name().get() if target_object.windowPropertyFrameAndDivider().is_initialized() else None,
+        'View Factor to Ground': None,
         'Multiplier': target_object.multiplier(),
-        'Azimuth': orientation_data['Azimuth'],
-        'Orientation': orientation_data['Orientation'],
-        'Number of Vertices': len(target_object.vertices())
+        'Number of Vertices': None
     }
 
 def get_all_subsurface_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:

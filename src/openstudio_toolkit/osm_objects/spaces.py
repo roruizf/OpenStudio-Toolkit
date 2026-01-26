@@ -53,7 +53,6 @@ def get_space_object_as_dict(
         'Part of Total Floor Area': target_object.partofTotalFloorArea(),
         'Design Specification Outdoor Air Object Name': target_object.designSpecificationOutdoorAir().get().name().get() if target_object.designSpecificationOutdoorAir().is_initialized() else None,
         'Building Unit Name': target_object.buildingUnit().get().name().get() if target_object.buildingUnit().is_initialized() else None,
-        'Orientation': calculate_space_orientation(target_object),
         'Volume {m3}': target_object.volume(),
         'Ceiling Height {m}': target_object.ceilingHeight(),
         'Floor Area {m2}': target_object.floorArea()

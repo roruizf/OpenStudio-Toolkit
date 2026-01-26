@@ -49,12 +49,11 @@ def get_surface_object_as_dict(
         'Construction Name': target_object.construction().get().name().get() if target_object.construction().is_initialized() else None,        
         'Space Name': target_object.space().get().name().get() if target_object.space().is_initialized() else None,
         'Outside Boundary Condition': target_object.outsideBoundaryCondition(),
-        'Adjacent Surface Name': target_object.adjacentSurface().get().name().get() if target_object.adjacentSurface().is_initialized() else None,
+        'Outside Boundary Condition Object': target_object.adjacentSurface().get().name().get() if target_object.adjacentSurface().is_initialized() else None,
         'Sun Exposure': target_object.sunExposure(),
         'Wind Exposure': target_object.windExposure(),
-        'Azimuth': orientation_data['Azimuth'],
-        'Orientation': orientation_data['Orientation'],
-        'Number of Vertices': len(target_object.vertices())
+        'View Factor to Ground': None,
+        'Number of Vertices': None
     }
 
 def get_all_surface_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
