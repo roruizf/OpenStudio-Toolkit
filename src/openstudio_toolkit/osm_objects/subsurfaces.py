@@ -19,7 +19,8 @@ def get_subsurface_object_as_dict(
     handle: Optional[str] = None, 
     name: Optional[str] = None, 
     _object_ref: Optional[openstudio.model.SubSurface] = None,
-    method: str = '8-Point'
+    method: str = '8-Point',
+    enriched_data: bool = False
 ) -> Dict[str, Any]:
     """
     Retrieve attributes of an OS:SubSurface from the OpenStudio Model.
@@ -30,6 +31,7 @@ def get_subsurface_object_as_dict(
     - name (str, optional): The name of the object to retrieve.
     - _object_ref (openstudio.model.SubSurface, optional): Direct object reference.
     - method (str): Orientation classification method ('4-Point' or '8-Point').
+    - enriched_data (bool): If True, includes calculated fields like Orientation and Azimuth. Defaults to False.
 
     Returns:
     - Dict[str, Any]: A dictionary containing subsurface attributes.
@@ -40,9 +42,8 @@ def get_subsurface_object_as_dict(
     if target_object is None:
         return {}
     
-    orientation_data = calculate_subsurface_orientation(target_object, method)
-
-    return {
+    # 1. Pure OSM Attributes (Mirroring .osm file)
+    subsurface_dict = {
         'Handle': str(target_object.handle()),
         'Name': target_object.name().get() if target_object.name().is_initialized() else None,
         'Sub Surface Type': target_object.subSurfaceType(),
@@ -53,6 +54,18 @@ def get_subsurface_object_as_dict(
         'Multiplier': target_object.multiplier(),
         'Number of Vertices': None
     }
+
+    # 2. Enriched Data (Added Intelligence/Calculated Fields)
+    if enriched_data:
+        orientation_data = calculate_subsurface_orientation(target_object, method)
+        subsurface_dict.update({
+            'Azimuth': orientation_data['Azimuth'],
+            'Orientation': orientation_data['Orientation'],
+            'Frame and Divider Name': target_object.windowPropertyFrameAndDivider().get().name().get() if target_object.windowPropertyFrameAndDivider().is_initialized() else None,
+            'Number of Vertices': len(target_object.vertices())
+        })
+
+    return subsurface_dict
 
 def get_all_subsurface_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """

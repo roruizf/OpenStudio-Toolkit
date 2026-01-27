@@ -18,7 +18,8 @@ def get_space_object_as_dict(
     osm_model: openstudio.model.Model, 
     handle: Optional[str] = None, 
     name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.Space] = None
+    _object_ref: Optional[openstudio.model.Space] = None,
+    enriched_data: bool = False
 ) -> Dict[str, Any]:
     """
     Retrieve attributes of an OS:Space from the OpenStudio Model.
@@ -28,6 +29,7 @@ def get_space_object_as_dict(
     - handle (str, optional): The handle of the object to retrieve.
     - name (str, optional): The name of the object to retrieve.
     - _object_ref (openstudio.model.Space, optional): Direct object reference.
+    - enriched_data (bool): If True, includes calculated fields like Orientation. Defaults to False.
 
     Returns:
     - Dict[str, Any]: A dictionary containing space attributes.
@@ -38,7 +40,8 @@ def get_space_object_as_dict(
     if target_object is None:
         return {}
 
-    return {
+    # 1. Pure OSM Attributes (Mirroring .osm file)
+    space_dict = {
         'Handle': str(target_object.handle()),
         'Name': target_object.name().get() if target_object.name().is_initialized() else None,
         'Space Type Name': target_object.spaceType().get().name().get() if target_object.spaceType().is_initialized() else None,
@@ -57,6 +60,12 @@ def get_space_object_as_dict(
         'Ceiling Height {m}': target_object.ceilingHeight(),
         'Floor Area {m2}': target_object.floorArea()
     }
+
+    # 2. Enriched Data (Added Intelligence/Calculated Fields)
+    if enriched_data:
+        space_dict['Orientation'] = calculate_space_orientation(target_object)
+
+    return space_dict
 
 def get_all_space_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
     """

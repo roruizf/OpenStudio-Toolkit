@@ -10,8 +10,7 @@ logger = logging.getLogger(__name__)
 
 def test_add_overhangs():
     # 1. Setup paths
-    measure_resources = Path("src/openstudio_toolkit/resources/measures/AddOverhangsByProjectionFactor")
-    test_model_path = measure_resources / "tests" / "OverhangTestModel_01.osm"
+    test_model_path = Path("tests/resources/OverhangTestModel_01.osm")
     
     # Note: measure.xml says filename is OverhangTestModel_01.osm but list_dir says 'tests' is a dir.
     # Let's verify where the OSM is.

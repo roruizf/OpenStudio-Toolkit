@@ -13,9 +13,8 @@ def test_hard_size_hvac():
     """
     Test the Hard Size HVAC measure integration.
     """
-    # Path to the test model (provided in measure resources)
-    resource_dir = Path(__file__).parent.parent / "src" / "openstudio_toolkit" / "resources" / "measures" / "HardSizeHvac" / "tests"
-    model_path = str(resource_dir / "small_office.osm")
+    # Path to the test model (moved to central tests/resources)
+    model_path = str(Path(__file__).parent / "resources" / "small_office.osm")
     
     if not os.path.exists(model_path):
         logger.error(f"Test model not found: {model_path}")
