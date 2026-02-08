@@ -174,12 +174,32 @@ class TestLoadsData:
             "Handle": "{ppl-uuid}",
             "Name": "Office People",
             "People Definition Name": "Office People Def",
-            "Space or Space Type Name": "OpenOffice",
+            "Space or SpaceType Name": "OpenOffice",
             "Number of People Schedule Name": "Occ Schedule",
             "Activity Level Schedule Name": "Activity Schedule",
+            "Surface Name/Angle Factor List Name": None,
+            "Work Efficiency Schedule Name": None,
+            "Clothing Insulation Schedule Name": None,
+            "Air Velocity Schedule Name": None,
             "Multiplier": 1.0,
         })
         assert p.people_definition_name == "Office People Def"
+        assert p.space_or_spacetype_name == "OpenOffice"
+
+    def test_people_definition(self):
+        pd = PeopleDefinitionData.model_validate({
+            "Handle": "{ppl-def-uuid}",
+            "Name": "Office People Def",
+            "Number of People Calculation Method": "People",
+            "Number of People {people}": 10.0,
+            "People per Space Floor Area {person/m2}": None,
+            "Space Floor Area per Person {m2/person}": None,
+            "Fraction Radiant": 0.3,
+            "Sensible Heat Fraction": 0.6,
+            "Carbon Dioxide Generation Rate {m3/s-W}": 3.82e-8,
+        })
+        assert pd.number_of_people_calculation_method == "People"
+        assert pd.fraction_radiant == 0.3
 
     def test_lights(self):
         l = LightsData.model_validate({
@@ -193,6 +213,48 @@ class TestLoadsData:
             "End-Use Subcategory": "General",
         })
         assert l.lights_definition_name == "Office Lights Def"
+
+    def test_lights_definition(self):
+        ld = LightsDefinitionData.model_validate({
+            "Handle": "{lights-def-uuid}",
+            "Name": "Office Lights Def",
+            "Design Level Calculation Method": "LightingLevel",
+            "Lighting Level {W}": 1000.0,
+            "Watts per Space Floor Area {W/m2}": None,
+            "Watts per Person {W/person}": None,
+            "Fraction Radiant": 0.42,
+            "Fraction Visible": 0.18,
+            "Return Air Fraction": 0.0,
+        })
+        assert ld.design_level_calculation_method == "LightingLevel"
+        assert ld.lighting_level_w == 1000.0
+
+    def test_electric_equipment(self):
+        ee = ElectricEquipmentData.model_validate({
+            "Handle": "{ee-uuid}",
+            "Name": "Office Equipment",
+            "Electric Equipment Definition Name": "Office Equipment Def",
+            "Space or SpaceType Name": "OpenOffice",
+            "Schedule Name": "Equipment Schedule",
+            "Multiplier": 1.0,
+            "End-Use Subcategory": "General",
+        })
+        assert ee.electric_equipment_definition_name == "Office Equipment Def"
+
+    def test_electric_equipment_definition(self):
+        eed = ElectricEquipmentDefinitionData.model_validate({
+            "Handle": "{ee-def-uuid}",
+            "Name": "Office Equipment Def",
+            "Design Level Calculation Method": "EquipmentLevel",
+            "Design Level {W}": 500.0,
+            "Watts per Space Floor Area {W/m2}": None,
+            "Watts per Person {W/person}": None,
+            "Fraction Latent": 0.0,
+            "Fraction Radiant": 0.2,
+            "Fraction Lost": 0.0,
+        })
+        assert eed.design_level_calculation_method == "EquipmentLevel"
+        assert eed.design_level_w == 500.0
 
 
 class TestAvailabilityManagerNightCycleData:

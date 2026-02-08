@@ -1,458 +1,601 @@
+"""Extractors for internal loads objects.
+
+Covers:
+    - OS:People
+    - OS:People:Definition
+    - OS:Lights
+    - OS:Lights:Definition
+    - OS:ElectricEquipment
+    - OS:ElectricEquipment:Definition
+    - OS:GasEquipment
+    - OS:GasEquipment:Definition
+    - OS:SteamEquipment
+    - OS:SteamEquipment:Definition
+    - OS:OtherEquipment
+    - OS:OtherEquipment:Definition
+    - OS:WaterUse:Equipment
+    - OS:WaterUse:Equipment:Definition
+    - OS:SpaceInfiltration:DesignFlowRate
+    - OS:DesignSpecification:OutdoorAir
+"""
+
 import logging
+from typing import Any
 
 import openstudio
 import pandas as pd
 
 from openstudio_toolkit.utils import helpers
 
-# Configure logger
 logger = logging.getLogger(__name__)
 
-# ------------------------------------------------------------------------------------------------
-#  ****** People *********************************************************************************
-# ------------------------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------------------------
-#  ****** People *********************************************************************************
-# ------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+#  OS:People
+# ---------------------------------------------------------------------------
 
+def get_people_object_as_dict(
+    osm_model: openstudio.model.Model,
+    handle: str | None = None,
+    name: str | None = None,
+    _object_ref: openstudio.model.People | None = None,
+) -> dict[str, Any]:
+    """Retrieve attributes of a single OS:People object.
 
-def get_people_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.People = None) -> dict:
-    """
-    Retrieve a specified OS:People object from the OpenStudio model by handle, name, or direct reference and return its attributes as a dictionary.
+    Parameters
+    ----------
+    osm_model : openstudio.model.Model
+        The OpenStudio Model object.
+    handle : str, optional
+        Handle UUID of the object.
+    name : str, optional
+        Name of the object.
+    _object_ref : People, optional
+        Direct object reference (bypasses lookup).
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the object to retrieve.
-    - name (str, optional): The name of the object to retrieve.
-    - _object_ref (openstudio.model.People, optional): Direct reference to the object.
-
-    Returns:
-    - dict: Dictionary containing information about the specified object.
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary of object attributes, or empty dict if not found.
     """
     target_object = helpers.fetch_object(
-        osm_model, "People", handle, name, _object_ref)
+        osm_model, "People", handle, name, _object_ref
+    )
 
     if target_object is None:
         return {}
 
-    object_dict = {
+    # Resolve Space or SpaceType Name
+    space_or_spacetype = None
+    if target_object.spaceType().is_initialized():
+        space_or_spacetype = (
+            target_object.spaceType().get().name().get()
+            if target_object.spaceType().get().name().is_initialized()
+            else None
+        )
+    elif target_object.space().is_initialized():
+        space_or_spacetype = (
+            target_object.space().get().name().get()
+            if target_object.space().get().name().is_initialized()
+            else None
+        )
+
+    return {
         'Handle': str(target_object.handle()),
         'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'People Definition Name': target_object.peopleDefinition().name().get() if target_object.peopleDefinition().name().is_initialized() else None,
-        'Space or Space Type Name': target_object.spaceType().get().name().get() if target_object.spaceType().is_initialized() else (target_object.space().get().name().get() if target_object.space().is_initialized() else None),
-        'Number of People': target_object.numberofPeopleSchedule().get().name().get() if target_object.numberofPeopleSchedule().is_initialized() else None,
-        'Number of People Schedule Name': target_object.numberofPeopleSchedule().get().name().get() if target_object.numberofPeopleSchedule().is_initialized() else None,
-        'Activity Level Schedule Name': target_object.activityLevelSchedule().get().name().get() if target_object.activityLevelSchedule().is_initialized() else None,
-        'Surface Name/Angle Factor List Name': None, # Placeholder
-        'Work Efficiency Schedule Name': target_object.workEfficiencySchedule().get().name().get() if target_object.workEfficiencySchedule().is_initialized() else None,
-        'Clothing Insulation Schedule Name': target_object.clothingInsulationSchedule().get().name().get() if target_object.clothingInsulationSchedule().is_initialized() else None,
-        'Air Velocity Schedule Name': target_object.airVelocitySchedule().get().name().get() if target_object.airVelocitySchedule().is_initialized() else None,
+        'People Definition Name': (
+            target_object.peopleDefinition().name().get()
+            if target_object.peopleDefinition().name().is_initialized()
+            else None
+        ),
+        'Space or SpaceType Name': space_or_spacetype,
+        'Number of People Schedule Name': (
+            target_object.numberofPeopleSchedule().get().name().get()
+            if target_object.numberofPeopleSchedule().is_initialized()
+            else None
+        ),
+        'Activity Level Schedule Name': (
+            target_object.activityLevelSchedule().get().name().get()
+            if target_object.activityLevelSchedule().is_initialized()
+            else None
+        ),
+        'Surface Name/Angle Factor List Name': None,  # Not accessible via SDK
+        'Work Efficiency Schedule Name': (
+            target_object.workEfficiencySchedule().get().name().get()
+            if target_object.workEfficiencySchedule().is_initialized()
+            else None
+        ),
+        'Clothing Insulation Schedule Name': (
+            target_object.clothingInsulationSchedule().get().name().get()
+            if target_object.clothingInsulationSchedule().is_initialized()
+            else None
+        ),
+        'Air Velocity Schedule Name': (
+            target_object.airVelocitySchedule().get().name().get()
+            if target_object.airVelocitySchedule().is_initialized()
+            else None
+        ),
         'Multiplier': target_object.multiplier(),
-        'Ankle Level Air Velocity Schedule Name': target_object.ankleLevelAirVelocitySchedule().get().name().get() if target_object.ankleLevelAirVelocitySchedule().is_initialized() else None,
-        'Cold Stress Temperature Threshold {C}': target_object.coldStressTemperatureThreshold(),
-        'Heat Stress Temperature Threshold {C}': target_object.heatStressTemperatureThreshold()
     }
 
-    return object_dict
 
-def get_all_people_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
-    """
-    Retrieve all OS:People objects from the OpenStudio model and return their attributes as a list of dictionaries.
+def get_all_people_objects_as_dicts(
+    osm_model: openstudio.model.Model,
+) -> list[dict[str, Any]]:
+    """Retrieve attributes for all OS:People objects."""
+    from openstudio_toolkit.osm_objects._base import build_all_dicts
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - list[dict]: A list of dictionaries, each containing information about a people object.
-    """
-    all_objects = osm_model.getPeoples()
-    return [get_people_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
-
-def get_all_people_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    """
-    Retrieve all OS:People objects from the OpenStudio model and organize them into a pandas DataFrame.
-
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - pd.DataFrame: DataFrame containing information about all people objects.
-    """
-    all_objects_dicts = get_all_people_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} people objects")
-    return all_objects_df
+    return build_all_dicts(
+        osm_model,
+        "getPeoples",
+        get_people_object_as_dict,
+    )
 
 
-# ------------------------------------------------------------------------------------------------
-#  ****** People Definition **********************************************************************
-# ------------------------------------------------------------------------------------------------
+def get_all_people_objects_as_dataframe(
+    osm_model: openstudio.model.Model,
+) -> pd.DataFrame:
+    """Retrieve all OS:People objects as a DataFrame."""
+    from openstudio_toolkit.osm_objects._base import build_dataframe
+
+    return build_dataframe(
+        get_all_people_objects_as_dicts(osm_model),
+        "People",
+    )
 
 
-def get_people_definition_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.PeopleDefinition = None) -> dict:
-    """
-    Retrieve a specified OS:People:Definition object from the OpenStudio model by handle, name, or direct reference and return its attributes as a dictionary.
+# ---------------------------------------------------------------------------
+#  OS:People:Definition
+# ---------------------------------------------------------------------------
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the object to retrieve.
-    - name (str, optional): The name of the object to retrieve.
-    - _object_ref (openstudio.model.PeopleDefinition, optional): Direct reference to the object.
+def get_people_definition_object_as_dict(
+    osm_model: openstudio.model.Model,
+    handle: str | None = None,
+    name: str | None = None,
+    _object_ref: openstudio.model.PeopleDefinition | None = None,
+) -> dict[str, Any]:
+    """Retrieve attributes of a single OS:People:Definition object.
 
-    Returns:
-    - dict: Dictionary containing information about the specified object.
+    Parameters
+    ----------
+    osm_model : openstudio.model.Model
+        The OpenStudio Model object.
+    handle : str, optional
+        Handle UUID of the object.
+    name : str, optional
+        Name of the object.
+    _object_ref : PeopleDefinition, optional
+        Direct object reference (bypasses lookup).
+
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary of object attributes, or empty dict if not found.
     """
     target_object = helpers.fetch_object(
-        osm_model, "PeopleDefinition", handle, name, _object_ref)
+        osm_model, "PeopleDefinition", handle, name, _object_ref
+    )
 
     if target_object is None:
         return {}
 
-    floorArea = target_object.floorArea()
-
-    object_dict = {
+    return {
         'Handle': str(target_object.handle()),
         'Name': target_object.name().get() if target_object.name().is_initialized() else None,
         'Number of People Calculation Method': target_object.numberofPeopleCalculationMethod(),
-        'Number of People {people}': target_object.getNumberOfPeople(floorArea),
-        'People per Space Floor Area {person/m2}': 1 / target_object.getFloorAreaPerPerson(floorArea) if target_object.getNumberOfPeople(floorArea) != 0 else 0.0,
-        'Space Floor Area per Person {m2/person}': target_object.getFloorAreaPerPerson(floorArea) if target_object.getNumberOfPeople(floorArea) != 0 else 0.0,
+        'Number of People {people}': (
+            target_object.numberofPeople().get()
+            if target_object.numberofPeople().is_initialized()
+            else None
+        ),
+        'People per Space Floor Area {person/m2}': (
+            target_object.peopleperSpaceFloorArea().get()
+            if target_object.peopleperSpaceFloorArea().is_initialized()
+            else None
+        ),
+        'Space Floor Area per Person {m2/person}': (
+            target_object.spaceFloorAreaperPerson().get()
+            if target_object.spaceFloorAreaperPerson().is_initialized()
+            else None
+        ),
         'Fraction Radiant': target_object.fractionRadiant(),
-        'Sensible Heat Fraction': target_object.sensibleHeatFraction().get() if target_object.sensibleHeatFraction().is_initialized() else None,
+        'Sensible Heat Fraction': (
+            target_object.sensibleHeatFraction().get()
+            if target_object.sensibleHeatFraction().is_initialized()
+            else None
+        ),
         'Carbon Dioxide Generation Rate {m3/s-W}': target_object.carbonDioxideGenerationRate(),
-        'Enable ASHRAE 55 Comfort Warnings': None # Placeholder
     }
 
-    return object_dict
 
-def get_all_people_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
-    """
-    Retrieve all OS:People:Definition objects from the OpenStudio model and return their attributes as a list of dictionaries.
+def get_all_people_definition_objects_as_dicts(
+    osm_model: openstudio.model.Model,
+) -> list[dict[str, Any]]:
+    """Retrieve attributes for all OS:People:Definition objects."""
+    from openstudio_toolkit.osm_objects._base import build_all_dicts
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - list[dict]: A list of dictionaries, each containing information about a people definition object.
-    """
-    all_objects = osm_model.getPeopleDefinitions()
-    return [get_people_definition_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
-
-def get_all_people_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    """
-    Retrieve all OS:People:Definition objects from the OpenStudio model and organize them into a pandas DataFrame.
-
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - pd.DataFrame: DataFrame containing information about all people definition objects.
-    """
-    all_objects_dicts = get_all_people_definition_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} people definition objects")
-    return all_objects_df
-
-# ------------------------------------------------------------------------------------------------
-#  ****** Lights *********************************************************************************
-# ------------------------------------------------------------------------------------------------
+    return build_all_dicts(
+        osm_model,
+        "getPeopleDefinitions",
+        get_people_definition_object_as_dict,
+    )
 
 
-def get_lights_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.Lights = None) -> dict:
-    """
-    Retrieve a specified OS:Lights object from the OpenStudio model by handle, name, or direct reference and return its attributes as a dictionary.
+def get_all_people_definition_objects_as_dataframe(
+    osm_model: openstudio.model.Model,
+) -> pd.DataFrame:
+    """Retrieve all OS:People:Definition objects as a DataFrame."""
+    from openstudio_toolkit.osm_objects._base import build_dataframe
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the object to retrieve.
-    - name (str, optional): The name of the object to retrieve.
-    - _object_ref (openstudio.model.Lights, optional): Direct reference to the object.
+    return build_dataframe(
+        get_all_people_definition_objects_as_dicts(osm_model),
+        "PeopleDefinition",
+    )
 
-    Returns:
-    - dict: Dictionary containing information about the specified object.
+
+# ---------------------------------------------------------------------------
+#  OS:Lights
+# ---------------------------------------------------------------------------
+
+def get_lights_object_as_dict(
+    osm_model: openstudio.model.Model,
+    handle: str | None = None,
+    name: str | None = None,
+    _object_ref: openstudio.model.Lights | None = None,
+) -> dict[str, Any]:
+    """Retrieve attributes of a single OS:Lights object.
+
+    Parameters
+    ----------
+    osm_model : openstudio.model.Model
+        The OpenStudio Model object.
+    handle : str, optional
+        Handle UUID of the object.
+    name : str, optional
+        Name of the object.
+    _object_ref : Lights, optional
+        Direct object reference (bypasses lookup).
+
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary of object attributes, or empty dict if not found.
     """
     target_object = helpers.fetch_object(
-        osm_model, "Lights", handle, name, _object_ref)
+        osm_model, "Lights", handle, name, _object_ref
+    )
 
     if target_object is None:
         return {}
 
-    object_dict = {
+    # Resolve Space or SpaceType Name
+    space_or_spacetype = None
+    if target_object.spaceType().is_initialized():
+        space_or_spacetype = (
+            target_object.spaceType().get().name().get()
+            if target_object.spaceType().get().name().is_initialized()
+            else None
+        )
+    elif target_object.space().is_initialized():
+        space_or_spacetype = (
+            target_object.space().get().name().get()
+            if target_object.space().get().name().is_initialized()
+            else None
+        )
+
+    return {
         'Handle': str(target_object.handle()),
         'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Lights Definition Name': target_object.lightsDefinition().name().get() if target_object.lightsDefinition().name().is_initialized() else None,
-        'Space or SpaceType Name': target_object.spaceType().get().name().get() if target_object.spaceType().is_initialized() else (target_object.space().get().name().get() if target_object.space().is_initialized() else None),
-        'Schedule Name': target_object.schedule().get().name().get() if target_object.schedule().is_initialized() else None,
+        'Lights Definition Name': (
+            target_object.lightsDefinition().name().get()
+            if target_object.lightsDefinition().name().is_initialized()
+            else None
+        ),
+        'Space or SpaceType Name': space_or_spacetype,
+        'Schedule Name': (
+            target_object.schedule().get().name().get()
+            if target_object.schedule().is_initialized()
+            else None
+        ),
         'Fraction Replaceable': target_object.fractionReplaceable(),
         'Multiplier': target_object.multiplier(),
-        'End-Use Subcategory': target_object.endUseSubcategory()
+        'End-Use Subcategory': target_object.endUseSubcategory(),
     }
 
-    return object_dict
 
-def get_all_lights_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
-    """
-    Retrieve all OS:Lights objects from the OpenStudio model and return their attributes as a list of dictionaries.
+def get_all_lights_objects_as_dicts(
+    osm_model: openstudio.model.Model,
+) -> list[dict[str, Any]]:
+    """Retrieve attributes for all OS:Lights objects."""
+    from openstudio_toolkit.osm_objects._base import build_all_dicts
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - list[dict]: A list of dictionaries, each containing information about a lights object.
-    """
-    all_objects = osm_model.getLightss()
-    return [get_lights_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
-
-def get_all_lights_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    """
-    Retrieve all OS:Lights objects from the OpenStudio model and organize them into a pandas DataFrame.
-
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - pd.DataFrame: DataFrame containing information about all lights objects.
-    """
-
-    all_objects_dicts = get_all_lights_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} light objects")
-    return all_objects_df
+    return build_all_dicts(
+        osm_model,
+        "getLightss",
+        get_lights_object_as_dict,
+    )
 
 
-# ------------------------------------------------------------------------------------------------
-#  ****** Lights Definition **********************************************************************
-# ------------------------------------------------------------------------------------------------
+def get_all_lights_objects_as_dataframe(
+    osm_model: openstudio.model.Model,
+) -> pd.DataFrame:
+    """Retrieve all OS:Lights objects as a DataFrame."""
+    from openstudio_toolkit.osm_objects._base import build_dataframe
 
-def get_lights_definition_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.LightsDefinition = None) -> dict:
-    """
-    Retrieve a specified OS:Lights:Definition object from the OpenStudio model by handle, name, or direct reference and return its attributes as a dictionary.
+    return build_dataframe(
+        get_all_lights_objects_as_dicts(osm_model),
+        "Lights",
+    )
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the object to retrieve.
-    - name (str, optional): The name of the object to retrieve.
-    - _object_ref (openstudio.model.LightsDefinition, optional): Direct reference to the object.
 
-    Returns:
-    - dict: Dictionary containing information about the specified object.
+# ---------------------------------------------------------------------------
+#  OS:Lights:Definition
+# ---------------------------------------------------------------------------
+
+def get_lights_definition_object_as_dict(
+    osm_model: openstudio.model.Model,
+    handle: str | None = None,
+    name: str | None = None,
+    _object_ref: openstudio.model.LightsDefinition | None = None,
+) -> dict[str, Any]:
+    """Retrieve attributes of a single OS:Lights:Definition object.
+
+    Parameters
+    ----------
+    osm_model : openstudio.model.Model
+        The OpenStudio Model object.
+    handle : str, optional
+        Handle UUID of the object.
+    name : str, optional
+        Name of the object.
+    _object_ref : LightsDefinition, optional
+        Direct object reference (bypasses lookup).
+
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary of object attributes, or empty dict if not found.
     """
     target_object = helpers.fetch_object(
-        osm_model, "LightsDefinition", handle, name, _object_ref)
+        osm_model, "LightsDefinition", handle, name, _object_ref
+    )
 
     if target_object is None:
         return {}
 
-    # Define attributes to retrieve in a dictionary
-    object_dict = {
+    return {
         'Handle': str(target_object.handle()),
         'Name': target_object.name().get() if target_object.name().is_initialized() else None,
         'Design Level Calculation Method': target_object.designLevelCalculationMethod(),
-        'Lighting Level {W}': target_object.lightingLevel().get() if target_object.lightingLevel().is_initialized() else None,
-        'Watts per Space Floor Area {W/m2}': target_object.wattsperSpaceFloorArea().get() if target_object.wattsperSpaceFloorArea().is_initialized() else None,
-        'Watts per Person {W/person}': target_object.wattsperPerson().get() if target_object.wattsperPerson().is_initialized() else None,
+        'Lighting Level {W}': (
+            target_object.lightingLevel().get()
+            if target_object.lightingLevel().is_initialized()
+            else None
+        ),
+        'Watts per Space Floor Area {W/m2}': (
+            target_object.wattsperSpaceFloorArea().get()
+            if target_object.wattsperSpaceFloorArea().is_initialized()
+            else None
+        ),
+        'Watts per Person {W/person}': (
+            target_object.wattsperPerson().get()
+            if target_object.wattsperPerson().is_initialized()
+            else None
+        ),
         'Fraction Radiant': target_object.fractionRadiant(),
         'Fraction Visible': target_object.fractionVisible(),
-        'Return Air Fraction': target_object.returnAirFraction()
+        'Return Air Fraction': target_object.returnAirFraction(),
     }
 
-    return object_dict
 
-def get_all_lights_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
-    """
-    Retrieve all OS:Lights:Definition objects from the OpenStudio model and return their attributes as a list of dictionaries.
+def get_all_lights_definition_objects_as_dicts(
+    osm_model: openstudio.model.Model,
+) -> list[dict[str, Any]]:
+    """Retrieve attributes for all OS:Lights:Definition objects."""
+    from openstudio_toolkit.osm_objects._base import build_all_dicts
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - list[dict]: A list of dictionaries, each containing information about a lights definition object.
-    """
-    all_objects = osm_model.getLightsDefinitions()
-    return [get_lights_definition_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
-
-def get_all_lights_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    """
-    Retrieve all OS:Lights:Definition objects from the OpenStudio model and organize them into a pandas DataFrame.
-
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - pd.DataFrame: DataFrame containing information about all lights definition objects.
-    """
-    all_objects_dicts = get_all_lights_definition_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} lights definition objects")
-    return all_objects_df
-
-# ------------------------------------------------------------------------------------------------
-#  ****** Electric Equipment *********************************************************************************
-# ------------------------------------------------------------------------------------------------
+    return build_all_dicts(
+        osm_model,
+        "getLightsDefinitions",
+        get_lights_definition_object_as_dict,
+    )
 
 
-def get_electric_equipment_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.ElectricEquipment = None) -> dict:
-    """
-    Retrieve a specified OS:ElectricEquipment object from the OpenStudio model by handle, name, or direct reference and return its attributes as a dictionary.
+def get_all_lights_definition_objects_as_dataframe(
+    osm_model: openstudio.model.Model,
+) -> pd.DataFrame:
+    """Retrieve all OS:Lights:Definition objects as a DataFrame."""
+    from openstudio_toolkit.osm_objects._base import build_dataframe
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the object to retrieve.
-    - name (str, optional): The name of the object to retrieve.
-    - _object_ref (openstudio.model.ElectricEquipment, optional): Direct reference to the object.
+    return build_dataframe(
+        get_all_lights_definition_objects_as_dicts(osm_model),
+        "LightsDefinition",
+    )
 
-    Returns:
-    - dict: Dictionary containing information about the specified object.
+
+# ---------------------------------------------------------------------------
+#  OS:ElectricEquipment
+# ---------------------------------------------------------------------------
+
+def get_electric_equipment_object_as_dict(
+    osm_model: openstudio.model.Model,
+    handle: str | None = None,
+    name: str | None = None,
+    _object_ref: openstudio.model.ElectricEquipment | None = None,
+) -> dict[str, Any]:
+    """Retrieve attributes of a single OS:ElectricEquipment object.
+
+    Parameters
+    ----------
+    osm_model : openstudio.model.Model
+        The OpenStudio Model object.
+    handle : str, optional
+        Handle UUID of the object.
+    name : str, optional
+        Name of the object.
+    _object_ref : ElectricEquipment, optional
+        Direct object reference (bypasses lookup).
+
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary of object attributes, or empty dict if not found.
     """
     target_object = helpers.fetch_object(
-        osm_model, "ElectricEquipment", handle, name, _object_ref)
+        osm_model, "ElectricEquipment", handle, name, _object_ref
+    )
 
     if target_object is None:
         return {}
 
-    object_dict = {
+    # Resolve Space or SpaceType Name
+    space_or_spacetype = None
+    if target_object.spaceType().is_initialized():
+        space_or_spacetype = (
+            target_object.spaceType().get().name().get()
+            if target_object.spaceType().get().name().is_initialized()
+            else None
+        )
+    elif target_object.space().is_initialized():
+        space_or_spacetype = (
+            target_object.space().get().name().get()
+            if target_object.space().get().name().is_initialized()
+            else None
+        )
+
+    return {
         'Handle': str(target_object.handle()),
         'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Electric Equipment Definition Name': target_object.definition().name().get() if target_object.definition().name().is_initialized() else None,
-        'Space or SpaceType Name': target_object.spaceType().get().name().get() if target_object.spaceType().is_initialized() else (target_object.space().get().name().get() if target_object.space().is_initialized() else None),
-        'Schedule Name': target_object.schedule().get().name().get() if target_object.schedule().is_initialized() else None,
+        'Electric Equipment Definition Name': (
+            target_object.definition().name().get()
+            if target_object.definition().name().is_initialized()
+            else None
+        ),
+        'Space or SpaceType Name': space_or_spacetype,
+        'Schedule Name': (
+            target_object.schedule().get().name().get()
+            if target_object.schedule().is_initialized()
+            else None
+        ),
         'Multiplier': target_object.multiplier(),
-        'End-Use Subcategory': target_object.endUseSubcategory()
+        'End-Use Subcategory': target_object.endUseSubcategory(),
     }
 
-    return object_dict
 
-def get_all_electric_equipment_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
-    """
-    Retrieve all OS:ElectricEquipment objects from the OpenStudio model and return their attributes as a list of dictionaries.
+def get_all_electric_equipment_objects_as_dicts(
+    osm_model: openstudio.model.Model,
+) -> list[dict[str, Any]]:
+    """Retrieve attributes for all OS:ElectricEquipment objects."""
+    from openstudio_toolkit.osm_objects._base import build_all_dicts
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - list[dict]: A list of dictionaries, each containing information about an electric equipment object.
-    """
-    all_objects = osm_model.getElectricEquipments()
-    return [get_electric_equipment_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
-
-def get_all_electric_equipment_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    """
-    Retrieve all OS:ElectricEquipment objects from the OpenStudio model and organize them into a pandas DataFrame.
-
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-
-    Returns:
-    - pd.DataFrame: DataFrame containing information about all electric equipment objects.
-    """
-    all_objects_dicts = get_all_electric_equipment_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} electric equipment objects")
-    return all_objects_df
+    return build_all_dicts(
+        osm_model,
+        "getElectricEquipments",
+        get_electric_equipment_object_as_dict,
+    )
 
 
-# ------------------------------------------------------------------------------------------------
-#  ****** Electric Equipment Definition **********************************************************
-# ------------------------------------------------------------------------------------------------
+def get_all_electric_equipment_objects_as_dataframe(
+    osm_model: openstudio.model.Model,
+) -> pd.DataFrame:
+    """Retrieve all OS:ElectricEquipment objects as a DataFrame."""
+    from openstudio_toolkit.osm_objects._base import build_dataframe
 
-def get_electric_equipment_definition_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.ElectricEquipmentDefinition = None) -> dict:
-    """
-    Retrieve a specified OS:ElectricEquipment:Definition object from the OpenStudio model by handle, name, or direct reference and return its attributes as a dictionary.
+    return build_dataframe(
+        get_all_electric_equipment_objects_as_dicts(osm_model),
+        "ElectricEquipment",
+    )
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
-    - handle (str, optional): The handle of the object to retrieve.
-    - name (str, optional): The name of the object to retrieve.
-    - _object_ref (openstudio.model.ElectricEquipmentDefinition, optional): Direct reference to the object.
 
-    Returns:
-    - dict: Dictionary containing information about the specified object.
+# ---------------------------------------------------------------------------
+#  OS:ElectricEquipment:Definition
+# ---------------------------------------------------------------------------
+
+def get_electric_equipment_definition_object_as_dict(
+    osm_model: openstudio.model.Model,
+    handle: str | None = None,
+    name: str | None = None,
+    _object_ref: openstudio.model.ElectricEquipmentDefinition | None = None,
+) -> dict[str, Any]:
+    """Retrieve attributes of a single OS:ElectricEquipment:Definition object.
+
+    Parameters
+    ----------
+    osm_model : openstudio.model.Model
+        The OpenStudio Model object.
+    handle : str, optional
+        Handle UUID of the object.
+    name : str, optional
+        Name of the object.
+    _object_ref : ElectricEquipmentDefinition, optional
+        Direct object reference (bypasses lookup).
+
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary of object attributes, or empty dict if not found.
     """
     target_object = helpers.fetch_object(
-        osm_model, "ElectricEquipmentDefinition", handle, name, _object_ref)
+        osm_model, "ElectricEquipmentDefinition", handle, name, _object_ref
+    )
 
     if target_object is None:
         return {}
 
-    object_dict = {
+    return {
         'Handle': str(target_object.handle()),
         'Name': target_object.name().get() if target_object.name().is_initialized() else None,
         'Design Level Calculation Method': target_object.designLevelCalculationMethod(),
-        'Design Level {W}': target_object.designLevel().get() if target_object.designLevel().is_initialized() else None,
-        'Watts per Space Floor Area {W/m2}': target_object.wattsperSpaceFloorArea().get() if target_object.wattsperSpaceFloorArea().is_initialized() else None,
-        'Watts per Person {W/person}': target_object.wattsperPerson().get() if target_object.wattsperPerson().is_initialized() else None,
+        'Design Level {W}': (
+            target_object.designLevel().get()
+            if target_object.designLevel().is_initialized()
+            else None
+        ),
+        'Watts per Space Floor Area {W/m2}': (
+            target_object.wattsperSpaceFloorArea().get()
+            if target_object.wattsperSpaceFloorArea().is_initialized()
+            else None
+        ),
+        'Watts per Person {W/person}': (
+            target_object.wattsperPerson().get()
+            if target_object.wattsperPerson().is_initialized()
+            else None
+        ),
         'Fraction Latent': target_object.fractionLatent(),
         'Fraction Radiant': target_object.fractionRadiant(),
         'Fraction Lost': target_object.fractionLost(),
     }
 
-    return object_dict
 
-def get_all_electric_equipment_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict]:
-    """
-    Retrieve all OS:ElectricEquipment:Definition objects from the OpenStudio model and return their attributes as a list of dictionaries.
+def get_all_electric_equipment_definition_objects_as_dicts(
+    osm_model: openstudio.model.Model,
+) -> list[dict[str, Any]]:
+    """Retrieve attributes for all OS:ElectricEquipment:Definition objects."""
+    from openstudio_toolkit.osm_objects._base import build_all_dicts
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    return build_all_dicts(
+        osm_model,
+        "getElectricEquipmentDefinitions",
+        get_electric_equipment_definition_object_as_dict,
+    )
 
-    Returns:
-    - list[dict]: A list of dictionaries, each containing information about an electric equipment definition object.
-    """
-    all_objects = osm_model.getElectricEquipmentDefinitions()
-    return [get_electric_equipment_definition_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
 
-def get_all_electric_equipment_definition_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
-    """
-    Retrieve all OS:ElectricEquipment:Definition objects from the OpenStudio model and organize them into a pandas DataFrame.
+def get_all_electric_equipment_definition_objects_as_dataframe(
+    osm_model: openstudio.model.Model,
+) -> pd.DataFrame:
+    """Retrieve all OS:ElectricEquipment:Definition objects as a DataFrame."""
+    from openstudio_toolkit.osm_objects._base import build_dataframe
 
-    Parameters:
-    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    return build_dataframe(
+        get_all_electric_equipment_definition_objects_as_dicts(osm_model),
+        "ElectricEquipmentDefinition",
+    )
 
-    Returns:
-    - pd.DataFrame: DataFrame containing information about all electric equipment definition objects.
-    """
-    all_objects_dicts = get_all_electric_equipment_definition_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
 
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} electric equipment definition objects")
-    return all_objects_df
-
+# ------------------------------------------------------------------------------------------------
+#  ****** LEGACY OBJECTS (NOT REFACTORED) *******************************************************
+#  The following objects remain in their original v0.1.0 implementation style
+# ------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------
 #  ****** Gas Equipment **************************************************************************

@@ -213,9 +213,10 @@ class PeopleData(OsmObjectBase):
     """Schema for OS:People objects (loads.get_people_object_as_dict)."""
 
     people_definition_name: str | None = Field(default=None, alias="People Definition Name")
-    space_or_space_type_name: str | None = Field(default=None, alias="Space or Space Type Name")
+    space_or_spacetype_name: str | None = Field(default=None, alias="Space or SpaceType Name")
     number_of_people_schedule_name: str | None = Field(default=None, alias="Number of People Schedule Name")
     activity_level_schedule_name: str | None = Field(default=None, alias="Activity Level Schedule Name")
+    surface_name_angle_factor_list_name: str | None = Field(default=None, alias="Surface Name/Angle Factor List Name")
     work_efficiency_schedule_name: str | None = Field(default=None, alias="Work Efficiency Schedule Name")
     clothing_insulation_schedule_name: str | None = Field(default=None, alias="Clothing Insulation Schedule Name")
     air_velocity_schedule_name: str | None = Field(default=None, alias="Air Velocity Schedule Name")

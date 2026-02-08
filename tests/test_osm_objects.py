@@ -183,6 +183,124 @@ def test_fetch_object_helpers_integration(model_with_objects):
     # Verify strict argument validation still works via the modules
     with pytest.raises(ValueError):
         space_types.get_space_type_as_dict(model_with_objects, space_type_handle="fake", space_type_name="fake")
-    
+
     with pytest.raises(ValueError):
         space_types.get_space_type_as_dict(model_with_objects) # Neither provided
+
+
+# ---------------------------------------------------------------------------
+# Loads Tests
+# ---------------------------------------------------------------------------
+
+def test_people(model_with_objects):
+    dicts = loads.get_all_people_objects_as_dicts(model_with_objects)
+    assert len(dicts) > 0, "R2F-Office-Hub should have People objects"
+
+    first = dicts[0]
+    assert "Handle" in first
+    assert "Name" in first
+    assert "People Definition Name" in first
+    assert "Space or SpaceType Name" in first
+    assert "Multiplier" in first
+
+
+def test_people_dataframe(model_with_objects):
+    df = loads.get_all_people_objects_as_dataframe(model_with_objects)
+    assert isinstance(df, pd.DataFrame)
+    assert not df.empty, "R2F-Office-Hub should have People objects"
+    assert "Name" in df.columns
+    assert "People Definition Name" in df.columns
+
+
+def test_people_definition(model_with_objects):
+    dicts = loads.get_all_people_definition_objects_as_dicts(model_with_objects)
+    assert len(dicts) > 0, "R2F-Office-Hub should have People Definition objects"
+
+    first = dicts[0]
+    assert "Handle" in first
+    assert "Name" in first
+    assert "Number of People Calculation Method" in first
+    assert "Fraction Radiant" in first
+
+
+def test_people_definition_dataframe(model_with_objects):
+    df = loads.get_all_people_definition_objects_as_dataframe(model_with_objects)
+    assert isinstance(df, pd.DataFrame)
+    assert not df.empty, "R2F-Office-Hub should have People Definition objects"
+    assert "Name" in df.columns
+
+
+def test_lights(model_with_objects):
+    dicts = loads.get_all_lights_objects_as_dicts(model_with_objects)
+    assert len(dicts) > 0, "R2F-Office-Hub should have Lights objects"
+
+    first = dicts[0]
+    assert "Handle" in first
+    assert "Name" in first
+    assert "Lights Definition Name" in first
+    assert "Space or SpaceType Name" in first
+    assert "Multiplier" in first
+
+
+def test_lights_dataframe(model_with_objects):
+    df = loads.get_all_lights_objects_as_dataframe(model_with_objects)
+    assert isinstance(df, pd.DataFrame)
+    assert not df.empty, "R2F-Office-Hub should have Lights objects"
+    assert "Name" in df.columns
+    assert "Lights Definition Name" in df.columns
+
+
+def test_lights_definition(model_with_objects):
+    dicts = loads.get_all_lights_definition_objects_as_dicts(model_with_objects)
+    assert len(dicts) > 0, "R2F-Office-Hub should have Lights Definition objects"
+
+    first = dicts[0]
+    assert "Handle" in first
+    assert "Name" in first
+    assert "Design Level Calculation Method" in first
+    assert "Fraction Radiant" in first
+
+
+def test_lights_definition_dataframe(model_with_objects):
+    df = loads.get_all_lights_definition_objects_as_dataframe(model_with_objects)
+    assert isinstance(df, pd.DataFrame)
+    assert not df.empty, "R2F-Office-Hub should have Lights Definition objects"
+    assert "Name" in df.columns
+
+
+def test_electric_equipment(model_with_objects):
+    dicts = loads.get_all_electric_equipment_objects_as_dicts(model_with_objects)
+    assert len(dicts) > 0, "R2F-Office-Hub should have ElectricEquipment objects"
+
+    first = dicts[0]
+    assert "Handle" in first
+    assert "Name" in first
+    assert "Electric Equipment Definition Name" in first
+    assert "Space or SpaceType Name" in first
+    assert "Multiplier" in first
+
+
+def test_electric_equipment_dataframe(model_with_objects):
+    df = loads.get_all_electric_equipment_objects_as_dataframe(model_with_objects)
+    assert isinstance(df, pd.DataFrame)
+    assert not df.empty, "R2F-Office-Hub should have ElectricEquipment objects"
+    assert "Name" in df.columns
+    assert "Electric Equipment Definition Name" in df.columns
+
+
+def test_electric_equipment_definition(model_with_objects):
+    dicts = loads.get_all_electric_equipment_definition_objects_as_dicts(model_with_objects)
+    assert len(dicts) > 0, "R2F-Office-Hub should have ElectricEquipment Definition objects"
+
+    first = dicts[0]
+    assert "Handle" in first
+    assert "Name" in first
+    assert "Design Level Calculation Method" in first
+    assert "Fraction Radiant" in first
+
+
+def test_electric_equipment_definition_dataframe(model_with_objects):
+    df = loads.get_all_electric_equipment_definition_objects_as_dataframe(model_with_objects)
+    assert isinstance(df, pd.DataFrame)
+    assert not df.empty, "R2F-Office-Hub should have ElectricEquipment Definition objects"
+    assert "Name" in df.columns
