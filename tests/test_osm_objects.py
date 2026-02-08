@@ -3,6 +3,7 @@ import pytest
 import openstudio
 import pandas as pd
 from openstudio_toolkit.osm_objects import hvac_air_loops
+from openstudio_toolkit.osm_objects import availability_managers
 from openstudio_toolkit.osm_objects import component_curves
 from openstudio_toolkit.osm_objects import space_types
 from openstudio_toolkit.osm_objects import constructions
@@ -150,6 +151,33 @@ def test_thermal_zones(model_with_objects):
     assert isinstance(tzs, pd.DataFrame)
     if not tzs.empty:
         assert 'Name' in tzs.columns
+
+def test_availability_manager_night_cycle(model_with_objects):
+    dicts = availability_managers.get_all_availability_manager_night_cycle_objects_as_dicts(model_with_objects)
+    assert len(dicts) > 0, "R2F-Office-Hub should have NightCycle objects"
+
+    first = dicts[0]
+    assert "Handle" in first
+    assert "Name" in first
+    assert "Control Type" in first
+    assert "Thermostat Tolerance {deltaC}" in first
+    assert "Cycling Run Time {s}" in first
+
+    # Test single get by handle
+    handle = first["Handle"]
+    single = availability_managers.get_availability_manager_night_cycle_object_as_dict(
+        model_with_objects, handle=handle
+    )
+    assert single["Name"] == first["Name"]
+
+
+def test_availability_manager_night_cycle_dataframe(model_with_objects):
+    df = availability_managers.get_all_availability_manager_night_cycle_objects_as_dataframe(model_with_objects)
+    assert isinstance(df, pd.DataFrame)
+    if not df.empty:
+        assert "Name" in df.columns
+        assert "Control Type" in df.columns
+
 
 def test_fetch_object_helpers_integration(model_with_objects):
     # Verify strict argument validation still works via the modules

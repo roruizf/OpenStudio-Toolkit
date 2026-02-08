@@ -11,6 +11,7 @@ import pytest
 from pydantic import ValidationError
 
 from openstudio_toolkit.schemas.osm_objects import (
+    AvailabilityManagerNightCycleData,
     ConstructionData,
     DefaultConstructionSetData,
     ElectricEquipmentData,
@@ -192,3 +193,61 @@ class TestLoadsData:
             "End-Use Subcategory": "General",
         })
         assert l.lights_definition_name == "Office Lights Def"
+
+
+class TestAvailabilityManagerNightCycleData:
+    SAMPLE = {
+        "Handle": "{61a28efb-7132-4c2c-8a1a-2af5fe6eff77}",
+        "Name": "Availability Manager Night Cycle 1",
+        "Applicability Schedule": "Always On Discrete",
+        "Fan Schedule": None,
+        "Control Type": "CycleOnAny",
+        "Thermostat Tolerance {deltaC}": 1.0,
+        "Cycling Run Time Control Type": "FixedRunTime",
+        "Cycling Run Time {s}": 1800.0,
+        "Control Zone or Zone List Name": "Thermal Zone 1",
+        "Cooling Control Zone or Zone List Name": None,
+        "Heating Control Zone or Zone List Name": None,
+        "Heating Zone Fans Only Zone or Zone List Name": None,
+    }
+
+    def test_validate_sample(self):
+        obj = AvailabilityManagerNightCycleData.model_validate(self.SAMPLE)
+        assert obj.name == "Availability Manager Night Cycle 1"
+        assert obj.control_type == "CycleOnAny"
+        assert obj.thermostat_tolerance_deltac == 1.0
+        assert obj.cycling_run_time_s == 1800.0
+        assert obj.control_zone_or_zone_list_name == "Thermal Zone 1"
+        assert obj.fan_schedule is None
+
+    def test_with_thermostat_cycling_control(self):
+        """Variant with StayOff + Thermostat cycling (R2F-Office-Hub pattern)."""
+        sample = {
+            **self.SAMPLE,
+            "Control Type": "StayOff",
+            "Thermostat Tolerance {deltaC}": 1.9999,
+            "Cycling Run Time Control Type": "Thermostat",
+            "Cycling Run Time {s}": 3600.0,
+        }
+        obj = AvailabilityManagerNightCycleData.model_validate(sample)
+        assert obj.control_type == "StayOff"
+        assert obj.thermostat_tolerance_deltac == 1.9999
+        assert obj.cycling_run_time_control_type == "Thermostat"
+        assert obj.cycling_run_time_s == 3600.0
+
+    def test_with_multiple_control_zones(self):
+        """Comma-separated zone names validate as string."""
+        sample = {
+            **self.SAMPLE,
+            "Control Zone or Zone List Name": "Zone 1, Zone 2, Zone 3",
+        }
+        obj = AvailabilityManagerNightCycleData.model_validate(sample)
+        assert obj.control_zone_or_zone_list_name == "Zone 1, Zone 2, Zone 3"
+
+    def test_missing_handle_fails(self):
+        with pytest.raises(ValidationError):
+            AvailabilityManagerNightCycleData.model_validate({"Name": "No Handle"})
+
+    def test_empty_dict_fails(self):
+        with pytest.raises(ValidationError):
+            AvailabilityManagerNightCycleData.model_validate({})

@@ -321,3 +321,38 @@ class DesignSpecOutdoorAirData(OsmObjectBase):
     outdoor_air_flow_ach: float | None = Field(
         default=None, alias="Outdoor Air Flow Air Changes per Hour {1/hr}"
     )
+
+
+# ---------------------------------------------------------------------------
+# HVAC Availability
+# ---------------------------------------------------------------------------
+
+class AvailabilityManagerNightCycleData(OsmObjectBase):
+    """Schema for OS:AvailabilityManager:NightCycle objects
+    (availability_managers.get_availability_manager_night_cycle_object_as_dict).
+    """
+
+    applicability_schedule: str | None = Field(
+        default=None, alias="Applicability Schedule"
+    )
+    fan_schedule: str | None = Field(default=None, alias="Fan Schedule")
+    control_type: str | None = Field(default=None, alias="Control Type")
+    thermostat_tolerance_deltac: float | None = Field(
+        default=None, alias="Thermostat Tolerance {deltaC}"
+    )
+    cycling_run_time_control_type: str | None = Field(
+        default=None, alias="Cycling Run Time Control Type"
+    )
+    cycling_run_time_s: float | None = Field(default=None, alias="Cycling Run Time {s}")
+    control_zone_or_zone_list_name: str | None = Field(
+        default=None, alias="Control Zone or Zone List Name"
+    )
+    cooling_control_zone_or_zone_list_name: str | None = Field(
+        default=None, alias="Cooling Control Zone or Zone List Name"
+    )
+    heating_control_zone_or_zone_list_name: str | None = Field(
+        default=None, alias="Heating Control Zone or Zone List Name"
+    )
+    heating_zone_fans_only_zone_or_zone_list_name: str | None = Field(
+        default=None, alias="Heating Zone Fans Only Zone or Zone List Name"
+    )
