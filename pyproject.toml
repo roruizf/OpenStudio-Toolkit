@@ -1,42 +1,70 @@
-
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "openstudio_toolkit"
-version = "0.1.0"
+name = "openstudio-toolkit"
+version = "0.2.0"
 authors = [
-  { name="Roberto Ruiz", email="roruizf@gmail.com" },
+    { name = "Roberto Ruiz", email = "roruizf@gmail.com" },
 ]
-description = "A Python library for interacting with OpenStudio Models."
+description = "A Python library for structured access to OpenStudio models for building energy simulation."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
+license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "pandas",
-    "pytest",
-    "openpyxl"
+    "pandas>=2.0",
+    "openpyxl>=3.1",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.4",
+    "mypy>=1.0",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/roruizf/OpenStudio-Toolkit"
-"Bug Tracker" = "https://github.com/roruizf/OpenStudio-Toolkit/issues"
+Homepage = "https://github.com/roruizf/OpenStudio-Toolkit"
+Issues = "https://github.com/roruizf/OpenStudio-Toolkit/issues"
 
 [tool.setuptools]
-# Include non-Python files specified in package-data
 include-package-data = true
 
 [tool.setuptools.packages.find]
-# Look for packages under the src/ directory
 where = ["src"]
 
 [tool.setuptools.package-data]
-# Include all files in the resources/measures directory
 openstudio_toolkit = [
     "resources/measures/**/*",
 ]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["openstudio_toolkit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

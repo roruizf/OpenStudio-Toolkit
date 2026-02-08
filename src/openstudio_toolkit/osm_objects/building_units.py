@@ -1,8 +1,9 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import numpy as np
-import logging
-from typing import Dict, Any, List, Optional
+
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -10,10 +11,10 @@ logger = logging.getLogger(__name__)
 
 def get_building_unit_as_dict(
     osm_model: openstudio.model.Model, 
-    unit_handle: Optional[str] = None, 
-    unit_name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.BuildingUnit] = None
-) -> Dict[str, Any]:
+    unit_handle: str | None = None, 
+    unit_name: str | None = None, 
+    _object_ref: openstudio.model.BuildingUnit | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of a BuildingUnit object from the OpenStudio Model.
 
@@ -43,7 +44,7 @@ def get_building_unit_as_dict(
         'Building Unit Type': target_unit.buildingUnitType()
     }
 
-def get_all_building_units_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_building_units_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all BuildingUnit objects in the model.
 
@@ -75,7 +76,7 @@ def get_all_building_unit_objects_as_dataframe(osm_model: openstudio.model.Model
     logger.info(f"Retrieved {len(df)} building unit objects from the model.")
     return df
 
-def create_new_building_unit_objects(osm_model: openstudio.model.Model, building_units_to_create: List[Dict[str, Any]]) -> Dict[str, Any]:
+def create_new_building_unit_objects(osm_model: openstudio.model.Model, building_units_to_create: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Create new BuildingUnit objects based on a list of dictionaries.
 
@@ -129,7 +130,7 @@ def create_new_building_unit_objects(osm_model: openstudio.model.Model, building
         "messages": messages
     }
 
-def update_building_unit_objects(osm_model: openstudio.model.Model, building_units_to_update: List[Dict[str, Any]]) -> Dict[str, Any]:
+def update_building_unit_objects(osm_model: openstudio.model.Model, building_units_to_update: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Update attributes of existing BuildingUnit objects based on a list of dictionaries.
 
@@ -203,7 +204,7 @@ def update_building_unit_objects(osm_model: openstudio.model.Model, building_uni
         "messages": messages
     }
 
-def assign_spaces_to_building_units(osm_model: openstudio.model.Model, space_unit_mapping: List[Dict[str, str]]) -> Dict[str, Any]:
+def assign_spaces_to_building_units(osm_model: openstudio.model.Model, space_unit_mapping: list[dict[str, str]]) -> dict[str, Any]:
     """
     Assign BuildingUnit objects to Space objects based on a mapping list.
 
@@ -282,7 +283,7 @@ def assign_spaces_to_building_units(osm_model: openstudio.model.Model, space_uni
         "messages": messages
     }
 
-def remove_unit_from_spaces(osm_model: openstudio.model.Model, space_handles: Optional[List[str]] = None) -> Dict[str, Any]:
+def remove_unit_from_spaces(osm_model: openstudio.model.Model, space_handles: list[str] | None = None) -> dict[str, Any]:
     """
     Remove the BuildingUnit assignment from specified spaces (or all if none provided).
 
@@ -340,8 +341,8 @@ def remove_unit_from_spaces(osm_model: openstudio.model.Model, space_handles: Op
     }
 
 def get_spaces_in_unit(osm_model: openstudio.model.Model, 
-                       unit_handle: Optional[str] = None, 
-                       unit_name: Optional[str] = None) -> List[Dict[str, Any]]:
+                       unit_handle: str | None = None, 
+                       unit_name: str | None = None) -> list[dict[str, Any]]:
     """
     Retrieve all spaces assigned to a specific BuildingUnit.
 
@@ -372,8 +373,8 @@ def get_spaces_in_unit(osm_model: openstudio.model.Model,
     return [spaces.get_space_object_as_dict(osm_model, _object_ref=space) for space in unit_spaces]
 
 def delete_building_unit(osm_model: openstudio.model.Model, 
-                         unit_handle: Optional[str] = None, 
-                         unit_name: Optional[str] = None) -> Dict[str, Any]:
+                         unit_handle: str | None = None, 
+                         unit_name: str | None = None) -> dict[str, Any]:
     """
     Delete a BuildingUnit object from the model.
     Note: Spaces assigned to this unit will simply be unassigned (orphaned), not deleted.

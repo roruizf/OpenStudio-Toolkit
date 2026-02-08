@@ -1,7 +1,9 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import Dict, List, Any
+
 from openstudio_toolkit.osm_objects import surfaces
 
 # Configure logger
@@ -59,7 +61,7 @@ def _deduplicate_names(names: pd.Series) -> pd.Series:
             new_names.append(f"{name}_1")
     return pd.Series(new_names, index=names.index)
 
-def validator(osm_model: openstudio.model.Model) -> Dict[str, Any]:
+def validator(osm_model: openstudio.model.Model) -> dict[str, Any]:
     """
     Validate that the model has surfaces to be renamed.
 

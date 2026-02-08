@@ -1,7 +1,8 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import List, Dict, Any, Optional
 
 from openstudio_toolkit.utils import helpers
 
@@ -16,11 +17,11 @@ import math
 
 def get_space_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.Space] = None,
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.Space | None = None,
     enriched_data: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Space from the OpenStudio Model.
 
@@ -67,7 +68,7 @@ def get_space_object_as_dict(
 
     return space_dict
 
-def get_all_space_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_space_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Space objects in the model.
 
@@ -77,8 +78,8 @@ def get_all_space_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Di
     Returns:
     - List[Dict[str, Any]]: A list of dictionaries containing space attributes.
     """
-    all_objects = osm_model.getSpaces()
-    return [get_space_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
+    from openstudio_toolkit.osm_objects._base import build_all_dicts
+    return build_all_dicts(osm_model, "getSpaces", get_space_object_as_dict)
 
 def get_all_space_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
@@ -90,17 +91,11 @@ def get_all_space_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.
     Returns:
     - pd.DataFrame: A DataFrame containing all Space attributes.
     """
-    all_objects_dicts = get_all_space_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} Space objects from the model.")
-    return df
+    from openstudio_toolkit.osm_objects._base import build_dataframe
+    return build_dataframe(get_all_space_objects_as_dicts(osm_model), "Space")
 
 
-def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Batch update non-geometric attributes of spaces.
 

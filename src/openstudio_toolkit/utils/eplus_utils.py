@@ -1,12 +1,13 @@
-import re
 import logging
+import os
+import re
+
 import pandas as pd
-from typing import Optional
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
-def extract_table_by_name_from_energyplus_results_html(html_file_path: str, table_name: str) -> Optional[pd.DataFrame]:
+def extract_table_by_name_from_energyplus_results_html(html_file_path: str, table_name: str) -> pd.DataFrame | None:
     """
     Extract a specific table from an EnergyPlus results HTML file based on its title.
 
@@ -27,7 +28,7 @@ def extract_table_by_name_from_energyplus_results_html(html_file_path: str, tabl
             logger.error(f"EnergyPlus HTML file not found: {html_file_path}")
             return None
             
-        with open(html_file_path, 'r', encoding='utf-8') as f:
+        with open(html_file_path, encoding='utf-8') as f:
             html_content = f.read()
     except Exception as e:
         logger.error(f"Error reading HTML file: {str(e)}")

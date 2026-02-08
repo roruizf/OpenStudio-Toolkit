@@ -1,11 +1,11 @@
-import os
 import json
-import tempfile
-import subprocess
-import shutil
 import logging
+import os
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class MeasureRunner:
     generation, subprocess management, and result extraction.
     """
 
-    def __init__(self, openstudio_cli_path: Optional[str] = None):
+    def __init__(self, openstudio_cli_path: str | None = None):
         """
         Initialize the MeasureRunner with an optional path to the OpenStudio CLI.
 
@@ -45,11 +45,11 @@ class MeasureRunner:
         self,
         model_path: str,
         measure_dir: str,
-        arguments: Dict[str, Any],
-        output_path: Optional[str] = None,
+        arguments: dict[str, Any],
+        output_path: str | None = None,
         run_simulation: bool = False,
-        extra_output_files: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        extra_output_files: list[str] | None = None
+    ) -> dict[str, Any]:
         """
         Execute an OpenStudio measure on a specified model.
 
@@ -108,9 +108,9 @@ class MeasureRunner:
                 logger.error(f"OpenStudio CLI failed with return code {result.returncode}")
                 logger.error(f"STDOUT: {result.stdout}")
                 logger.error(f"STDERR: {result.stderr}")
-                raise RuntimeError(f"Measure execution failed. See logs for details.")
+                raise RuntimeError("Measure execution failed. See logs for details.")
             else:
-                logger.info(f"OpenStudio CLI completed successfully.")
+                logger.info("OpenStudio CLI completed successfully.")
                 logger.debug(f"STDOUT: {result.stdout}")
                 if result.stderr:
                     logger.warning(f"STDERR (non-fatal): {result.stderr}")
@@ -143,7 +143,7 @@ class MeasureRunner:
 
             return result_summary
 
-    def _find_file_in_temp(self, temp_path: Path, file_pattern: str) -> Optional[Path]:
+    def _find_file_in_temp(self, temp_path: Path, file_pattern: str) -> Path | None:
         """
         Search for a specific file within the temporary run directory.
 
@@ -164,7 +164,7 @@ class MeasureRunner:
 
         return None
 
-    def _generate_osw(self, osm_path: str, measure_dir: str, measure_args: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_osw(self, osm_path: str, measure_dir: str, measure_args: dict[str, Any]) -> dict[str, Any]:
         """
         Generate the content for an OSW (OpenStudio Workflow) JSON file.
 

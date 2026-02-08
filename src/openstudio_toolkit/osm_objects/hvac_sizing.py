@@ -1,8 +1,9 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import numpy as np
-import logging
-from typing import Dict, Any, List, Optional
+
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -14,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 def get_sizing_zone_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.SizingZone] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.SizingZone | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Sizing:Zone object from the OpenStudio Model.
 
@@ -72,7 +73,7 @@ def get_sizing_zone_object_as_dict(
         'Zone Humidification Design Supply Air Humidity Ratio Difference {kgWater/kgDryAir}': target_object.zoneHumidificationDesignSupplyAirHumidityRatioDifference()
     }
 
-def get_all_sizing_zone_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_sizing_zone_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Sizing:Zone objects in the model.
 
@@ -110,10 +111,10 @@ def get_all_sizing_zone_objects_as_dataframe(osm_model: openstudio.model.Model) 
 
 def get_sizing_system_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.SizingSystem] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.SizingSystem | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Sizing:System object from the OpenStudio Model.
 
@@ -173,7 +174,7 @@ def get_sizing_system_object_as_dict(
         'Occupant Diversity': target_object.occupantDiversity().get() if not target_object.isOccupantDiversityAutosized() else 'autosize',
     }
 
-def get_all_air_sizing_system_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_air_sizing_system_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Sizing:System objects in the model.
 

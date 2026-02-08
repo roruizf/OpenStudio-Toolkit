@@ -1,7 +1,9 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import Dict, Any, List, Optional
+
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -9,10 +11,10 @@ logger = logging.getLogger(__name__)
 
 def get_construction_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.Construction] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.Construction | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Construction object from the OpenStudio Model.
 
@@ -44,7 +46,7 @@ def get_construction_object_as_dict(
 
     return object_dict
 
-def get_all_construction_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_construction_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Construction objects in the model.
 
@@ -78,10 +80,10 @@ def get_all_construction_objects_as_dataframe(osm_model: openstudio.model.Model)
 
 def get_default_construction_set_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.DefaultConstructionSet] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.DefaultConstructionSet | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:DefaultConstructionSet from the OpenStudio Model.
 
@@ -115,7 +117,7 @@ def get_default_construction_set_object_as_dict(
         'Adiabatic Surface Construction Name': target_object.adiabaticSurfaceConstruction().get().name().get() if target_object.adiabaticSurfaceConstruction().is_initialized() else None
     }
 
-def get_all_default_construction_set_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_default_construction_set_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:DefaultConstructionSet objects in the model.
 
@@ -149,10 +151,10 @@ def get_all_default_construction_set_objects_as_dataframe(osm_model: openstudio.
 
 def get_default_surface_constructions_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.DefaultSurfaceConstructions] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.DefaultSurfaceConstructions | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:DefaultSurfaceConstructions from the OpenStudio Model.
 
@@ -179,7 +181,7 @@ def get_default_surface_constructions_object_as_dict(
         'Roof Ceiling Construction Name': target_object.roofCeilingConstruction().get().name().get() if target_object.roofCeilingConstruction().is_initialized() else None
     }
 
-def get_all_default_surface_construction_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_default_surface_construction_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:DefaultSurfaceConstructions objects in the model.
 
@@ -213,10 +215,10 @@ def get_all_default_surface_construction_objects_as_dataframe(osm_model: openstu
 
 def get_default_subsurface_constructions_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.DefaultSubSurfaceConstructions] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.DefaultSubSurfaceConstructions | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:DefaultSubSurfaceConstructions from the OpenStudio Model.
 
@@ -248,7 +250,7 @@ def get_default_subsurface_constructions_object_as_dict(
         'Tubular Daylight Diffuser Construction Name': target_object.tubularDaylightDiffuserConstruction().get().name().get() if target_object.tubularDaylightDiffuserConstruction().is_initialized() else None
     }
 
-def get_all_default_subsurface_construction_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_default_subsurface_construction_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:DefaultSubSurfaceConstructions objects in the model.
 
@@ -366,7 +368,7 @@ def get_all_default_construction_set_component_as_dataframe(osm_model: openstudi
 def create_new_construction_set_from_dict(
     osm_model: openstudio.model.Model, 
     construction_set_name: str, 
-    construction_set_dict: Dict[str, Any]
+    construction_set_dict: dict[str, Any]
 ) -> openstudio.model.Model:
     """
     Create a new DefaultConstructionSet based on a nested parameter dictionary.

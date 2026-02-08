@@ -1,15 +1,16 @@
-import openstudio
 import logging
-from typing import Dict, List, Literal, Any
+from typing import Any, Literal
+
+import openstudio
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
 def validator(
     osm_model: openstudio.model.Model,
-    variable_names: List[str],
+    variable_names: list[str],
     reporting_frequency: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validate that the input parameters for setting output variables are correct and consistent.
 
@@ -42,7 +43,7 @@ def validator(
 
 def run(
     osm_model: openstudio.model.Model,
-    variable_names: List[str],    
+    variable_names: list[str],    
     reporting_frequency: Literal["Detailed", "Timestep", "Hourly", "Daily", "Monthly", "RunPeriod", "Annual"],
     key_value: str = "*",
     remove_existing: bool = False

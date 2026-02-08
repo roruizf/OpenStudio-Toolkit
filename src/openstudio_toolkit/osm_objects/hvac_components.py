@@ -1,7 +1,9 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import Dict, Any, List, Optional
+
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -13,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 def get_coil_cooling_dx_variable_refrigerant_flow_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.CoilCoolingDXVariableRefrigerantFlow] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.CoilCoolingDXVariableRefrigerantFlow | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Coil:Cooling:DX:VariableRefrigerantFlow from the OpenStudio Model.
 
@@ -46,7 +48,7 @@ def get_coil_cooling_dx_variable_refrigerant_flow_object_as_dict(
         'Cooling Capacity Modifier Curve Function of Flow Fraction Name': target_object.coolingCapacityModifierCurveFunctionofFlowFraction().name().get() if target_object.coolingCapacityModifierCurveFunctionofFlowFraction().name().is_initialized() else None
     }
 
-def get_all_coil_cooling_dx_variable_refrigerant_flow_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_coil_cooling_dx_variable_refrigerant_flow_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Coil:Cooling:DX:VariableRefrigerantFlow objects in the model.
 
@@ -84,10 +86,10 @@ def get_all_coil_cooling_dx_variable_refrigerant_flow_objects_as_dataframe(osm_m
 
 def get_coil_heating_dx_variable_refrigerant_flow_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.CoilHeatingDXVariableRefrigerantFlow] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.CoilHeatingDXVariableRefrigerantFlow | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Coil:Heating:DX:VariableRefrigerantFlow from the OpenStudio Model.
 
@@ -118,7 +120,7 @@ def get_coil_heating_dx_variable_refrigerant_flow_object_as_dict(
         'Heating Capacity Modifier Function of Flow Fraction Curve Name': target_object.heatingCapacityModifierFunctionofFlowFractionCurve().name().get() if target_object.heatingCapacityModifierFunctionofFlowFractionCurve().name().is_initialized() else None
     }
 
-def get_all_coil_heating_dx_variable_refrigerant_flow_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_coil_heating_dx_variable_refrigerant_flow_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Coil:Heating:DX:VariableRefrigerantFlow objects in the model.
 
@@ -156,10 +158,10 @@ def get_all_coil_heating_dx_variable_refrigerant_flow_objects_as_dataframe(osm_m
 
 def get_fan_constant_volume_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.FanConstantVolume] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.FanConstantVolume | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Fan:ConstantVolume from the OpenStudio Model.
 
@@ -192,7 +194,7 @@ def get_fan_constant_volume_object_as_dict(
         'End-Use Subcategory': target_object.endUseSubcategory()
     }
 
-def get_all_fan_constant_volume_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_fan_constant_volume_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Fan:ConstantVolume objects in the model.
 
@@ -230,10 +232,10 @@ def get_all_fan_constant_volume_objects_as_dataframe(osm_model: openstudio.model
 
 def get_fan_on_off_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.FanOnOff] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.FanOnOff | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Fan:OnOff from the OpenStudio Model.
 
@@ -268,7 +270,7 @@ def get_fan_on_off_object_as_dict(
         'End-Use Subcategory': target_object.endUseSubcategory()
     }
 
-def get_all_fan_on_off_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_fan_on_off_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Fan:OnOff objects in the model.
 
@@ -306,10 +308,10 @@ def get_all_fan_on_off_objects_as_dataframe(osm_model: openstudio.model.Model) -
 
 def get_hx_air_to_air_sensible_and_latent_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.HeatExchangerAirToAirSensibleAndLatent] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.HeatExchangerAirToAirSensibleAndLatent | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:HeatExchanger:AirToAir:SensibleAndLatent from the OpenStudio Model.
 
@@ -355,7 +357,7 @@ def get_hx_air_to_air_sensible_and_latent_object_as_dict(
         'Latent Effectiveness of Cooling Air Flow Curve Name': target_object.latentEffectivenessofCoolingAirFlowCurve().get().name().get() if target_object.latentEffectivenessofCoolingAirFlowCurve().is_initialized() else None
     }
 
-def get_all_hx_air_to_air_sensible_and_latent_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_hx_air_to_air_sensible_and_latent_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:HeatExchanger:AirToAir:SensibleAndLatent objects in the model.
 
@@ -393,10 +395,10 @@ def get_all_hx_air_to_air_sensible_and_latent_as_dataframe(osm_model: openstudio
 
 def get_air_conditioner_variable_refrigerant_flow_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.AirConditionerVariableRefrigerantFlow] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.AirConditionerVariableRefrigerantFlow | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:AirConditioner:VariableRefrigerantFlow from the OpenStudio Model.
 
@@ -498,7 +500,7 @@ def get_air_conditioner_variable_refrigerant_flow_object_as_dict(
         'Heat Recovery Heating Energy Time Constant {hr}': target_object.heatRecoveryHeatingEnergyTimeConstant()
     }
 
-def get_all_air_conditioner_variable_refrigerant_flow_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_air_conditioner_variable_refrigerant_flow_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:AirConditioner:VariableRefrigerantFlow objects in the model.
 
@@ -540,10 +542,10 @@ def get_all_air_conditioner_variable_refrigerant_flow_objects_as_dataframe(osm_m
 
 def get_coil_heating_gas_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.CoilHeatingGas] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.CoilHeatingGas | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Coil:Heating:Gas from the OpenStudio Model.
 
@@ -576,7 +578,7 @@ def get_coil_heating_gas_object_as_dict(
         'Off Cycle Parasitic Gas Load {W}': target_object.offCycleParasiticGasLoad()                           
     }
 
-def get_all_coil_heating_gas_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_coil_heating_gas_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Coil:Heating:Gas objects in the model.
 
@@ -617,10 +619,10 @@ def get_all_coil_heating_gas_objects_as_dataframe(osm_model: openstudio.model.Mo
 
 def get_coil_heating_water_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.CoilHeatingWater] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.CoilHeatingWater | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Coil:Heating:Water from the OpenStudio Model.
 
@@ -658,7 +660,7 @@ def get_coil_heating_water_object_as_dict(
         'Rated Ratio for Air and Water Convection': target_object.ratedRatioForAirAndWaterConvection()
     }
 
-def get_all_coil_heating_water_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_coil_heating_water_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Coil:Heating:Water objects in the model.
 
@@ -700,10 +702,10 @@ def get_all_coil_heating_water_objects_as_dataframe(osm_model: openstudio.model.
 
 def get_coil_cooling_water_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.CoilCoolingWater] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.CoilCoolingWater | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Coil:Cooling:Water from the OpenStudio Model.
 
@@ -740,7 +742,7 @@ def get_coil_cooling_water_object_as_dict(
         'Heat Exchanger Configuration': target_object.heatExchangerConfiguration()        
     }
 
-def get_all_coil_cooling_water_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_coil_cooling_water_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Coil:Cooling:Water objects in the model.
 
@@ -784,10 +786,10 @@ def get_all_coil_cooling_water_objects_as_dataframe(osm_model: openstudio.model.
 
 def get_pump_variable_speed_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.PumpVariableSpeed] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.PumpVariableSpeed | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Pump:VariableSpeed from the OpenStudio Model.
 
@@ -831,7 +833,7 @@ def get_pump_variable_speed_object_as_dict(
         'End-Use Subcategory': target_object.endUseSubcategory()
     }
 
-def get_all_pump_variable_speed_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_pump_variable_speed_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Pump:VariableSpeed objects in the model.
 
@@ -875,10 +877,10 @@ def get_all_pump_variable_speed_objects_as_dataframe(osm_model: openstudio.model
 
 def get_chiller_electric_eir_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.ChillerElectricEIR] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.ChillerElectricEIR | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Chiller:Electric:EIR from the OpenStudio Model.
 
@@ -933,7 +935,7 @@ def get_chiller_electric_eir_object_as_dict(
         'End-Use Subcategory': target_object.endUseSubcategory()
     }
 
-def get_all_chiller_electric_eir_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_chiller_electric_eir_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Chiller:Electric:EIR objects in the model.
 

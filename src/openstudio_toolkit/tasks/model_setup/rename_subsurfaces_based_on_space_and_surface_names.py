@@ -1,13 +1,15 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import Dict, List, Tuple, Any
-from openstudio_toolkit.osm_objects import surfaces, subsurfaces
+
+from openstudio_toolkit.osm_objects import subsurfaces, surfaces
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
-def _get_and_prepare_dataframes(osm_model: openstudio.model.Model) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def _get_and_prepare_dataframes(osm_model: openstudio.model.Model) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Extract and prepare the initial dataframes for surfaces and subsurfaces from the model.
 
@@ -107,7 +109,7 @@ def _apply_names_to_model(osm_model: openstudio.model.Model, final_df: pd.DataFr
             if current_name != new_name:
                 subsurface.setName(new_name)
 
-def validator(osm_model: openstudio.model.Model) -> Dict[str, Any]:
+def validator(osm_model: openstudio.model.Model) -> dict[str, Any]:
     """
     Validate that the model possesses subsurfaces to be renamed.
 

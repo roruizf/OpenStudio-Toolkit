@@ -1,11 +1,11 @@
-import openstudio
 import logging
 import os
 from pathlib import Path
-from typing import Optional
+
+import openstudio
 
 from openstudio_toolkit.utils.measure_runner import MeasureRunner
-from openstudio_toolkit.utils.osm_utils import save_model_as_osm_file, load_osm_file_as_model
+from openstudio_toolkit.utils.osm_utils import load_osm_file_as_model, save_model_as_osm_file
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ def validator(osm_model: openstudio.model.Model) -> bool:
 
 def run(
     osm_model: openstudio.model.Model,
-    output_path: Optional[str] = None
+    output_path: str | None = None
 ) -> openstudio.model.Model:
     """
     Apply the Hard Size HVAC measure to an OpenStudio model.

@@ -1,9 +1,9 @@
 import logging
+
+import numpy as np
 import openpyxl
 import pandas as pd
-import numpy as np
-from openpyxl import load_workbook, Workbook
-from typing import Optional, Dict, Any
+from openpyxl import Workbook, load_workbook
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def read_excel_table_to_df(
     excel_file_path: str, 
     sheet_name: str, 
-    column_range: Optional[str] = None, 
+    column_range: str | None = None, 
     start_row: int = 1, 
     end_row: int = 25000
 ) -> pd.DataFrame:
@@ -53,7 +53,7 @@ def update_excel_from_dataframe(
     sheet_name: str, 
     columns_range: str,
     df: pd.DataFrame, 
-    df_to_excel_cols_names_dict: Optional[Dict[str, str]] = None
+    df_to_excel_cols_names_dict: dict[str, str] | None = None
 ) -> None:
     """
     Update specific columns in an existing Excel sheet based on DataFrame content.

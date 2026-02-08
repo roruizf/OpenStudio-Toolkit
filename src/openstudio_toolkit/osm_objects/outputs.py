@@ -1,7 +1,8 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import List, Dict, Any, Optional
 
 from openstudio_toolkit.utils import helpers
 
@@ -14,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 def get_output_variable_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.OutputVariable] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.OutputVariable | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Output:Variable from the OpenStudio Model.
 
@@ -44,7 +45,7 @@ def get_output_variable_object_as_dict(
         'Reporting Frequency': target_object.reportingFrequency()
     }
 
-def get_all_output_variable_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_output_variable_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Output:Variable objects in the model.
 

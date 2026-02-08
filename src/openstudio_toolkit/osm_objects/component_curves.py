@@ -1,8 +1,10 @@
-from openstudio_toolkit.utils import helpers
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import Dict, Any, List, Optional
+
+from openstudio_toolkit.utils import helpers
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -13,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 def get_curve_cubic_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.CurveCubic] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.CurveCubic | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Curve:Cubic object from the OpenStudio Model.
 
@@ -46,7 +48,7 @@ def get_curve_cubic_object_as_dict(
         'Maximum Value of x': target_object.maximumValueofx()
     }
 
-def get_all_curve_cubic_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_curve_cubic_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Curve:Cubic objects in the model.
 
@@ -84,10 +86,10 @@ def get_all_curve_cubic_objects_as_dataframe(osm_model: openstudio.model.Model) 
 
 def get_curve_biquadratic_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.CurveBiquadratic] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.CurveBiquadratic | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Curve:Biquadratic object from the OpenStudio Model.
 
@@ -121,7 +123,7 @@ def get_curve_biquadratic_object_as_dict(
         'Maximum Value of y': target_object.maximumValueofy()
     }
 
-def get_all_curve_biquadratic_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_curve_biquadratic_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Curve:Biquadratic objects in the model.
 
@@ -159,10 +161,10 @@ def get_all_curve_biquadratic_objects_as_dataframe(osm_model: openstudio.model.M
 
 def get_curve_exponent_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.CurveExponent] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.CurveExponent | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Curve:Exponent object from the OpenStudio Model.
 
@@ -195,7 +197,7 @@ def get_curve_exponent_object_as_dict(
         'Output Unit Type': target_object.outputUnitType()
     }
 
-def get_all_curve_exponent_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_curve_exponent_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Curve:Exponent objects in the model.
 
@@ -233,10 +235,10 @@ def get_all_curve_exponent_objects_as_dataframe(osm_model: openstudio.model.Mode
 
 def get_curve_quadratic_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.CurveQuadratic] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.CurveQuadratic | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Curve:Quadratic object from the OpenStudio Model.
 
@@ -265,7 +267,7 @@ def get_curve_quadratic_object_as_dict(
         'Maximum Value of x': target_object.maximumValueofx()
     }
 
-def get_all_curve_quadratic_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_curve_quadratic_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Curve:Quadratic objects in the model.
 

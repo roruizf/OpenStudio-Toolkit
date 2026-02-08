@@ -1,11 +1,12 @@
-import openstudio
 import logging
-from typing import Any, Optional
+from typing import Any
+
+import openstudio
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
-def validate_args(handle: Optional[str], name: Optional[str]) -> None:
+def validate_args(handle: str | None, name: str | None) -> None:
     """
     Validate that exactly one identifier ('handle' or 'name') is provided.
 
@@ -21,7 +22,7 @@ def validate_args(handle: Optional[str], name: Optional[str]) -> None:
     if handle is None and name is None:
         raise ValueError("Either 'handle' or 'name' must be provided.")
 
-def fetch_object(osm_model: openstudio.model.Model, object_type: str, handle: Optional[str] = None, name: Optional[str] = None, _object_ref: Optional[Any] = None) -> Optional[Any]:
+def fetch_object(osm_model: openstudio.model.Model, object_type: str, handle: str | None = None, name: str | None = None, _object_ref: Any | None = None) -> Any | None:
     """
     Retrieve an OpenStudio object from the model using handle, name, or a direct reference.
 

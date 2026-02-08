@@ -1,7 +1,8 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import List, Dict, Any, Optional
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -177,7 +178,7 @@ def get_air_terminal_single_duct_parallel_piu_reheat_object_as_dict(osm_model: o
 
     return object_dict
 
-def get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dict(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dict(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:AirTerminal:SingleDuct:ParallelPIU:Reheat objects in the model.
 
@@ -231,9 +232,9 @@ def get_all_air_terminal_single_duct_parallel_piu_reheat_objects_as_dataframe(os
 
 def get_zone_hvac_unit_heater_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:ZoneHVAC:UnitHeater object from the OpenStudio Model.
 
@@ -286,7 +287,7 @@ def get_zone_hvac_unit_heater_object_as_dict(
 
     return object_dict
 
-def get_all_zone_hvac_unit_heater_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_zone_hvac_unit_heater_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:ZoneHVAC:UnitHeater objects in the model.
 
@@ -339,9 +340,9 @@ def get_all_zone_hvac_unit_heater_objects_as_dataframe(osm_model: openstudio.mod
 
 def get_four_pipe_fan_coil_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:ZoneHVAC:FourPipeFanCoil object from the OpenStudio Model.
 
@@ -405,7 +406,7 @@ def get_four_pipe_fan_coil_object_as_dict(
 
     return object_dict
 
-def get_all_four_pipe_fan_coil_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_four_pipe_fan_coil_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:ZoneHVAC:FourPipeFanCoil objects in the model.
 

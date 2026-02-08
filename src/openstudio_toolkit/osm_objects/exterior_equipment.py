@@ -1,7 +1,9 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import Dict, Any, List, Optional
+
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -13,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 def get_exterior_fuel_equipment_definition_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.ExteriorFuelEquipmentDefinition] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.ExteriorFuelEquipmentDefinition | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Exterior:FuelEquipment:Definition from the OpenStudio Model.
 
@@ -41,7 +43,7 @@ def get_exterior_fuel_equipment_definition_object_as_dict(
         'Design Level {W}': target_object.designLevel()
     }
 
-def get_all_exterior_fuel_equipment_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_exterior_fuel_equipment_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Exterior:FuelEquipment:Definition objects in the model.
 
@@ -79,10 +81,10 @@ def get_all_exterior_fuel_equipment_definition_objects_as_dataframe(osm_model: o
 
 def get_exterior_water_equipment_definition_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.ExteriorWaterEquipmentDefinition] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.ExteriorWaterEquipmentDefinition | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Exterior:WaterEquipment:Definition from the OpenStudio Model.
 
@@ -107,7 +109,7 @@ def get_exterior_water_equipment_definition_object_as_dict(
         'Design Level {m3/s}': target_object.designLevel()
     }
 
-def get_all_exterior_water_equipment_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_exterior_water_equipment_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Exterior:WaterEquipment:Definition objects in the model.
 
@@ -145,10 +147,10 @@ def get_all_exterior_water_equipment_definition_objects_as_dataframe(osm_model: 
 
 def get_exterior_lights_definition_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.ExteriorLightsDefinition] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.ExteriorLightsDefinition | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Exterior:Lights:Definition from the OpenStudio Model.
 
@@ -173,7 +175,7 @@ def get_exterior_lights_definition_object_as_dict(
         'Design Level {W}': target_object.designLevel()
     }
 
-def get_all_exterior_lights_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_exterior_lights_definition_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Exterior:Lights:Definition objects in the model.
 

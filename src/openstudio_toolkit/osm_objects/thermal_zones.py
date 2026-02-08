@@ -1,7 +1,8 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import List, Dict, Any, Optional
 
 from openstudio_toolkit.utils import helpers
 
@@ -14,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 def get_thermal_zone_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.ThermalZone] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.ThermalZone | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:ThermalZone from the OpenStudio Model.
 
@@ -62,7 +63,7 @@ def get_thermal_zone_object_as_dict(
         'Daylighting Controls Availability Schedule Name': target_object.daylightingControlsAvailabilitySchedule().get().name().get() if target_object.daylightingControlsAvailabilitySchedule().is_initialized() else None
     }
 
-def get_all_thermal_zones_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_thermal_zones_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:ThermalZone objects in the model.
 
@@ -72,8 +73,8 @@ def get_all_thermal_zones_objects_as_dicts(osm_model: openstudio.model.Model) ->
     Returns:
     - List[Dict[str, Any]]: A list of dictionaries containing thermal zone attributes.
     """
-    all_objects = osm_model.getThermalZones()
-    return [get_thermal_zone_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
+    from openstudio_toolkit.osm_objects._base import build_all_dicts
+    return build_all_dicts(osm_model, "getThermalZones", get_thermal_zone_object_as_dict)
 
 def get_all_thermal_zones_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
@@ -85,18 +86,12 @@ def get_all_thermal_zones_objects_as_dataframe(osm_model: openstudio.model.Model
     Returns:
     - pd.DataFrame: A DataFrame containing all ThermalZone attributes.
     """
-    all_objects_dicts = get_all_thermal_zones_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} ThermalZone objects from the model.")
-    return df
+    from openstudio_toolkit.osm_objects._base import build_dataframe
+    return build_dataframe(get_all_thermal_zones_objects_as_dicts(osm_model), "ThermalZone")
 
 
 def assign_spaces_to_thermal_zones(osm_model: openstudio.model.Model, 
-                                   mapping_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+                                   mapping_data: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Assign Thermal Zones to specific Spaces.
     
@@ -197,7 +192,7 @@ def assign_spaces_to_thermal_zones(osm_model: openstudio.model.Model,
 
 
 def update_thermal_zones_data(osm_model: openstudio.model.Model, 
-                              zones_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+                              zones_data: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Batch update attributes of Thermal Zones.
 

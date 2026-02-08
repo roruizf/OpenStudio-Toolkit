@@ -1,8 +1,7 @@
+import logging
+
 import openstudio
 import pandas as pd
-
-import logging
-from typing import List, Dict, Any, Optional
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -49,5 +48,5 @@ def get_building_object_as_dataframe(osm_model: openstudio.model.Model) -> pd.Da
     building_df = building_df.sort_values(
         by='Name', ascending=True).reset_index(drop=True)
 
-    logger.info(f"Retrieved Building object from the model.")
+    logger.info("Retrieved Building object from the model.")
     return building_df

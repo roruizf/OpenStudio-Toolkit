@@ -1,6 +1,7 @@
-import openstudio
 import logging
-from typing import Dict, List, Any
+from typing import Any
+
+import openstudio
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ def _is_normalized(space_name: str) -> bool:
     """
     return " " not in space_name and "_" not in space_name
 
-def validator(osm_model: openstudio.model.Model) -> Dict[str, Any]:
+def validator(osm_model: openstudio.model.Model) -> dict[str, Any]:
     """
     Validate that the model possesses spaces and check if they require name normalization.
 

@@ -1,7 +1,9 @@
+import logging
+
+import numpy as np
 import openstudio
 import pandas as pd
-import numpy as np
-import logging
+
 from openstudio_toolkit.osm_objects.schedules import *
 from openstudio_toolkit.utils import helpers
 

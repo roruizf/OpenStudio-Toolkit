@@ -1,6 +1,8 @@
+import logging
+
 import openstudio
 import pandas as pd
-import logging
+
 from openstudio_toolkit.utils import helpers
 
 # Configure logger

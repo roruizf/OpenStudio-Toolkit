@@ -1,12 +1,12 @@
-import os
 import logging
+import os
+
 import openstudio
-from typing import Optional
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
-def load_osm_file_as_model(osm_file_path: str, version_translator: Optional[bool] = True) -> openstudio.model.Model:
+def load_osm_file_as_model(osm_file_path: str, version_translator: bool | None = True) -> openstudio.model.Model:
     """
     Load an OpenStudio Model (.osm) file from a specified path.
 
@@ -40,7 +40,7 @@ def load_osm_file_as_model(osm_file_path: str, version_translator: Optional[bool
         logger.error(err_msg)
         raise RuntimeError(err_msg)
 
-def save_model_as_osm_file(osm_model: openstudio.model.Model, osm_file_path: str, new_file_name: Optional[str] = None) -> None:
+def save_model_as_osm_file(osm_model: openstudio.model.Model, osm_file_path: str, new_file_name: str | None = None) -> None:
     """
     Save an OpenStudio Model object to a file.
 

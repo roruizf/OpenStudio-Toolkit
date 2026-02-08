@@ -1,14 +1,15 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import Dict, List, Any
-from openstudio_toolkit.osm_objects import surfaces, subsurfaces
-from openstudio_toolkit.utils import helpers
+
+from openstudio_toolkit.osm_objects import subsurfaces, surfaces
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
-def validator(osm_model: openstudio.model.Model) -> Dict[str, Any]:
+def validator(osm_model: openstudio.model.Model) -> dict[str, Any]:
     """
     Diagnose if the model possesses the necessary geometry components (surfaces/walls) to calculate WWR.
 

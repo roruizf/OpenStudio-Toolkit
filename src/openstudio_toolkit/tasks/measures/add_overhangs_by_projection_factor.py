@@ -1,9 +1,11 @@
-import openstudio
-import tempfile
-import os
 import logging
+import os
+import tempfile
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any
+
+import openstudio
+
 from openstudio_toolkit.utils.measure_runner import MeasureRunner
 
 # Configure logger
@@ -17,8 +19,8 @@ def validator(
     projection_factor: float = 0.5,
     facade: str = "South",
     remove_ext_space_shading: bool = False,
-    construction: Optional[str] = None
-) -> Dict[str, Any]:
+    construction: str | None = None
+) -> dict[str, Any]:
     """
     Validate that required arguments are provided and the measure resource exists.
 
@@ -102,7 +104,7 @@ def run(
     projection_factor: float = 0.5,
     facade: str = "South",
     remove_ext_space_shading: bool = False,
-    construction: Optional[str] = None
+    construction: str | None = None
 ) -> openstudio.model.Model:
     """
     Execute the Add Overhangs by Projection Factor measure on the model.

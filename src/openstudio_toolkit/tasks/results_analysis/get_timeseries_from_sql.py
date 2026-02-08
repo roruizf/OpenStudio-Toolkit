@@ -1,10 +1,11 @@
+import logging
 import os
 import sqlite3
-import pandas as pd
-import logging
 from collections import namedtuple
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
+from typing import Any
+
+import pandas as pd
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ RP = "runperiod"
 
 # --- Internal Helper Functions ---
 
-def _to_sql_frequency(eso_frequency: str) -> Optional[str]:
+def _to_sql_frequency(eso_frequency: str) -> str | None:
     """
     Convert short frequency names to SQL-compatible reporting names.
 
@@ -38,7 +39,7 @@ def _to_sql_frequency(eso_frequency: str) -> Optional[str]:
     }
     return frequencies.get(eso_frequency.lower())
 
-def _eso_to_sql_variable(variable: Variable) -> Dict[str, str]:
+def _eso_to_sql_variable(variable: Variable) -> dict[str, str]:
     """
     Convert a Variable namedtuple to a dictionary for SQL queries.
 
@@ -51,7 +52,7 @@ def _eso_to_sql_variable(variable: Variable) -> Dict[str, str]:
     sql_columns = ["KeyValue", "Name", "Units"]
     return {col: val for val, col in zip(variable, sql_columns) if val is not None}
 
-def _data_dict_statement(columns: List[str], alike: bool) -> str:
+def _data_dict_statement(columns: list[str], alike: bool) -> str:
     """
     Construct the SELECT statement for the ReportDataDictionary table.
 
@@ -89,7 +90,7 @@ def _fetch_data_dict_rows(conn: sqlite3.Connection, variable: Variable, sql_freq
     
     return conn.execute(statement, params)
 
-def _get_outputs(conn: sqlite3.Connection, id_: int) -> List[float]:
+def _get_outputs(conn: sqlite3.Connection, id_: int) -> list[float]:
     """
     Retrieve all numerical values for a specific time series entry.
 
@@ -103,7 +104,7 @@ def _get_outputs(conn: sqlite3.Connection, id_: int) -> List[float]:
     statement = "SELECT Value FROM ReportData WHERE ReportDataDictionaryIndex = ?"
     return [r[0] for r in conn.execute(statement, (id_,))]
 
-def _get_timestamps(conn: sqlite3.Connection, frequency: str) -> List[datetime]:
+def _get_timestamps(conn: sqlite3.Connection, frequency: str) -> list[datetime]:
     """
     Retrieve and format timestamps for the specified frequency from the SQL database.
 
@@ -132,7 +133,7 @@ def _get_timestamps(conn: sqlite3.Connection, frequency: str) -> List[datetime]:
 
 # --- Main Task Functions ---
 
-def validator(sql_path: str) -> Dict[str, Any]:
+def validator(sql_path: str) -> dict[str, Any]:
     """
     Validate that the provided path exists and corresponds to a valid EnergyPlus SQL database.
 
@@ -163,12 +164,12 @@ def validator(sql_path: str) -> Dict[str, Any]:
 
 def run(
     sql_path: str,
-    variables: List[Variable],
+    variables: list[Variable],
     frequency: str,
     alike: bool = False,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None
-    ) -> Optional[pd.DataFrame]:
+    start_date: datetime | None = None,
+    end_date: datetime | None = None
+    ) -> pd.DataFrame | None:
     """
     Extract specified time series data from an EnergyPlus SQL file into a pandas DataFrame.
 

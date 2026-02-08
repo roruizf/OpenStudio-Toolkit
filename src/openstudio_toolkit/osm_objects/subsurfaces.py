@@ -1,7 +1,8 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import List, Dict, Any, Optional
 
 from openstudio_toolkit.utils import helpers
 
@@ -16,12 +17,12 @@ import math
 
 def get_subsurface_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.SubSurface] = None,
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.SubSurface | None = None,
     method: str = '8-Point',
     enriched_data: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:SubSurface from the OpenStudio Model.
 
@@ -67,7 +68,7 @@ def get_subsurface_object_as_dict(
 
     return subsurface_dict
 
-def get_all_subsurface_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_subsurface_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:SubSurface objects in the model.
 
@@ -77,8 +78,8 @@ def get_all_subsurface_objects_as_dicts(osm_model: openstudio.model.Model) -> Li
     Returns:
     - List[Dict[str, Any]]: A list of dictionaries containing subsurface attributes.
     """
-    all_objects = osm_model.getSubSurfaces()
-    return [get_subsurface_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
+    from openstudio_toolkit.osm_objects._base import build_all_dicts
+    return build_all_dicts(osm_model, "getSubSurfaces", get_subsurface_object_as_dict)
 
 def get_all_subsurface_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
@@ -90,16 +91,10 @@ def get_all_subsurface_objects_as_dataframe(osm_model: openstudio.model.Model) -
     Returns:
     - pd.DataFrame: A DataFrame containing all SubSurface attributes.
     """
-    all_objects_dicts = get_all_subsurface_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
+    from openstudio_toolkit.osm_objects._base import build_dataframe
+    return build_dataframe(get_all_subsurface_objects_as_dicts(osm_model), "SubSurface")
 
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} SubSurface objects from the model.")
-    return df
-
-def calculate_subsurface_orientation(subsurface: openstudio.model.SubSurface, method: str = '8-Point') -> Dict[str, Any]:
+def calculate_subsurface_orientation(subsurface: openstudio.model.SubSurface, method: str = '8-Point') -> dict[str, Any]:
     """
     Calculate the absolute azimuth and classification for a subsurface.
     Uses the parent surface's normal and space rotation.

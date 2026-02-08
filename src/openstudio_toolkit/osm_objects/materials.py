@@ -1,17 +1,18 @@
+import logging
+from typing import Any
+
+import numpy as np
 import openstudio
 import pandas as pd
-import numpy as np
-import logging
-from typing import List, Dict, Any, Optional
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
 def get_standard_opaque_material_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:StandardOpaqueMaterial object from the OpenStudio Model.
 
@@ -64,7 +65,7 @@ def get_standard_opaque_material_object_as_dict(
 
     return object_dict
 
-def get_all_standard_opaque_material_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_standard_opaque_material_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:StandardOpaqueMaterial objects in the model.
 
@@ -118,9 +119,9 @@ def get_all_standard_opaque_material_objects_as_dataframe(osm_model: openstudio.
 
 def get_massless_opaque_material_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Material:NoMass object from the OpenStudio Model.
 
@@ -170,7 +171,7 @@ def get_massless_opaque_material_object_as_dict(
 
     return object_dict
 
-def get_all_massless_opaque_material_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_massless_opaque_material_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Material:NoMass objects in the model.
 

@@ -1,11 +1,12 @@
-import openstudio
 import logging
-from typing import Dict, List, Any
+from typing import Any
+
+import openstudio
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
-def validator(osm_model: openstudio.model.Model, spaces_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+def validator(osm_model: openstudio.model.Model, spaces_data: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Validate that the model and input data are ready for the space data update task.
 
@@ -47,7 +48,7 @@ def validator(osm_model: openstudio.model.Model, spaces_data: List[Dict[str, Any
     messages.append(msg)
     return {"status": "READY", "messages": messages}
 
-def run(osm_model: openstudio.model.Model, spaces_data: List[Dict[str, Any]]) -> openstudio.model.Model:
+def run(osm_model: openstudio.model.Model, spaces_data: list[dict[str, Any]]) -> openstudio.model.Model:
     """
     Update geometric properties (Floor Area, Volume, Ceiling Height) for spaces based on a provided list of dictionaries.
 

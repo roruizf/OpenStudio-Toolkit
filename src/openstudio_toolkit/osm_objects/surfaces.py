@@ -1,7 +1,8 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import List, Dict, Any, Optional
 
 from openstudio_toolkit.utils import helpers
 
@@ -16,12 +17,12 @@ import math
 
 def get_surface_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.Surface] = None,
+    handle: str | None = None, 
+    name: str | None = None, 
+    _object_ref: openstudio.model.Surface | None = None,
     method: str = '8-Point',
     enriched_data: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Surface from the OpenStudio Model.
 
@@ -68,7 +69,7 @@ def get_surface_object_as_dict(
 
     return surface_dict
 
-def get_all_surface_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_surface_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Surface objects in the model.
 
@@ -78,8 +79,8 @@ def get_all_surface_objects_as_dicts(osm_model: openstudio.model.Model) -> List[
     Returns:
     - List[Dict[str, Any]]: A list of dictionaries containing surface attributes.
     """
-    all_objects = osm_model.getSurfaces()
-    return [get_surface_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
+    from openstudio_toolkit.osm_objects._base import build_all_dicts
+    return build_all_dicts(osm_model, "getSurfaces", get_surface_object_as_dict)
 
 def get_all_surface_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
@@ -91,16 +92,10 @@ def get_all_surface_objects_as_dataframe(osm_model: openstudio.model.Model) -> p
     Returns:
     - pd.DataFrame: A DataFrame containing all Surface attributes.
     """
-    all_objects_dicts = get_all_surface_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
+    from openstudio_toolkit.osm_objects._base import build_dataframe
+    return build_dataframe(get_all_surface_objects_as_dicts(osm_model), "Surface")
 
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} Surface objects from the model.")
-    return df
-
-def calculate_surface_orientation(surface: openstudio.model.Surface, method: str = '8-Point') -> Dict[str, Any]:
+def calculate_surface_orientation(surface: openstudio.model.Surface, method: str = '8-Point') -> dict[str, Any]:
     """
     Calculate the absolute azimuth and classification for a single surface.
     

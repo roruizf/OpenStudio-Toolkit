@@ -1,7 +1,8 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import List, Dict, Any, Optional
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -12,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 def get_controller_outdoor_air_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:Controller:OutdoorAir object from the OpenStudio Model.
 
@@ -81,7 +82,7 @@ def get_controller_outdoor_air_object_as_dict(
     return object_dict
 
 
-def get_all_controller_outdoor_air_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_controller_outdoor_air_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:Controller:OutdoorAir objects in the model.
 

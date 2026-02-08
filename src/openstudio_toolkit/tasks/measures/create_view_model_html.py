@@ -1,12 +1,13 @@
-import openstudio
-import tempfile
+import logging
 import os
 import shutil
-import logging
+import tempfile
 from pathlib import Path
-from typing import Dict, Any
-# from importlib.resources import files (Removed for Python 3.8 compatibility)
+from typing import Any
 
+import openstudio
+
+# from importlib.resources import files (Removed for Python 3.8 compatibility)
 from openstudio_toolkit.utils.measure_runner import MeasureRunner
 
 # Configure logger
@@ -23,7 +24,7 @@ def _get_measure_dir() -> Path:
     # Current file is at src/openstudio_toolkit/tasks/measures/create_view_model_html.py
     return Path(__file__).parent.parent.parent / "resources" / "measures" / "view_model"
 
-def validator(osm_model: openstudio.model.Model) -> Dict[str, Any]:
+def validator(osm_model: openstudio.model.Model) -> dict[str, Any]:
     """
     Validate that the view_model measure resource exists and is properly structured.
 

@@ -1,8 +1,9 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import numpy as np
-import logging
-from typing import Dict, Any, List, Optional
+
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -10,10 +11,10 @@ logger = logging.getLogger(__name__)
 
 def get_building_story_as_dict(
     osm_model: openstudio.model.Model, 
-    story_handle: Optional[str] = None, 
-    story_name: Optional[str] = None, 
-    _object_ref: Optional[openstudio.model.BuildingStory] = None
-) -> Dict[str, Any]:
+    story_handle: str | None = None, 
+    story_name: str | None = None, 
+    _object_ref: openstudio.model.BuildingStory | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of a BuildingStory object from the OpenStudio Model.
 
@@ -43,7 +44,7 @@ def get_building_story_as_dict(
         'Nominal Floor to Ceiling Height {m}': target_story.nominalFloortoCeilingHeight().get() if target_story.nominalFloortoCeilingHeight().is_initialized() else None
     }
 
-def get_all_building_stories_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_building_stories_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all BuildingStory objects in the model.
 
@@ -75,7 +76,7 @@ def get_all_building_stories_objects_as_dataframe(osm_model: openstudio.model.Mo
     logger.info(f"Retrieved {len(df)} building story objects from the model.")
     return df
 
-def create_new_building_stories_objects(osm_model: openstudio.model.Model, building_stories_to_create: List[Dict[str, Any]]) -> Dict[str, Any]:
+def create_new_building_stories_objects(osm_model: openstudio.model.Model, building_stories_to_create: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Create new BuildingStory objects based on a list of dictionaries.
 
@@ -149,7 +150,7 @@ def create_new_building_stories_objects(osm_model: openstudio.model.Model, build
         "messages": messages
     }
 
-def update_building_stories_objects(osm_model: openstudio.model.Model, building_stories_to_update: List[Dict[str, Any]]) -> Dict[str, Any]:
+def update_building_stories_objects(osm_model: openstudio.model.Model, building_stories_to_update: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Update attributes of existing BuildingStory objects based on a list of dictionaries.
 
@@ -247,7 +248,7 @@ def update_building_stories_objects(osm_model: openstudio.model.Model, building_
         "messages": messages
     }
 
-def assign_spaces_to_building_stories(osm_model: openstudio.model.Model, space_story_mapping: List[Dict[str, str]]) -> Dict[str, Any]:
+def assign_spaces_to_building_stories(osm_model: openstudio.model.Model, space_story_mapping: list[dict[str, str]]) -> dict[str, Any]:
     """
     Assign BuildingStory objects to Space objects based on a mapping list.
 
@@ -327,7 +328,7 @@ def assign_spaces_to_building_stories(osm_model: openstudio.model.Model, space_s
     }
 
 
-def remove_story_from_spaces(osm_model: openstudio.model.Model, space_handles: Optional[List[str]] = None) -> Dict[str, Any]:
+def remove_story_from_spaces(osm_model: openstudio.model.Model, space_handles: list[str] | None = None) -> dict[str, Any]:
     """
     Remove the BuildingStory assignment from specified spaces (or all if none provided).
 
@@ -386,8 +387,8 @@ def remove_story_from_spaces(osm_model: openstudio.model.Model, space_handles: O
 
 
 def get_spaces_in_story(osm_model: openstudio.model.Model, 
-                        story_handle: Optional[str] = None, 
-                        story_name: Optional[str] = None) -> List[Dict[str, Any]]:
+                        story_handle: str | None = None, 
+                        story_name: str | None = None) -> list[dict[str, Any]]:
     """
     Retrieve all spaces assigned to a specific BuildingStory.
 
@@ -419,8 +420,8 @@ def get_spaces_in_story(osm_model: openstudio.model.Model,
 
 
 def delete_building_story(osm_model: openstudio.model.Model, 
-                          story_handle: Optional[str] = None, 
-                          story_name: Optional[str] = None) -> Dict[str, Any]:
+                          story_handle: str | None = None, 
+                          story_name: str | None = None) -> dict[str, Any]:
     """
     Delete a BuildingStory object from the model.
     Note: Spaces assigned to this story will simply be unassigned (orphaned), not deleted.

@@ -1,7 +1,8 @@
+import logging
+from typing import Any
+
 import openstudio
 import pandas as pd
-import logging
-from typing import List, Dict, Any, Optional
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -11,9 +12,9 @@ logger = logging.getLogger(__name__)
 #-------------------
 def get_air_loop_hvac_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:AirLoopHVAC object from the OpenStudio Model.
 
@@ -75,7 +76,7 @@ def get_air_loop_hvac_object_as_dict(
     return object_dict
 
 
-def get_all_air_loop_hvac_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_air_loop_hvac_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:AirLoopHVAC objects in the model.
 
@@ -131,9 +132,9 @@ def get_all_air_loop_hvac_objects_as_dataframe(osm_model: openstudio.model.Model
 
 def get_air_loop_hvac_outdoor_air_system_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:AirLoopHVAC:OutdoorAirSystem object from the OpenStudio Model.
 
@@ -182,7 +183,7 @@ def get_air_loop_hvac_outdoor_air_system_object_as_dict(
 
     return object_dict
 
-def get_all_air_loop_hvac_outdoor_air_system_objects_as_dicts(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_air_loop_hvac_outdoor_air_system_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:AirLoopHVAC:OutdoorAirSystem objects in the model.
 
@@ -235,9 +236,9 @@ def get_all_air_loop_hvac_outdoor_air_system_objects_as_dataframe(osm_model: ope
 
 def get_air_loop_hvac_unitary_system_object_as_dict(
     osm_model: openstudio.model.Model, 
-    handle: Optional[str] = None, 
-    name: Optional[str] = None
-) -> Dict[str, Any]:
+    handle: str | None = None, 
+    name: str | None = None
+) -> dict[str, Any]:
     """
     Retrieve attributes of an OS:AirLoopHVAC:UnitarySystem object from the OpenStudio Model.
 
@@ -318,7 +319,7 @@ def get_air_loop_hvac_unitary_system_object_as_dict(
 
     return object_dict
 
-def get_all_air_loop_hvac_unitary_system_objects_as_dict(osm_model: openstudio.model.Model) -> List[Dict[str, Any]]:
+def get_all_air_loop_hvac_unitary_system_objects_as_dict(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
     """
     Retrieve attributes for all OS:AirLoopHVAC:UnitarySystem objects in the model.
 

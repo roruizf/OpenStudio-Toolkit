@@ -1,9 +1,11 @@
-import openstudio
-import tempfile
-import os
 import logging
+import os
+import tempfile
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any
+
+import openstudio
+
 from openstudio_toolkit.utils.measure_runner import MeasureRunner
 
 # Configure logger
@@ -42,7 +44,7 @@ def validator(
     create_space_types: bool = True, 
     create_construction_set: bool = True, 
     set_building_defaults: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validate that required arguments are provided and the measure resource exists.
 
