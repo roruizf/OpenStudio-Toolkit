@@ -1,6 +1,6 @@
 # P2 Model Inventory Contract
 
-Status: P2.1 implemented and reviewed; pending checkpoint
+Status: P2.1 and P2.2 reviewed and checkpointed
 Date: 2026-06-20
 Target capability: `inspect-openstudio-model`
 
@@ -62,10 +62,14 @@ Decision: P2 traverses each SDK collection once and extracts only the scoped fie
 ## 4. Aggregate Shape
 
 ```text
+InventoryRun
+  source            # path/filename plus stable identity
+  runtime           # complete execution provenance
+  inventory
+
 ModelInventory
   schema_version
-  source
-  runtime
+  source            # sha256 and size only
   building
   counts
   stories[]
@@ -77,7 +81,7 @@ ModelInventory
 
 `schema_version` begins at `0.1.0`. It versions the inventory contract independently from the toolkit package.
 
-The JSON artifact SHA-256 is returned alongside the serialized bytes. It is not embedded in `ModelInventory`, avoiding a self-referential hash.
+Only `ModelInventory` is canonically serialized and hashed. `InventoryRun` records path and runtime provenance outside those bytes, so equivalent runs on different machines retain the same semantic hash. The JSON artifact SHA-256 is returned alongside the serialized bytes and is not embedded in `ModelInventory`, avoiding a self-referential hash.
 
 ## 5. Common Rules
 
@@ -116,16 +120,14 @@ This metadata is the source for a human-readable field map in `docs/contracts/`.
 
 ## 6. Records
 
-### 6.1 SourceRecord
+### 6.1 SourceIdentityRecord and SourceRecord
 
 | Field | Type | Required | Meaning |
 |---|---|---:|---|
-| `path` | string | yes | Input path as supplied to the controlled adapter |
-| `filename` | string | yes | Basename for portable display |
 | `sha256` | string | yes | Hash before model loading |
 | `size_bytes` | integer | yes | Source file size |
 
-The toolkit does not decide whether `path` is project-relative or absolute. The adapter supplies the registered path policy.
+`SourceIdentityRecord` contains these two portable fields and is embedded in `ModelInventory`. `SourceRecord` adds `path` and `filename` for the outer `InventoryRun` envelope. The toolkit does not decide whether `path` is project-relative or absolute; the adapter supplies the registered path policy. Envelope paths do not affect the semantic inventory hash.
 
 ### 6.2 RuntimeRecord
 
@@ -137,7 +139,7 @@ Reuse the serialized facts from P1 `RuntimeInfo`:
 - `energyplus_version`
 - `openstudio_module_path`
 
-Controlled extraction calls `assert_reference_runtime()` before loading the model.
+`RuntimeRecord` belongs to `InventoryRun`, not the hashed `ModelInventory`. Controlled extraction calls `assert_reference_runtime()` before loading the model.
 
 ### 6.3 BuildingRecord
 
@@ -259,11 +261,11 @@ Counts must equal the corresponding collection lengths when the Pydantic model i
 The first public API should remain narrow:
 
 ```python
-inspect_model(path: Path, *, registered_path: str | None = None) -> ModelInventory
+inspect_model(path: Path, *, registered_path: str | None = None) -> InventoryRun
 serialize_inventory(inventory: ModelInventory) -> InventoryArtifact
 ```
 
-`InventoryArtifact` contains canonical JSON bytes and `sha256`. It is an in-memory result; writing to disk is the adapter's responsibility.
+The caller serializes `run.inventory`. `InventoryArtifact` contains canonical JSON bytes and `sha256`; the run envelope is recorded separately. Both are in-memory results, and writing to disk is the adapter's responsibility.
 
 Implementation constraints:
 
@@ -271,6 +273,7 @@ Implementation constraints:
 - Hash before loading and again after extraction.
 - Fail if the input hash changes.
 - Load through `VersionTranslator` and fail explicitly when uninitialized.
+- In-memory upgrade by `VersionTranslator` is expected and is not source-file mutation.
 - Traverse each SDK collection once.
 - Extract from direct object references; do not re-fetch every object by name or handle.
 - Do not call setters, `save`, translators to disk, subprocesses, measures, or simulation.
@@ -292,7 +295,7 @@ Missing relationships such as a space without a story are valid nullable facts i
 1. The extractor runs only under the asserted P1 profile.
 2. Office Hub produces exactly 2 stories, 36 spaces, 36 thermal zones, 278 surfaces, and 53 subsurfaces.
 3. All Office Hub relationship handles resolve to objects present in the inventory.
-4. Repeated runs produce byte-identical canonical JSON and the same artifact SHA-256.
+4. Repeated runs and equivalent runs with different envelope paths produce byte-identical semantic inventory JSON and the same artifact SHA-256.
 5. The source SHA-256 is unchanged before and after each run.
 6. Pydantic rejects inconsistent collection counts.
 7. Optional SDK values become floats or `null`, never SWIG proxy objects.
@@ -308,10 +311,14 @@ No hard timing threshold is an acceptance gate. The direct SDK probe is recorded
 
 ### P2.1 - Schemas and canonical serialization
 
+Status: Completed and checkpointed at `4cab3a8`.
+
 - Add only the Pydantic records listed here.
 - Test counts, optional values, deterministic sorting, and serialization without OpenStudio.
 
 ### P2.2 - Direct SDK extractor
+
+Status: Completed and checkpointed; determinism changes applied.
 
 - Add one read-only traversal for the six scoped collections.
 - Test the small fixture first, then Office Hub.

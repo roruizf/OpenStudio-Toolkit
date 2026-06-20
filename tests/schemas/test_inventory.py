@@ -9,9 +9,11 @@ from pydantic import ValidationError
 
 from openstudio_toolkit.schemas.inventory import (
     BuildingRecord,
+    InventoryRun,
     ModelCounts,
     ModelInventory,
     RuntimeRecord,
+    SourceIdentityRecord,
     SourceRecord,
     SpaceRecord,
     StoryRecord,
@@ -19,8 +21,12 @@ from openstudio_toolkit.schemas.inventory import (
 )
 
 
+def _source_identity() -> SourceIdentityRecord:
+    return SourceIdentityRecord(sha256="a" * 64, size_bytes=42)
+
+
 def _source() -> SourceRecord:
-    return SourceRecord(path="models/example.osm", filename="example.osm", sha256="a" * 64, size_bytes=42)
+    return SourceRecord(sha256="a" * 64, size_bytes=42, path="models/example.osm", filename="example.osm")
 
 
 def _runtime() -> RuntimeRecord:
@@ -50,8 +56,7 @@ def _inventory(
 ) -> ModelInventory:
     story_records = stories or []
     return ModelInventory(
-        source=_source(),
-        runtime=_runtime(),
+        source=_source_identity(),
         building=building or _building(),
         counts=ModelCounts(
             stories=len(story_records), spaces=0, thermal_zones=0, surfaces=0, subsurfaces=0
@@ -63,8 +68,7 @@ def _inventory(
 def test_inventory_rejects_inconsistent_counts() -> None:
     with pytest.raises(ValidationError, match="Inventory counts do not match collections"):
         ModelInventory(
-            source=_source(),
-            runtime=_runtime(),
+            source=_source_identity(),
             building=_building(),
             counts=ModelCounts(stories=1, spaces=0, thermal_zones=0, surfaces=0, subsurfaces=0),
         )
@@ -171,6 +175,20 @@ def test_inventory_records_forbid_unknown_fields() -> None:
 
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
         SourceRecord.model_validate(data)
+
+
+def test_run_envelope_source_identity_must_match_inventory() -> None:
+    with pytest.raises(ValidationError, match="Run source identity does not match"):
+        InventoryRun(
+            source=SourceRecord(
+                sha256="b" * 64,
+                size_bytes=42,
+                path="models/example.osm",
+                filename="example.osm",
+            ),
+            runtime=_runtime(),
+            inventory=_inventory(),
+        )
 
 
 def test_space_field_lineage_preserves_openstudio_labels() -> None:

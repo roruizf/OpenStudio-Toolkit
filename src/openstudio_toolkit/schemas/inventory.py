@@ -48,11 +48,14 @@ class InventoryRecord(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
-class SourceRecord(InventoryRecord):
-    path: str
-    filename: str
+class SourceIdentityRecord(InventoryRecord):
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     size_bytes: int = Field(ge=0)
+
+
+class SourceRecord(SourceIdentityRecord):
+    path: str
+    filename: str
 
 
 class RuntimeRecord(InventoryRecord):
@@ -293,8 +296,7 @@ class ModelCounts(InventoryRecord):
 
 class ModelInventory(InventoryRecord):
     schema_version: Literal["0.1.0"] = SCHEMA_VERSION
-    source: SourceRecord
-    runtime: RuntimeRecord
+    source: SourceIdentityRecord
     building: BuildingRecord
     counts: ModelCounts
     stories: list[StoryRecord] = Field(default_factory=list)
@@ -320,6 +322,23 @@ class ModelInventory(InventoryRecord):
         )
         if self.counts != observed:
             raise ValueError(f"Inventory counts do not match collections: expected {observed.model_dump()}")
+        return self
+
+
+class InventoryRun(InventoryRecord):
+    """Provenance envelope excluded from the canonical semantic hash."""
+
+    source: SourceRecord
+    runtime: RuntimeRecord
+    inventory: ModelInventory
+
+    @model_validator(mode="after")
+    def source_identity_matches_inventory(self) -> InventoryRun:
+        if (
+            self.source.sha256 != self.inventory.source.sha256
+            or self.source.size_bytes != self.inventory.source.size_bytes
+        ):
+            raise ValueError("Run source identity does not match the inventory source identity")
         return self
 
 
