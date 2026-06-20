@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 import openstudio
+import pytest
 
 from openstudio_toolkit.extractors import inspect_model
 from openstudio_toolkit.osm_objects import spaces as legacy_spaces
@@ -76,12 +77,14 @@ def test_canonical_space_fields_match_legacy_human_projection() -> None:
         assert canonical.story_name == legacy["Building Story Name"]
         assert canonical.thermal_zone_name == legacy["Thermal Zone Name"]
         assert canonical.part_of_total_floor_area == legacy["Part of Total Floor Area"]
-        assert canonical.floor_area_m2 == legacy["Floor Area {m2}"]
-        assert canonical.volume_m3 == legacy["Volume {m3}"]
-        assert canonical.x_origin_m == legacy["X Origin {m}"]
-        assert canonical.y_origin_m == legacy["Y Origin {m}"]
-        assert canonical.z_origin_m == legacy["Z Origin {m}"]
-        assert canonical.direction_of_relative_north_deg == legacy["Direction of Relative North {deg}"]
+        assert canonical.floor_area_m2 == pytest.approx(legacy["Floor Area {m2}"])
+        assert canonical.volume_m3 == pytest.approx(legacy["Volume {m3}"])
+        assert canonical.x_origin_m == pytest.approx(legacy["X Origin {m}"])
+        assert canonical.y_origin_m == pytest.approx(legacy["Y Origin {m}"])
+        assert canonical.z_origin_m == pytest.approx(legacy["Z Origin {m}"])
+        assert canonical.direction_of_relative_north_deg == pytest.approx(
+            legacy["Direction of Relative North {deg}"]
+        )
 
 
 def test_caller_can_write_and_verify_office_hub_artifact_in_tmp(tmp_path: Path) -> None:

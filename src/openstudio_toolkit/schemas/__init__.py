@@ -1,5 +1,13 @@
 """Pydantic schemas for typed data contracts across the OpenStudio Toolkit."""
 
+from openstudio_toolkit.schemas.findings import (
+    Finding,
+    FindingObjectType,
+    FindingSeverity,
+    NamingProfile,
+    ProfileStatus,
+    sort_findings,
+)
 from openstudio_toolkit.schemas.inventory import (
     BuildingRecord,
     CoordinateSystem,
@@ -20,15 +28,29 @@ from openstudio_toolkit.schemas.inventory import (
 )
 from openstudio_toolkit.schemas.project import ProjectSpec, TaskStep
 from openstudio_toolkit.schemas.results import TaskResult, ValidationResult
+from openstudio_toolkit.schemas.validation import (
+    GeometryValidationReport,
+    ValidationArtifact,
+    ValidationCheck,
+    render_validation_report_markdown,
+    serialize_validation_report,
+)
 
 __all__ = [
     "BuildingRecord",
     "CoordinateSystem",
+    "Finding",
+    "FindingObjectType",
+    "FindingSeverity",
+    "GeometryValidationReport",
     "InventoryArtifact",
     "InventoryRun",
     "ModelCounts",
     "ModelInventory",
+    "NamingProfile",
     "Point3D",
+    "ProfileStatus",
+    "ProjectSpec",
     "RuntimeRecord",
     "SourceIdentityRecord",
     "SourceRecord",
@@ -37,9 +59,13 @@ __all__ = [
     "SubSurfaceRecord",
     "SurfaceRecord",
     "TaskResult",
+    "TaskStep",
     "ThermalZoneRecord",
     "ValidationResult",
-    "ProjectSpec",
-    "TaskStep",
+    "ValidationArtifact",
+    "ValidationCheck",
     "serialize_inventory",
+    "serialize_validation_report",
+    "sort_findings",
+    "render_validation_report_markdown",
 ]
