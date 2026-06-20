@@ -22,6 +22,7 @@ venv/
 # OpenStudio output directories and test artifacts
 test_output/
 *_output/
+tests/output/
 *.osm.bak
 # test_*.py
 test_*.html

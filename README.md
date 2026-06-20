@@ -52,8 +52,10 @@ A Python library that provides structured access to OpenStudio Model (OSM) eleme
 
 ## Prerequisites
 
-- **Python** 3.8 or higher
-- **OpenStudio** 3.x or higher (with Python bindings)
+- **Python** 3.13
+- **OpenStudio** 3.10.0 Python bindings
+- **EnergyPlus** 25.1.0 (reported by the OpenStudio binding)
+- **uv** for Python and dependency management
 - **Operating System**: Windows, macOS, or Linux
 
 ---
@@ -67,40 +69,14 @@ git clone https://github.com/roruizf/OpenStudio-Toolkit.git
 cd OpenStudio-Toolkit
 ```
 
-### 2. Install OpenStudio Python Package
-
-This toolkit requires the OpenStudio Python package to be installed in your environment.
-
-**Recommended (tested and verified):**
+### 2. Create the Verified Environment
 
 ```bash
-pip install openstudio==3.7.0
+uv sync --dev
+uv run python -c "from openstudio_toolkit.runtime import assert_reference_runtime; print(assert_reference_runtime())"
 ```
 
-**Note:** Version 3.7.0 has been fully tested with this toolkit. Other versions (3.x or higher) may work but are not guaranteed. If you choose to use a different version, you do so at your own risk.
-
-### 3. Install the Toolkit
-
-**Option A: Install in Editable Mode (Recommended for Development)**
-
-```bash
-pip install -e .
-```
-
-This installs the package in "editable mode" - any changes you make to the source code are immediately reflected without reinstalling. Perfect for development and experimentation.
-
-**Option B: Install in Standard Mode (Recommended for Regular Use)**
-
-```bash
-pip install .
-```
-
-This installs the package as a standard library. Use this if you just want to use the toolkit without modifying it.
-
-**Both options install the required dependencies:**
-- pandas
-- pytest
-- openpyxl
+`uv` installs the pinned OpenStudio 3.10.0 wheel into the project environment. The runtime assertion fails if Python, OpenStudio, or EnergyPlus does not match the verified profile. Conda and ambient `python3` environments are not supported.
 
 ---
 
@@ -269,17 +245,17 @@ OpenStudio-Toolkit/
 
 ## Testing
 
-Run the test suite with pytest:
+Run the test suite in the locked environment:
 
 ```bash
-pytest tests/
+uv run pytest tests/
 ```
 
 Run specific test modules:
 
 ```bash
-pytest tests/osm_objects/test_spaces.py
-pytest tests/utils/test_osm_utils.py
+uv run pytest tests/test_spaces.py
+uv run pytest tests/test_schemas/
 ```
 
 ---
