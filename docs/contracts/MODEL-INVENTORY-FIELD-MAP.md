@@ -33,3 +33,9 @@ The same rule applies to Building, BuildingStory, ThermalZone, Surface, and SubS
 - Collection relationships such as `surface_handles` are marked as derived.
 
 The generated Pydantic JSON schema is the machine-readable source of truth. This document is the human-oriented projection and will expand alongside accepted inventory fields.
+
+## Coordinate Frames
+
+- `space_local`: raw SDK vertices belong to geometry assigned to a Space; use the Space origin and relative-north transformation deliberately.
+- `model`: raw SDK vertices belong to orphan Surface/SubSurface objects without a parent Space or surface group.
+- Site-coordinate conversion is not implicit in the inventory.

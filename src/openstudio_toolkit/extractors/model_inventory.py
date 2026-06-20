@@ -12,6 +12,7 @@ import openstudio
 from openstudio_toolkit.runtime import assert_reference_runtime
 from openstudio_toolkit.schemas.inventory import (
     BuildingRecord,
+    CoordinateSystem,
     InventoryRun,
     ModelCounts,
     ModelInventory,
@@ -130,6 +131,7 @@ def inspect_model(path: Path, *, registered_path: str | None = None) -> Inventor
         )
 
     surfaces: list[SurfaceRecord] = []
+    surface_coordinate_systems: dict[str, CoordinateSystem] = {}
     for surface in surface_objects:
         surface_handle = str(surface.handle())
         parent_space_handle, space_name = _reference(surface.space())
@@ -137,6 +139,8 @@ def inspect_model(path: Path, *, registered_path: str | None = None) -> Inventor
         construction_handle, construction_name = _reference(surface.construction())
         if parent_space_handle is not None:
             space_surface_handles[parent_space_handle].append(surface_handle)
+        coordinate_system: CoordinateSystem = "space_local" if parent_space_handle is not None else "model"
+        surface_coordinate_systems[surface_handle] = coordinate_system
 
         surfaces.append(
             SurfaceRecord(
@@ -153,6 +157,7 @@ def inspect_model(path: Path, *, registered_path: str | None = None) -> Inventor
                 wind_exposure=surface.windExposure(),
                 gross_area_m2=surface.grossArea(),
                 net_area_m2=surface.netArea(),
+                coordinate_system=coordinate_system,
                 vertices=_points(surface.vertices()),
                 subsurface_handles=[],
             )
@@ -165,6 +170,11 @@ def inspect_model(path: Path, *, registered_path: str | None = None) -> Inventor
         construction_handle, construction_name = _reference(subsurface.construction())
         if parent_surface_handle is not None:
             surface_subsurface_handles[parent_surface_handle].append(subsurface_handle)
+        subsurface_coordinate_system: CoordinateSystem = (
+            "model"
+            if parent_surface_handle is None
+            else surface_coordinate_systems.get(parent_surface_handle, "model")
+        )
 
         subsurfaces.append(
             SubSurfaceRecord(
@@ -178,6 +188,7 @@ def inspect_model(path: Path, *, registered_path: str | None = None) -> Inventor
                 multiplier=subsurface.multiplier(),
                 gross_area_m2=subsurface.grossArea(),
                 net_area_m2=subsurface.netArea(),
+                coordinate_system=subsurface_coordinate_system,
                 vertices=_points(subsurface.vertices()),
             )
         )

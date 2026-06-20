@@ -1,6 +1,6 @@
 # P2 Model Inventory Contract
 
-Status: P2.1 and P2.2 reviewed and checkpointed
+Status: P2.1-P2.3 implemented, verified, and checkpointed
 Date: 2026-06-20
 Target capability: `inspect-openstudio-model`
 
@@ -202,7 +202,7 @@ HVAC equipment and thermostat fields are deliberately excluded from the geometry
 | `y_m` | float | yes |
 | `z_m` | float | yes |
 
-For P2, surface and subsurface vertices preserve the coordinates returned by the SDK object and provisionally declare `coordinate_system = "space_local"`. Space origin and relative north are included so later consumers can transform deliberately. P2.2 must verify this frame with a synthetic space having non-zero origin and rotation. If that test contradicts the label, the schema is corrected before `0.1.0` is released. P2 must not label coordinates as site coordinates without a separately verified transformation.
+Surface and subsurface vertices preserve the coordinates returned by the SDK object. Geometry assigned to a Space declares `coordinate_system = "space_local"`; orphan geometry without a parent Space declares `coordinate_system = "model"`. Space origin and relative north are included so later consumers can transform deliberately. P2 must not label coordinates as site coordinates without a separately verified transformation.
 
 ### 6.8 SurfaceRecord
 
@@ -221,7 +221,7 @@ For P2, surface and subsurface vertices preserve the coordinates returned by the
 | `wind_exposure` | string | yes |
 | `gross_area_m2` | float | yes |
 | `net_area_m2` | float | yes |
-| `coordinate_system` | literal `space_local` | yes |
+| `coordinate_system` | `space_local` or `model` | yes |
 | `vertices` | list of `Point3D` | yes |
 | `subsurface_handles` | list of strings | yes |
 
@@ -241,7 +241,7 @@ Do not add cardinal orientation labels in P2. They are derived analysis and requ
 | `multiplier` | float | yes |
 | `gross_area_m2` | float | yes |
 | `net_area_m2` | float | yes |
-| `coordinate_system` | literal `space_local` | yes |
+| `coordinate_system` | `space_local` or `model` | yes |
 | `vertices` | list of `Point3D` | yes |
 
 ### 6.10 ModelCounts
@@ -303,7 +303,7 @@ Missing relationships such as a space without a story are valid nullable facts i
 9. Existing `osm_objects` and DataFrame APIs continue to pass their tests unchanged.
 10. No output file is written by the toolkit extraction or serialization functions.
 11. The Office Hub result is recorded as `validated-on-fixture`; East Gate remains pending.
-12. A synthetic translated and rotated space verifies the declared vertex coordinate frame before schema `0.1.0` is accepted.
+12. Synthetic translated/rotated and orphan geometry verify `space_local` and `model` coordinate frames before schema `0.1.0` is accepted.
 
 No hard timing threshold is an acceptance gate. The direct SDK probe is recorded as a benchmark to detect accidental reintroduction of expensive broad-field traversal.
 
@@ -325,6 +325,8 @@ Status: Completed and checkpointed; determinism changes applied.
 - Record source and artifact hashes.
 
 ### P2.3 - Compatibility and evidence
+
+Status: Completed and checkpointed.
 
 - Run the complete legacy suite.
 - Compare canonical counts with SDK collection counts.

@@ -2,6 +2,7 @@
 
 from openstudio_toolkit.schemas.inventory import (
     BuildingRecord,
+    CoordinateSystem,
     InventoryArtifact,
     InventoryRun,
     ModelCounts,
@@ -22,6 +23,7 @@ from openstudio_toolkit.schemas.results import TaskResult, ValidationResult
 
 __all__ = [
     "BuildingRecord",
+    "CoordinateSystem",
     "InventoryArtifact",
     "InventoryRun",
     "ModelCounts",

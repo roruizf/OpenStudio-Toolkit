@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from openstudio_toolkit.runtime import RuntimeInfo
 
 SCHEMA_VERSION: Literal["0.1.0"] = "0.1.0"
+CoordinateSystem = Literal["space_local", "model"]
 
 
 def osm_field(
@@ -236,7 +237,7 @@ class SurfaceRecord(InventoryRecord):
     net_area_m2: float = osm_field(
         osm_label="Net Area {m2}", sdk_accessor="Surface.netArea()", lineage_note="Derived SDK geometry value."
     )
-    coordinate_system: Literal["space_local"] = "space_local"
+    coordinate_system: CoordinateSystem
     vertices: list[Point3D] = Field(default_factory=list)
     subsurface_handles: list[str] = Field(default_factory=list)
 
@@ -282,7 +283,7 @@ class SubSurfaceRecord(InventoryRecord):
     net_area_m2: float = osm_field(
         osm_label="Net Area {m2}", sdk_accessor="SubSurface.netArea()", lineage_note="Derived SDK geometry value."
     )
-    coordinate_system: Literal["space_local"] = "space_local"
+    coordinate_system: CoordinateSystem
     vertices: list[Point3D] = Field(default_factory=list)
 
 
