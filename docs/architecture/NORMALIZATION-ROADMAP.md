@@ -16,10 +16,9 @@ Date: 2026-06-20
 
 ## Remaining Checkpoints
 
-Two high-level checkpoints remain:
-
-1. **P4 integration:** P4a execution/evidence, then P4b disposition/release gate; still one high-level integration stage.
-2. **Vertical closure:** end-to-end fixture run, East Gate validation when its OSM exists, version `0.3.x`, branch review/merge, and maturity update.
+1. **P4 integration:** P4a execution/evidence and P4b disposition/release gate — complete and checkpointed in `r2f-simulation-os` (`f36730c`, `b73bee3`).
+2. **Vertical closure:** end-to-end fixture run wiring P4b outputs into the phase lifecycle — complete on the R2F Office Hub fixture plus a synthetic approved naming profile (see `r2f-simulation-os/docs/vertical-closure-evidence.md`). Read-only inventory/QA capability maturity stays `provisional` until validated on East Gate's first OSM.
+   - Still pending and gated on Roberto approval: East Gate validation when its OSM exists, toolkit version `0.3.x`, reachable immutable pin replacing the local `git+file://` source, and branch review/merge/tag.
 
 Do not add MCP, containers, remote execution, a second runtime, or mutation tools inside these checkpoints.
 
