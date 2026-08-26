@@ -53,8 +53,8 @@ A Python library that provides structured access to OpenStudio Model (OSM) eleme
 ## Prerequisites
 
 - **Python** 3.13
-- **OpenStudio** 3.10.0 Python bindings
-- **EnergyPlus** 25.1.0 (reported by the OpenStudio binding)
+- **OpenStudio** 3.11.0 Python bindings
+- **EnergyPlus** 25.2.0 (reported by the OpenStudio binding)
 - **uv** for Python and dependency management
 - **Operating System**: Windows, macOS, or Linux
 
@@ -76,7 +76,7 @@ uv sync --dev
 uv run python -c "from openstudio_toolkit.runtime import assert_reference_runtime; print(assert_reference_runtime())"
 ```
 
-`uv` installs the pinned OpenStudio 3.10.0 wheel into the project environment. The runtime assertion fails if Python, OpenStudio, or EnergyPlus does not match the verified profile. Conda and ambient `python3` environments are not supported.
+`uv` installs the pinned OpenStudio 3.11.0 wheel into the project environment. The runtime assertion fails if Python, OpenStudio, or EnergyPlus does not match the verified profile. Conda and ambient `python3` environments are not supported.
 
 ---
 

@@ -19,8 +19,8 @@ def test_reference_runtime_is_active() -> None:
     runtime = assert_reference_runtime()
 
     assert runtime.python_version.startswith("3.13.")
-    assert runtime.openstudio_version == "3.10.0"
-    assert runtime.energyplus_version == "25.1.0"
+    assert runtime.openstudio_version == "3.11.0"
+    assert runtime.energyplus_version == "25.2.0"
     assert "site-packages/openstudio" in runtime.openstudio_module_path
 
 

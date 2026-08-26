@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 REFERENCE_PYTHON_MINOR = (3, 13)
-REFERENCE_OPENSTUDIO_VERSION = "3.10.0"
-REFERENCE_ENERGYPLUS_VERSION = "25.1.0"
+REFERENCE_OPENSTUDIO_VERSION = "3.11.0"
+REFERENCE_ENERGYPLUS_VERSION = "25.2.0"
 
 
 class RuntimeMismatchError(RuntimeError):

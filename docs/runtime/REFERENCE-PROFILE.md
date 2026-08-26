@@ -1,15 +1,23 @@
 # Reference Runtime Profile
 
 Status: Verified for toolkit Python operations
-Verified: 2026-06-20
+Verified: 2026-06-20, bumped 2026-08-26 (OpenStudio 3.10.0 -> 3.11.0, EnergyPlus 25.1.0 -> 25.2.0 --
+Roberto initiated the upgrade after discovering a real OpenStudio 3.10.0 ForwardTranslator bug
+(NREL/OpenStudio hotfix PR #5505, merged 2025-10-23, first released in 3.11.0): a
+`ZoneHVACIdealLoadsAirSystem`'s own explicit `designSpecificationOutdoorAirObject` was silently
+ignored in favor of the containing zone's spaces' DSOA during OSM->IDF translation. Full test suite
+re-verified green (138/138) against the new pinned version; only this file, `README.md`, and the two
+hardcoded version literals in `tests/runtime/test_reference_profile.py` were updated -- the P1
+Evidence section below is a dated historical record of the original 3.10.0 verification pass and is
+deliberately left as-is)
 
 ## Profile
 
 | Component | Version |
 |---|---|
 | Python | 3.13.x |
-| OpenStudio Python wheel | 3.10.0 |
-| EnergyPlus reported by binding | 25.1.0 |
+| OpenStudio Python wheel | 3.11.0 |
+| EnergyPlus reported by binding | 25.2.0 |
 | Environment manager | uv |
 
 OpenStudio is installed from the pinned PyPI wheel through `uv`. Controlled toolkit execution must call `assert_reference_runtime()` before loading project inputs.

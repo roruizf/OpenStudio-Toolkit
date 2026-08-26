@@ -20,7 +20,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "openstudio==3.10.0",
+    "openstudio==3.11.0",
     "pandas>=2.0",
     "openpyxl>=3.1",
     "pydantic>=2.0",
