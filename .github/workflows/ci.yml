@@ -23,8 +23,8 @@ jobs:
         run: uv run --frozen python -c "import sys; assert sys.version.startswith('${{ matrix.python-version }}.'), sys.version"
       - name: Lint v0.3 code
         run: >-
-          uv run --frozen ruff check tests/contract tests/extractors/test_generic.py tests/osm_objects tests/test_sdk.py
-          src/openstudio_toolkit/_sdk.py src/openstudio_toolkit/extractors/generic.py
+          uv run --frozen ruff check tests/analysis tests/contract tests/dump tests/extractors/test_generic.py tests/osm_objects tests/test_sdk.py
+          src/openstudio_toolkit/_sdk.py src/openstudio_toolkit/analysis src/openstudio_toolkit/dump.py src/openstudio_toolkit/extractors/generic.py
           src/openstudio_toolkit/validators/references.py src/openstudio_toolkit/validators/_fatal_references.py
       - name: Test
         run: uv run --frozen pytest -q -rs

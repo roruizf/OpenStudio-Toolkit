@@ -123,7 +123,7 @@ def get_all_zone_hvac_terminal_unit_variant_refrigerant_flow_objects_as_datafram
         'Availability Manager List Name': None,
         'Design Specification ZoneHVAC Sizing Object Name': None,
         'Supplemental Heating Coil Name': [optional_name(x.supplementalHeatingCoil()) for x in all_zone_hvac_vrfs],
-        'Maximum Supply Air Temperature from Supplemental Heater {C}': [x.maximumSupplyAirTemperaturefromSupplementalHeater() for x in all_zone_hvac_vrfs],
+        'Maximum Supply Air Temperature from Supplemental Heater {C}': ['Autosize' if x.isMaximumSupplyAirTemperaturefromSupplementalHeaterAutosized() else opt(x.maximumSupplyAirTemperaturefromSupplementalHeater()) for x in all_zone_hvac_vrfs],
         'Maximum Outdoor Dry-Bulb Temperature for Supplemental Heater Operation {C}': [x.maximumOutdoorDryBulbTemperatureforSupplementalHeaterOperation() for x in all_zone_hvac_vrfs]
         }
                        
@@ -193,7 +193,7 @@ def get_air_terminal_single_duct_parallel_piu_reheat_object_as_dict(osm_model: o
                   'Name': opt(target_object.name()) if target_object.name().is_initialized() else None,
                   'Availability Schedule Name': opt(target_object.availabilitySchedule().name()) if target_object.availabilitySchedule().name().is_initialized() else None,
                   'Maximum Primary Air Flow Rate {m3/s}': opt(target_object.maximumPrimaryAirFlowRate()) if not target_object.isMaximumPrimaryAirFlowRateAutosized() else 'Autosize',
-                  'Maximum Secondary Air Flow Rate {m3/s}': opt(target_object.maximumSecondaryAirFlowRate()) if not target_object.isMaximumPrimaryAirFlowRateAutosized() else 'Autosize',
+                  'Maximum Secondary Air Flow Rate {m3/s}': opt(target_object.maximumSecondaryAirFlowRate()) if not target_object.isMaximumSecondaryAirFlowRateAutosized() else 'Autosize',
                   'Minimum Primary Air Flow Fraction': opt(target_object.minimumPrimaryAirFlowFraction()) if not target_object.isMinimumPrimaryAirFlowFractionAutosized() else 'Autosize',                  
                   'Fan On Flow Fraction': opt(target_object.fanOnFlowFraction()) if not target_object.isFanOnFlowFractionAutosized() else 'Autosize',
                   'Supply Air Inlet Node Name': opt(target_object.inletModelObject()).nameString() if target_object.inletModelObject().is_initialized() else None,
@@ -203,7 +203,7 @@ def get_air_terminal_single_duct_parallel_piu_reheat_object_as_dict(osm_model: o
                   'Zone Mixer Name': None,
                   'Fan Name': target_object.fan().nameString(),
                   'Reheat Coil Name': target_object.reheatCoil().nameString(),
-                  'Maximum Hot Water or Steam Flow Rate {m3/s}': target_object.maximumHotWaterorSteamFlowRate() if not target_object.isMaximumHotWaterorSteamFlowRateAutosized() else 'Autosize',
+                  'Maximum Hot Water or Steam Flow Rate {m3/s}': opt(target_object.maximumHotWaterorSteamFlowRate()) if not target_object.isMaximumHotWaterorSteamFlowRateAutosized() else 'Autosize',
                   'Minimum Hot Water or Steam Flow Rate {m3/s}': target_object.minimumHotWaterorSteamFlowRate(),
                   'Convergence Tolerance': target_object.convergenceTolerance()
     }
@@ -317,10 +317,10 @@ def get_zone_hvac_unit_heater_object_as_dict(
                   'Air Inlet Node Name': optional_name(target_object.inletNode()),
                   'Air Outlet Node Name': optional_name(target_object.outletNode()),
                   'Supply Air Fan Name': related_name(target_object, "Supply Air Fan Name"),
-                  'Maximum Supply Air Flow Rate {m3/s}': target_object.maximumSupplyAirFlowRate() if not target_object.isMaximumSupplyAirFlowRateAutosized() else 'Autosize',                  
+                  'Maximum Supply Air Flow Rate {m3/s}': opt(target_object.maximumSupplyAirFlowRate()) if not target_object.isMaximumSupplyAirFlowRateAutosized() else 'Autosize',                  
                   'Fan Control Type': target_object.fanControlType(),
                   'Heating Coil Name': related_name(target_object, "Heating Coil Name"),
-                  'Maximum Hot Water Flow Rate {m3/s}': target_object.maximumHotWaterFlowRate() if not target_object.isMaximumHotWaterFlowRateAutosized() else 'Autosize',
+                  'Maximum Hot Water Flow Rate {m3/s}': opt(target_object.maximumHotWaterFlowRate()) if not target_object.isMaximumHotWaterFlowRateAutosized() else 'Autosize',
                   'Minimum Hot Water Flow Rate {m3/s}': target_object.minimumHotWaterFlowRate(),
                   'Heating Convergence Tolerance': target_object.heatingConvergenceTolerance(),
                   'Availability Manager List Name': None
@@ -454,11 +454,11 @@ def get_four_pipe_fan_coil_object_as_dict(
                   'Outdoor Air Mixer Name': target_object.outdoorAirMixerName(),
                   'Supply Air Fan Name': related_name(target_object, "Supply Air Fan Name"),
                   'Cooling Coil Name': related_name(target_object, "Cooling Coil Name"),
-                  'Maximum Cold Water Flow Rate {m3/s}': target_object.maximumColdWaterFlowRate() if not target_object.isMaximumHotWaterFlowRateAutosized() else 'autosize',
+                  'Maximum Cold Water Flow Rate {m3/s}': opt(target_object.maximumColdWaterFlowRate()) if not target_object.isMaximumColdWaterFlowRateAutosized() else 'autosize',
                   'Minimum Cold Water Flow Rate {m3/s}': target_object.minimumColdWaterFlowRate(),
                   'Cooling Convergence Tolerance': target_object.coolingConvergenceTolerance(),
                   'Heating Coil Name': related_name(target_object, "Heating Coil Name"),
-                  'Maximum Hot Water Flow Rate {m3/s}': target_object.maximumHotWaterFlowRate() if not target_object.isMaximumHotWaterFlowRateAutosized() else 'autosize',
+                  'Maximum Hot Water Flow Rate {m3/s}': opt(target_object.maximumHotWaterFlowRate()) if not target_object.isMaximumHotWaterFlowRateAutosized() else 'autosize',
                   'Minimum Hot Water Flow Rate {m3/s}': target_object.minimumHotWaterFlowRate(),
                   'Heating Convergence Tolerance': target_object.heatingConvergenceTolerance(),
                   'Supply Air Fan Operating Mode Schedule Name': None,

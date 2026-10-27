@@ -37,7 +37,7 @@ item = "3"
 tier = "core"
 module = "dump"
 name = "families"
-status = "planned"
+status = "implemented"
 # families() -> Mapping[family name, IDD object type]; the [families] table below is checked against it.
 
 [[api]]
@@ -45,21 +45,21 @@ item = "3"
 tier = "core"
 module = "dump"
 name = "dump_records"
-status = "planned"
+status = "implemented"
 
 [[api]]
 item = "3"
 tier = "core"
 module = "dump"
 name = "dump_view"
-status = "planned"
+status = "implemented"
 
 [[api]]
 item = "6"
 tier = "core"
 module = "analysis.diff"
 name = "diff_models"
-status = "planned"
+status = "implemented"
 
 [[api]]
 item = "5"
@@ -205,4 +205,5 @@ no_bare_optional_get_in_osm_objects = "implemented"
 orphans_reported_as_findings = "implemented"
 orphan_fixture = "tests/resources/orphans_minimal.osm"
 # compare and diff run on models the toolkit never touched (here: the repo fixtures as-is).
-verification_runs_on_untouched_models = "planned"
+# Implemented for diff (item 6); item 5 adds compare_to_mapping to the same test.
+verification_runs_on_untouched_models = "implemented"
