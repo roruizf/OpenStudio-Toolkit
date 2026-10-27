@@ -6,6 +6,8 @@ pass). This file only orders the work and does not repeat facts the tests assert
 
 Anything not listed here needs Roberto's explicit approval to enter v0.3.
 
+Measurements, approved decisions and the next-session plan: `V0.3-DECISIONS.md`.
+
 ## Core (proves the thesis)
 
 | # | Item | Verified by |
