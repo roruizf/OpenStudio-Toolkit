@@ -11,7 +11,7 @@
 requires_python = ">=3.11,<3.14"
 ruff_target = "py311"
 mypy_python = "3.11"
-ci_python = ["3.11", "3.13"]
+ci_python = ["3.11", "3.12", "3.13"]
 openstudio = "3.11.0"
 
 # ---------------------------------------------------------------------------
@@ -23,14 +23,14 @@ item = "generic"
 tier = "core"
 module = "extractors.generic"
 name = "read_model_objects"
-status = "planned"
+status = "implemented"
 
 [[api]]
 item = "generic"
 tier = "core"
 module = "validators.references"
 name = "validate_references"
-status = "planned"
+status = "implemented"
 
 [[api]]
 item = "3"
@@ -181,12 +181,16 @@ forbidden_for_verification = ["transforms"]
 # polars only under results/; model views stay in pandas.
 polars_only_in = ["results"]
 # The generic reader only touches the model through these methods (orphan-safe by construction).
+# `get` is deliberately absent: OpenStudio Optionals are unwrapped only through
+# openstudio_toolkit._sdk.opt(), which checks is_initialized() first.
 generic_reader_module = "extractors.generic"
 generic_reader_allowed_methods = [
-    "objects", "modelObjects", "iddObject", "name", "handle", "numFields", "getString", "getTarget",
-    "is_initialized", "get", "nonextensibleFields", "extensibleGroup", "getField", "properties",
+    "objects", "iddObject", "name", "handle", "numFields", "getString", "getTarget",
+    "nonextensibleFields", "extensibleGroup", "properties",
+    # IDD metadata (field type enum), not a model relation.
+    "valueName",
 ]
-generic_reader_status = "planned"
+generic_reader_status = "implemented"
 
 [invariants]
 # Item 2: every get_all_*_as_dataframe in osm_objects (found by introspection, present and future)
@@ -195,9 +199,10 @@ generic_reader_status = "planned"
 dataframe_functions_return_columns_when_empty = "planned"
 # Curated reads never call .get() on an OpenStudio Optional without a guard; use the helper.
 no_bare_optional_get_in_osm_objects = "planned"
-# Orphan relations are reported as findings, never a crash. Code: integrity.reference.absent /
-# integrity.reference.dangling, object_type "model", IDD type and field in evidence.
-orphans_reported_as_findings = "planned"
+# Orphan relations are reported as findings, never a crash. Code: integrity.reference.absent,
+# object_type "model", IDD type and field in evidence. A reference to a non-existent handle is not
+# observable after loading (OpenStudio clears it and logs an error), so there is no "dangling" code.
+orphans_reported_as_findings = "implemented"
 orphan_fixture = "tests/resources/orphans_minimal.osm"
 # compare and diff run on models the toolkit never touched (here: the repo fixtures as-is).
 verification_runs_on_untouched_models = "planned"
