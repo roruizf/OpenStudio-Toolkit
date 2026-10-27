@@ -350,8 +350,13 @@ def test_orphans_reported_as_findings() -> None:
 def test_verification_runs_on_untouched_models() -> None:
     import openstudio
 
+    from openstudio_toolkit.analysis.compare import COMPARE_FAMILIES, compare_to_mapping
     from openstudio_toolkit.analysis.diff import diff_models
 
     load = lambda p: openstudio.osversion.VersionTranslator().loadModel(str(p)).get()  # noqa: E731
     fixture = ROOT / "tests" / "resources" / "small_office.osm"
     assert diff_models(load(fixture), load(fixture)) is not None
+    model = load(fixture)
+    for by, scopes in (("space", model.getSpaces()), ("thermal_zone", model.getThermalZones())):
+        mapping = {family: {s.nameString(): 0.0 for s in scopes} for family in COMPARE_FAMILIES}
+        assert not compare_to_mapping(model, mapping, by=by).empty

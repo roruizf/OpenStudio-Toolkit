@@ -66,21 +66,21 @@ item = "5"
 tier = "core"
 module = "analysis.compare"
 name = "compare_to_mapping"
-status = "planned"
+status = "implemented"
 
 [[api]]
 item = "7"
 tier = "core"
 module = "views.verification"
 name = "compare_rows"
-status = "planned"
+status = "implemented"
 
 [[api]]
 item = "7"
 tier = "core"
 module = "views.verification"
 name = "diff_rows"
-status = "planned"
+status = "implemented"
 
 [[api]]
 item = "4"
@@ -124,13 +124,13 @@ status = "planned"
 [artifact.compare]
 columns = ["family", "key", "field", "requested", "in_model", "difference", "status"]
 status_values = ["match", "differs", "missing"]
-implemented = false
+implemented = true
 
 [artifact.diff]
 columns = ["family", "key", "field", "parent", "child", "status", "match_method"]
 status_values = ["changed", "added", "removed", "not_requested"]
 match_methods = ["handle", "type_name"]
-implemented = false
+implemented = true
 # Level 3 (membership) matching is out of v0.3: in 8 real parent->child pairs it never matched;
 # what changes is the assignment level (SpaceType <-> Space, 1:N), not object identity.
 # Unmatched objects are reported as removed/added, never guessed.
@@ -205,5 +205,5 @@ no_bare_optional_get_in_osm_objects = "implemented"
 orphans_reported_as_findings = "implemented"
 orphan_fixture = "tests/resources/orphans_minimal.osm"
 # compare and diff run on models the toolkit never touched (here: the repo fixtures as-is).
-# Implemented for diff (item 6); item 5 adds compare_to_mapping to the same test.
+# Exercised for diff (item 6) and compare_to_mapping (item 5).
 verification_runs_on_untouched_models = "implemented"
