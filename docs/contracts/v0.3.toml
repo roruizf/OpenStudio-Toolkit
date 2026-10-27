@@ -1,0 +1,203 @@
+# openstudio-toolkit v0.3 contract.
+#
+# This file is the contract; tests/contract/ compares it with the code by introspection.
+# status = "implemented": the test asserts it exists and behaves.
+# status = "planned":     the test is xfail(strict=True); when the code lands the test XPASSes
+#                         and fails, forcing this file to be updated to "implemented".
+# tier   = "core" | "volume". Volume is cut first, in this order: cli, results, apply, families.
+# Anything not listed here is outside v0.3 and needs Roberto's explicit approval to enter.
+
+[runtime]
+requires_python = ">=3.11,<3.14"
+ruff_target = "py311"
+mypy_python = "3.11"
+ci_python = ["3.11", "3.13"]
+openstudio = "3.11.0"
+
+# ---------------------------------------------------------------------------
+# Public API. Module paths are relative to openstudio_toolkit.
+# ---------------------------------------------------------------------------
+
+[[api]]
+item = "generic"
+tier = "core"
+module = "extractors.generic"
+name = "read_model_objects"
+status = "planned"
+
+[[api]]
+item = "generic"
+tier = "core"
+module = "validators.references"
+name = "validate_references"
+status = "planned"
+
+[[api]]
+item = "3"
+tier = "core"
+module = "dump"
+name = "families"
+status = "planned"
+# families() -> Mapping[family name, IDD object type]; the [families] table below is checked against it.
+
+[[api]]
+item = "3"
+tier = "core"
+module = "dump"
+name = "dump_records"
+status = "planned"
+
+[[api]]
+item = "3"
+tier = "core"
+module = "dump"
+name = "dump_view"
+status = "planned"
+
+[[api]]
+item = "6"
+tier = "core"
+module = "analysis.diff"
+name = "diff_models"
+status = "planned"
+
+[[api]]
+item = "5"
+tier = "core"
+module = "analysis.compare"
+name = "compare_to_mapping"
+status = "planned"
+
+[[api]]
+item = "7"
+tier = "core"
+module = "views.verification"
+name = "compare_rows"
+status = "planned"
+
+[[api]]
+item = "7"
+tier = "core"
+module = "views.verification"
+name = "diff_rows"
+status = "planned"
+
+[[api]]
+item = "4"
+tier = "volume"
+module = "transforms.apply"
+name = "apply_mapping"
+status = "planned"
+
+[[api]]
+item = "8"
+tier = "volume"
+module = "results"
+name = "zone_sizes"
+status = "planned"
+
+[[api]]
+item = "8"
+tier = "volume"
+module = "results"
+name = "system_sizes"
+status = "planned"
+
+[[api]]
+item = "8"
+tier = "volume"
+module = "results"
+name = "unmet_hours"
+status = "planned"
+
+[[api]]
+item = "8"
+tier = "volume"
+module = "results"
+name = "end_uses"
+status = "planned"
+
+# ---------------------------------------------------------------------------
+# Verification artifact (item 7). Fixed schema; the visual form (Excel/HTML) is open.
+# ---------------------------------------------------------------------------
+
+[artifact.compare]
+columns = ["family", "key", "field", "requested", "in_model", "difference", "status"]
+status_values = ["match", "differs", "missing"]
+implemented = false
+
+[artifact.diff]
+columns = ["family", "key", "field", "parent", "child", "status", "match_method"]
+status_values = ["changed", "added", "removed", "not_requested"]
+match_methods = ["handle", "type_name"]
+implemented = false
+# Level 3 (membership) matching is out of v0.3: in 8 real parent->child pairs it never matched;
+# what changes is the assignment level (SpaceType <-> Space, 1:N), not object identity.
+# Unmatched objects are reported as removed/added, never guessed.
+
+# ---------------------------------------------------------------------------
+# CLI (item 9, volume).
+# ---------------------------------------------------------------------------
+
+[cli]
+entry_point = "openstudio-toolkit"
+module = "cli"
+commands = ["dump", "apply", "compare", "diff", "results"]
+tier = "volume"
+status = "planned"
+
+# ---------------------------------------------------------------------------
+# New curated families (item 3b, volume). IDD object types.
+# Criterion: present in >= 3 distinct projects, or part of an ASHRAE 90.1 Appendix G baseline
+# (2010: G3.1.3.11 two-speed tower; 2013+: variable-speed tower), plus explicit approval.
+# ---------------------------------------------------------------------------
+
+[families]
+tier = "volume"
+status = "planned"
+idd_types = [
+    "OS:ThermostatSetpoint:DualSetpoint",
+    "OS:WindowMaterial:SimpleGlazingSystem",
+    "OS:Fan:VariableVolume",
+    "OS:Pump:ConstantSpeed",
+    "OS:CoolingTower:TwoSpeed",
+    "OS:CoolingTower:VariableSpeed",
+    "OS:Boiler:HotWater",
+    "OS:ZoneHVAC:IdealLoadsAirSystem",
+]
+
+# ---------------------------------------------------------------------------
+# Import boundaries and invariants.
+# ---------------------------------------------------------------------------
+
+[boundaries]
+# Read code: whole modules, plus get_* functions in the legacy osm_objects modules.
+read_modules = ["extractors", "validators", "dump", "analysis", "views"]
+read_function_prefix_in_osm_objects = "get_"
+# Forbidden in read code: OpenStudio setters (set[A-Z]...), save/saveAs, subprocess / os.system.
+# compare and diff never depend on apply, directly or transitively.
+verification_modules = ["analysis.diff", "analysis.compare"]
+forbidden_for_verification = ["transforms"]
+# polars only under results/; model views stay in pandas.
+polars_only_in = ["results"]
+# The generic reader only touches the model through these methods (orphan-safe by construction).
+generic_reader_module = "extractors.generic"
+generic_reader_allowed_methods = [
+    "objects", "modelObjects", "iddObject", "name", "handle", "numFields", "getString", "getTarget",
+    "is_initialized", "get", "nonextensibleFields", "extensibleGroup", "getField", "properties",
+]
+generic_reader_status = "planned"
+
+[invariants]
+# Item 2: every get_all_*_as_dataframe in osm_objects (found by introspection, present and future)
+# returns a DataFrame WITH its columns on a model that has no objects of its family. The populated
+# case and the orphan-blanking case (one subprocess per function) live in tests/osm_objects/.
+dataframe_functions_return_columns_when_empty = "planned"
+# Curated reads never call .get() on an OpenStudio Optional without a guard; use the helper.
+no_bare_optional_get_in_osm_objects = "planned"
+# Orphan relations are reported as findings, never a crash. Code: integrity.reference.absent /
+# integrity.reference.dangling, object_type "model", IDD type and field in evidence.
+orphans_reported_as_findings = "planned"
+orphan_fixture = "tests/resources/orphans_minimal.osm"
+# compare and diff run on models the toolkit never touched (here: the repo fixtures as-is).
+verification_runs_on_untouched_models = "planned"

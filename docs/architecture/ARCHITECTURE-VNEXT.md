@@ -1,6 +1,12 @@
 # OpenStudio Toolkit vNext Architecture
 
-Status: Approved for incremental implementation; P1 verified
+Status: **Superseded** on 2026-10-26 by the v0.3 contract (`docs/contracts/v0.3.toml`, enforced by
+`tests/contract/`). Kept as the historical rationale for the design; do not read it as current fact.
+Known stale statements: §1.1 and §12 say `tests/output/` is tracked and that OpenStudio is not
+declared; both are false since the runtime pin (`openstudio==3.11.0` in `pyproject.toml`) and the
+P0 cleanup.
+
+Previous status: Approved for incremental implementation; P1 verified
 Date: 2026-06-20
 Scope: Evolution of `openstudio-toolkit` from a notebook-oriented helper library into an agent-ready domain library without a rewrite.
 

@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    env:
+      # Overrides the repo's .python-version for every uv command, including `uv run`.
+      UV_PYTHON: ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install
+        run: uv sync --frozen
+      - name: Interpreter
+        run: uv run --frozen python -c "import sys; assert sys.version.startswith('${{ matrix.python-version }}.'), sys.version"
+      - name: Lint v0.3 code
+        run: uv run --frozen ruff check tests/contract
+      - name: Test
+        run: uv run --frozen pytest -q

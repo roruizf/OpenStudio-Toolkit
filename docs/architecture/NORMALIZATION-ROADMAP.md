@@ -1,38 +1,48 @@
-# First Vertical Normalization Roadmap
+# Roadmap: openstudio-toolkit v0.3
 
-Status: Active
-Date: 2026-06-20
+The scope of v0.3 is closed. The contract is `docs/contracts/v0.3.toml`; whether each item is done
+is what `tests/contract/` says (an item is done when its status there is `implemented` and its tests
+pass). This file only orders the work and does not repeat facts the tests assert.
 
-## Completed
+Anything not listed here needs Roberto's explicit approval to enter v0.3.
 
-- P0: architecture review and clean standalone repository.
-- P1: verified uv/OpenStudio runtime.
-- P2.1: canonical inventory schemas and serialization.
-- P2.2: read-only SDK extractor and portable run envelope.
-- P2.3: compatibility, edge fixtures, and caller-owned artifact evidence.
-- P3 contract: Finding ownership, severity, validator boundaries, and naming-profile gating reviewed.
-- P3.1: deterministic findings plus pure integrity and spatial validators.
-- P3.2: profile-driven naming, composition, and portable QA/QC evidence.
+## Core (proves the thesis)
 
-## Remaining Checkpoints
+| # | Item | Verified by |
+|---|---|---|
+| 1 | Clean install from a tag on the CI Python matrix | `.github/workflows/ci.yml`, `test_requires_python_matches_contract`, `test_ci_matrix_*` |
+| 2 | Every `get_all_*_as_dataframe` (found by introspection) returns a DataFrame with its columns when the family is empty, works on fixtures that have objects, and does not die on orphan relations | `test_dataframe_functions_return_columns_when_empty`, `tests/osm_objects/` |
+| — | Generic reader over every model object (IDD fields, orphan-safe), and orphan relations reported as findings | `test_public_api[extractors.generic.*]`, `test_generic_reader_uses_only_orphan_safe_methods`, `test_orphans_reported_as_findings` |
+| 3 | Dumps of the existing families, as records and as a view | `test_public_api[dump.*]` |
+| 6 | Parent → child diff per family, built on the generic reader | `test_public_api[analysis.diff.diff_models]`, `test_verification_runs_on_untouched_models` |
+| 5 | Compare the model against a `Mapping`, by Space or Thermal Zone | `test_public_api[analysis.compare.compare_to_mapping]` |
+| 7 | Verification artifact with the fixed schema and golden output | `test_verification_artifact_schema[*]` |
 
-1. **P4 integration:** P4a execution/evidence and P4b disposition/release gate — complete and checkpointed in `r2f-simulation-os` (`f36730c`, `b73bee3`).
-2. **Vertical closure:** end-to-end fixture run wiring P4b outputs into the phase lifecycle — complete on the R2F Office Hub fixture plus a synthetic approved naming profile (see `r2f-simulation-os/docs/vertical-closure-evidence.md`). Read-only inventory/QA capability maturity stays `provisional` until validated on East Gate's first OSM.
-   - Still pending and gated on Roberto approval: East Gate validation when its OSM exists, toolkit version `0.3.x`, reachable immutable pin replacing the local `git+file://` source, and branch review/merge/tag.
+Work order: 1 → 2 → generic reader → 3 → 6 → 5 → 7. The diff comes before compare because it carries
+the most risk.
 
-Do not add MCP, containers, remote execution, a second runtime, or mutation tools inside these checkpoints.
+## Volume (cut first if needed)
 
-## After Normalization
+| # | Item | Verified by |
+|---|---|---|
+| 3b | New curated families (list in the contract's `[families]`) | `test_new_families_are_dumpable` |
+| 4 | `apply` from a `Mapping`, adopting the `r2f-simulation-os` `base_model_space_loads.py` contract | `test_public_api[transforms.apply.apply_mapping]` |
+| 8 | Results in polars: zone sizes, system sizes, unmet hours, end uses | `test_public_api[results.*]` |
+| 9 | CLI: `dump`, `apply`, `compare`, `diff`, `results` | `test_cli_commands` |
 
-Stop and evaluate the completed vertical rather than extending the taxonomy automatically.
+Cut order: CLI → results → `apply` → new families. Volume is built in the reverse order.
 
-Decision order:
+## Invariants (tested from day one)
 
-1. Run the vertical on East Gate's first OSM and record gaps, maintenance cost, and human usefulness.
-2. Select the next capability from observed project need.
-3. Likely next candidate: controlled naming/model-setup mutations with preview, change set, save-as, and human approval.
-4. Reassess the custom OpenStudio MCP only after at least one read-only and one controlled-mutation capability have stable contracts.
-5. Add container/VPS infrastructure only when reproducibility or remote execution creates a demonstrated need.
-6. Consider standards, simulation, results, Ladybug, or HPXML adapters as separate verticals driven by project scope.
+`test_read_code_does_not_mutate_or_spawn`, `test_verification_never_depends_on_apply`,
+`test_polars_only_in_results`, `test_no_bare_optional_get_in_osm_objects`.
 
-The objective after normalization is delivery through real projects, not continuous framework construction.
+## Capacity
+
+At most 10 h per week on the toolkit, logged by wall-clock time per session in
+`robert-os/ops/initiatives.md`.
+
+## History
+
+P0–P4 and the first vertical closure (inventory, findings, validators, Simulation OS P4 integration)
+were completed before v0.3; see git history and `r2f-simulation-os/docs/vertical-closure-evidence.md`.

@@ -15,7 +15,7 @@ deliberately left as-is)
 
 | Component | Version |
 |---|---|
-| Python | 3.13.x |
+| Python | `SUPPORTED_PYTHON_MINORS` in `src/openstudio_toolkit/runtime/profile.py`; checked by `tests/contract/` |
 | OpenStudio Python wheel | 3.11.0 |
 | EnergyPlus reported by binding | 25.2.0 |
 | Environment manager | uv |

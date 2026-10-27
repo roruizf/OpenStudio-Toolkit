@@ -52,7 +52,7 @@ A Python library that provides structured access to OpenStudio Model (OSM) eleme
 
 ## Prerequisites
 
-- **Python** 3.13
+- **Python** within `requires-python` in `pyproject.toml` (checked by `tests/contract/`)
 - **OpenStudio** 3.11.0 Python bindings
 - **EnergyPlus** 25.2.0 (reported by the OpenStudio binding)
 - **uv** for Python and dependency management
@@ -110,27 +110,9 @@ if validation["status"] == "READY":
 
 ### OSM Objects
 
-| Module | Description |
-|--------|-------------|
-| `building` | Building-level properties and methods |
-| `building_stories` | Story definitions and attributes |
-| `spaces` | Space geometry and absolute orientations (8-point) |
-| `thermal_zones` | Thermal zone definitions |
-| `surfaces` | Wall, floor, roof, and ceiling surfaces with azimuth and orientation (4/8-point) |
-| `subsurfaces` | Windows, doors, and skylights with azimuth and orientation (4/8-point) |
-| `space_types` | Space type assignments and properties |
-| `materials` | Material definitions |
-| `constructions` | Construction assemblies |
-| `loads` | Internal loads (people, lights, equipment) |
-| `schedules` | Schedule definitions and rulesets |
-| `hvac_air_loops` | Air loop HVAC systems |
-| `hvac_components` | HVAC equipment components |
-| `hvac_sizing` | HVAC sizing parameters |
-| `hvac_zone` | Zone-level HVAC equipment |
-| `outputs` | Simulation output requests |
-| `component_curves` | Performance curves |
-| `controllers` | Controller objects |
-| `exterior_equipment` | Exterior equipment definitions |
+One module per family group under `src/openstudio_toolkit/osm_objects/`. The list of modules and of
+`get_all_*_as_dataframe` functions is whatever the package contains; the tests discover them by
+introspection, so it is not repeated here.
 
 ### Utilities
 
