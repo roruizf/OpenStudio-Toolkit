@@ -4,6 +4,8 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt
+from openstudio_toolkit.osm_objects._base import build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -12,6 +14,13 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------
 #  ***** OS:Exterior:FuelEquipment:Definition ******
 # --------------------------------------------------
+
+EXTERIOR_FUEL_EQUIPMENT_DEFINITION_COLUMNS = (
+    'Handle',
+    'Name',
+    'Design Level {W}',
+)
+
 
 def get_exterior_fuel_equipment_definition_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -39,7 +48,7 @@ def get_exterior_fuel_equipment_definition_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()), 
-        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Exterior Fuel Equipment Definition", 
+        'Name': opt(target_object.name()) if target_object.name().is_initialized() else "Unnamed Exterior Fuel Equipment Definition", 
         'Design Level {W}': target_object.designLevel()
     }
 
@@ -66,18 +75,20 @@ def get_all_exterior_fuel_equipment_definition_objects_as_dataframe(osm_model: o
     Returns:
     - pd.DataFrame: A DataFrame containing all exterior fuel equipment definition attributes.
     """
-    all_objects_dicts = get_all_exterior_fuel_equipment_definition_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} ExteriorFuelEquipmentDefinition objects from the model.")
-    return df
+    return build_dataframe(
+        get_all_exterior_fuel_equipment_definition_objects_as_dicts(osm_model), "ExteriorFuelEquipmentDefinition",
+        sort_by="Name", columns=EXTERIOR_FUEL_EQUIPMENT_DEFINITION_COLUMNS)
 
 # --------------------------------------------------
 #  ***** OS:Exterior:WaterEquipment:Definition *****
 # --------------------------------------------------
+
+EXTERIOR_WATER_EQUIPMENT_DEFINITION_COLUMNS = (
+    'Handle',
+    'Name',
+    'Design Level {m3/s}',
+)
+
 
 def get_exterior_water_equipment_definition_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -105,7 +116,7 @@ def get_exterior_water_equipment_definition_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()), 
-        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Exterior Water Equipment Definition", 
+        'Name': opt(target_object.name()) if target_object.name().is_initialized() else "Unnamed Exterior Water Equipment Definition", 
         'Design Level {m3/s}': target_object.designLevel()
     }
 
@@ -132,18 +143,20 @@ def get_all_exterior_water_equipment_definition_objects_as_dataframe(osm_model: 
     Returns:
     - pd.DataFrame: A DataFrame containing all exterior water equipment definition attributes.
     """
-    all_objects_dicts = get_all_exterior_water_equipment_definition_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} ExteriorWaterEquipmentDefinition objects from the model.")
-    return df
+    return build_dataframe(
+        get_all_exterior_water_equipment_definition_objects_as_dicts(osm_model), "ExteriorWaterEquipmentDefinition",
+        sort_by="Name", columns=EXTERIOR_WATER_EQUIPMENT_DEFINITION_COLUMNS)
 
 # --------------------------------------------------
 #  ***** OS:Exterior:Lights:Definition *************
 # --------------------------------------------------
+
+EXTERIOR_LIGHTS_DEFINITION_COLUMNS = (
+    'Handle',
+    'Name',
+    'Design Level {W}',
+)
+
 
 def get_exterior_lights_definition_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -171,7 +184,7 @@ def get_exterior_lights_definition_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()), 
-        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Exterior Lights Definition", 
+        'Name': opt(target_object.name()) if target_object.name().is_initialized() else "Unnamed Exterior Lights Definition", 
         'Design Level {W}': target_object.designLevel()
     }
 
@@ -198,11 +211,6 @@ def get_all_exterior_lights_definition_objects_as_dataframe(osm_model: openstudi
     Returns:
     - pd.DataFrame: A DataFrame containing all exterior lights definition attributes.
     """
-    all_objects_dicts = get_all_exterior_lights_definition_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} ExteriorLightsDefinition objects from the model.")
-    return df
+    return build_dataframe(
+        get_all_exterior_lights_definition_objects_as_dicts(osm_model), "ExteriorLightsDefinition",
+        sort_by="Name", columns=EXTERIOR_LIGHTS_DEFINITION_COLUMNS)

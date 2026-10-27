@@ -4,10 +4,24 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, related_name
+from openstudio_toolkit.osm_objects._base import build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+BUILDING_STORY_COLUMNS = (
+    'Handle',
+    'Name',
+    'Nominal Z Coordinate {m}',
+    'Nominal Floor to Floor Height {m}',
+    'Default Construction Set Name',
+    'Default Schedule Set Name',
+    'Group Rendering Name',
+    'Nominal Floor to Ceiling Height {m}',
+)
+
 
 def get_building_story_as_dict(
     osm_model: openstudio.model.Model, 
@@ -35,13 +49,13 @@ def get_building_story_as_dict(
 
     return {
         'Handle': str(target_story.handle()),
-        'Name': target_story.name().get() if target_story.name().is_initialized() else None,
-        'Nominal Z Coordinate {m}': target_story.nominalZCoordinate().get() if target_story.nominalZCoordinate().is_initialized() else None,
-        'Nominal Floor to Floor Height {m}': target_story.nominalFloortoFloorHeight().get() if target_story.nominalFloortoFloorHeight().is_initialized() else None,
-        'Default Construction Set Name': target_story.defaultConstructionSet().get().name().get() if target_story.defaultConstructionSet().is_initialized() else None,
-        'Default Schedule Set Name': target_story.defaultScheduleSet().get().name().get() if target_story.defaultScheduleSet().is_initialized() else None,
-        'Group Rendering Name': target_story.renderingColor().get().name().get() if target_story.renderingColor().is_initialized() else None,
-        'Nominal Floor to Ceiling Height {m}': target_story.nominalFloortoCeilingHeight().get() if target_story.nominalFloortoCeilingHeight().is_initialized() else None
+        'Name': opt(target_story.name()),
+        'Nominal Z Coordinate {m}': opt(target_story.nominalZCoordinate()),
+        'Nominal Floor to Floor Height {m}': opt(target_story.nominalFloortoFloorHeight()),
+        'Default Construction Set Name': related_name(target_story, "Default Construction Set Name"),
+        'Default Schedule Set Name': related_name(target_story, "Default Schedule Set Name"),
+        'Group Rendering Name': related_name(target_story, "Group Rendering Name"),
+        'Nominal Floor to Ceiling Height {m}': opt(target_story.nominalFloortoCeilingHeight())
     }
 
 def get_all_building_stories_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
@@ -67,14 +81,10 @@ def get_all_building_stories_objects_as_dataframe(osm_model: openstudio.model.Mo
     Returns:
     - pd.DataFrame: A DataFrame containing all building story attributes.
     """
-    all_objects_dicts = get_all_building_stories_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
+    return build_dataframe(
+        get_all_building_stories_as_dicts(osm_model), "BuildingStory",
+        sort_by="Name", columns=BUILDING_STORY_COLUMNS)
 
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} building story objects from the model.")
-    return df
 
 def create_new_building_stories_objects(osm_model: openstudio.model.Model, building_stories_to_create: list[dict[str, Any]]) -> dict[str, Any]:
     """
@@ -114,17 +124,17 @@ def create_new_building_stories_objects(osm_model: openstudio.model.Model, build
             if entry.get('Default Construction Set Name'):
                 const_set_opt = osm_model.getDefaultConstructionSetByName(str(entry['Default Construction Set Name']))
                 if const_set_opt.is_initialized():
-                    new_story.setDefaultConstructionSet(const_set_opt.get())
+                    new_story.setDefaultConstructionSet(opt(const_set_opt))
 
             if entry.get('Default Schedule Set Name'):
                 sched_set_opt = osm_model.getDefaultScheduleSetByName(str(entry['Default Schedule Set Name']))
                 if sched_set_opt.is_initialized():
-                    new_story.setDefaultScheduleSet(sched_set_opt.get())
+                    new_story.setDefaultScheduleSet(opt(sched_set_opt))
 
             if entry.get('Group Rendering Name'):
                 render_opt = osm_model.getRenderingColorByName(str(entry['Group Rendering Name']))
                 if render_opt.is_initialized():
-                    new_story.setRenderingColor(render_opt.get())
+                    new_story.setRenderingColor(opt(render_opt))
                 else:
                     new_color = openstudio.model.RenderingColor(osm_model)
                     new_color.setName(str(entry['Group Rendering Name']))
@@ -196,7 +206,7 @@ def update_building_stories_objects(osm_model: openstudio.model.Model, building_
 
         try:
             changes_made = False
-            if entry.get('Name') and entry['Name'] != target_story.name().get():
+            if entry.get('Name') and entry['Name'] != opt(target_story.name()):
                 target_story.setName(str(entry['Name']))
                 changes_made = True
 
@@ -215,19 +225,19 @@ def update_building_stories_objects(osm_model: openstudio.model.Model, building_
             if entry.get('Default Construction Set Name'):
                 const_opt = osm_model.getDefaultConstructionSetByName(str(entry['Default Construction Set Name']))
                 if const_opt.is_initialized():
-                    target_story.setDefaultConstructionSet(const_opt.get())
+                    target_story.setDefaultConstructionSet(opt(const_opt))
                     changes_made = True
 
             if entry.get('Default Schedule Set Name'):
                 sched_opt = osm_model.getDefaultScheduleSetByName(str(entry['Default Schedule Set Name']))
                 if sched_opt.is_initialized():
-                    target_story.setDefaultScheduleSet(sched_opt.get())
+                    target_story.setDefaultScheduleSet(opt(sched_opt))
                     changes_made = True
 
             if entry.get('Group Rendering Name'):
                 render_opt = osm_model.getRenderingColorByName(str(entry['Group Rendering Name']))
                 if render_opt.is_initialized():
-                    target_story.setRenderingColor(render_opt.get())
+                    target_story.setRenderingColor(opt(render_opt))
                     changes_made = True
             
             if changes_made:
@@ -312,7 +322,7 @@ def assign_spaces_to_building_stories(osm_model: openstudio.model.Model, space_s
             continue
         
         # Assign story to space
-        space_opt.get().setBuildingStory(story)
+        opt(space_opt).setBuildingStory(story)
         count += 1
     
     # Determine status
@@ -355,7 +365,7 @@ def remove_story_from_spaces(osm_model: openstudio.model.Model, space_handles: l
         for handle in space_handles:
             space_opt = osm_model.getSpace(openstudio.toUUID(handle))
             if space_opt.is_initialized():
-                target_spaces.append(space_opt.get())
+                target_spaces.append(opt(space_opt))
             else:
                 msg = f"Warning: Space with handle {handle} not found."
                 logger.warning(msg)
@@ -413,7 +423,7 @@ def get_spaces_in_story(osm_model: openstudio.model.Model,
 
     # Get spaces associated with the story
     story_spaces = target_story.spaces()
-    logger.info(f"Found {len(story_spaces)} spaces in story '{target_story.name().get() if target_story.name().is_initialized() else 'Unnamed Story'}'.")
+    logger.info(f"Found {len(story_spaces)} spaces in story '{opt(target_story.name()) if target_story.name().is_initialized() else 'Unnamed Story'}'.")
     
     # Convert space objects to dictionaries
     return [spaces.get_space_object_as_dict(osm_model, _object_ref=space) for space in story_spaces]
@@ -447,7 +457,7 @@ def delete_building_story(osm_model: openstudio.model.Model,
             "message": msg
         }
     
-    initial_name = target_story.name().get() if target_story.name().is_initialized() else "Unnamed"
+    initial_name = opt(target_story.name()) if target_story.name().is_initialized() else "Unnamed"
     
     # Remove the story itself
     target_story.remove()

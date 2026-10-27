@@ -10,6 +10,8 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, related_name
+from openstudio_toolkit.osm_objects._base import build_all_dicts, build_dataframe
 from openstudio_toolkit.utils import helpers
 
 logger = logging.getLogger(__name__)
@@ -28,14 +30,31 @@ def _zone_list_to_name(zones) -> str | None:
         return None
     names = []
     for zone in zones:
-        if zone.name().is_initialized():
-            names.append(zone.name().get())
+        name = opt(zone.name())
+        if name is not None:
+            names.append(name)
     return ", ".join(names) if names else None
 
 
 # ---------------------------------------------------------------------------
 #  OS:AvailabilityManager:NightCycle
 # ---------------------------------------------------------------------------
+
+AVAILABILITY_MANAGER_NIGHT_CYCLE_COLUMNS = (
+    'Handle',
+    'Name',
+    'Applicability Schedule',
+    'Fan Schedule',
+    'Control Type',
+    'Thermostat Tolerance {deltaC}',
+    'Cycling Run Time Control Type',
+    'Cycling Run Time {s}',
+    'Control Zone or Zone List Name',
+    'Cooling Control Zone or Zone List Name',
+    'Heating Control Zone or Zone List Name',
+    'Heating Zone Fans Only Zone or Zone List Name',
+)
+
 
 def get_availability_manager_night_cycle_object_as_dict(
     osm_model: openstudio.model.Model,
@@ -68,11 +87,15 @@ def get_availability_manager_night_cycle_object_as_dict(
     if target_object is None:
         return {}
 
+    # Not a plain field read: fanSchedule() can return a schedule while the Fan Schedule field is empty
+    # in the IDF (OpenStudio computes it), so the name comes from the accessor, not related_name().
+    fan_schedule = opt(target_object.fanSchedule())
+
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Applicability Schedule': target_object.applicabilitySchedule().name().get() if target_object.applicabilitySchedule().name().is_initialized() else None,
-        'Fan Schedule': target_object.fanSchedule().get().name().get() if target_object.fanSchedule().is_initialized() else None,
+        'Name': opt(target_object.name()),
+        'Applicability Schedule': related_name(target_object, "Applicability Schedule"),
+        'Fan Schedule': opt(fan_schedule.name()) if fan_schedule is not None else None,
         'Control Type': target_object.controlType(),
         'Thermostat Tolerance {deltaC}': target_object.thermostatTolerance(),
         'Cycling Run Time Control Type': target_object.cyclingRunTimeControlType(),
@@ -88,8 +111,6 @@ def get_all_availability_manager_night_cycle_objects_as_dicts(
     osm_model: openstudio.model.Model,
 ) -> list[dict[str, Any]]:
     """Retrieve attributes for all OS:AvailabilityManager:NightCycle objects."""
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
-
     return build_all_dicts(
         osm_model,
         "getAvailabilityManagerNightCycles",
@@ -101,9 +122,7 @@ def get_all_availability_manager_night_cycle_objects_as_dataframe(
     osm_model: openstudio.model.Model,
 ) -> pd.DataFrame:
     """Retrieve all OS:AvailabilityManager:NightCycle objects as a DataFrame."""
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-
     return build_dataframe(
         get_all_availability_manager_night_cycle_objects_as_dicts(osm_model),
-        "AvailabilityManagerNightCycle",
+        "AvailabilityManagerNightCycle", columns=AVAILABILITY_MANAGER_NIGHT_CYCLE_COLUMNS,
     )

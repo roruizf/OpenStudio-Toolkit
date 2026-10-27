@@ -4,6 +4,8 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, related, related_name
+from openstudio_toolkit.osm_objects._base import build_all_dicts, build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -12,6 +14,39 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------
 #  ***** OS:ThermalZone ****************************
 # --------------------------------------------------
+
+def _zone_air_node_name(zone: Any) -> str | None:
+    """The zone air node field points to an OS:Connection; the node is that connection's target."""
+    connection = related(zone, "Zone Air Node Name")
+    return related_name(connection, "Target Object") if connection is not None else None
+
+
+THERMAL_ZONE_COLUMNS = (
+    'Handle',
+    'Name',
+    'Multiplier',
+    'Ceiling Height {m}',
+    'Volume {m3}',
+    'Floor Area {m2}',
+    'Zone Inside Convection Algorithm',
+    'Zone Outside Convection Algorithm',
+    'Zone Conditioning Equipment List Name',
+    'Zone Air Inlet Port List',
+    'Zone Air Exhaust Port List',
+    'Zone Air Node Name',
+    'Zone Return Air Port List',
+    'Primary Daylighting Control Name',
+    'Fraction of Zone Controlled by Primary Daylighting Control',
+    'Secondary Daylighting Control Name',
+    'Fraction of Zone Controlled by Secondary Daylighting Control',
+    'Illuminance Map Name',
+    'Group Rendering Name',
+    'Thermostat Name',
+    'Use Ideal Air Loads',
+    'Humidistat Name',
+    'Daylighting Controls Availability Schedule Name',
+)
+
 
 def get_thermal_zone_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -39,28 +74,28 @@ def get_thermal_zone_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Multiplier': target_object.multiplier(),
-        'Ceiling Height {m}': target_object.ceilingHeight().get() if target_object.ceilingHeight().is_initialized() else None,
+        'Ceiling Height {m}': opt(target_object.ceilingHeight()),
         'Volume {m3}': target_object.airVolume(),
         'Floor Area {m2}': target_object.floorArea(),        
-        'Zone Inside Convection Algorithm': target_object.zoneInsideConvectionAlgorithm().get() if target_object.zoneInsideConvectionAlgorithm().is_initialized() else None,
-        'Zone Outside Convection Algorithm': target_object.zoneOutsideConvectionAlgorithm().get() if target_object.zoneOutsideConvectionAlgorithm().is_initialized() else None,
+        'Zone Inside Convection Algorithm': opt(target_object.zoneInsideConvectionAlgorithm()),
+        'Zone Outside Convection Algorithm': opt(target_object.zoneOutsideConvectionAlgorithm()),
         'Zone Conditioning Equipment List Name': target_object.zoneConditioningEquipmentListName(),
-        'Zone Air Inlet Port List': str(target_object.inletPortList().handle()) if target_object.inletPortList().handle() else None,
-        'Zone Air Exhaust Port List': str(target_object.exhaustPortList().handle()) if target_object.exhaustPortList().handle() else None,
-        'Zone Air Node Name': target_object.zoneAirNode().name().get() if target_object.zoneAirNode().name().is_initialized() else None,
-        'Zone Return Air Port List': str(target_object.returnPortList().handle()) if target_object.returnPortList().handle() else None,
-        'Primary Daylighting Control Name': target_object.primaryDaylightingControl().get().name().get() if (target_object.primaryDaylightingControl().is_initialized() and target_object.primaryDaylightingControl().get().name().is_initialized()) else None,
+        'Zone Air Inlet Port List': str(related(target_object, "Zone Air Inlet Port List").handle()) if related(target_object, "Zone Air Inlet Port List") is not None else None,
+        'Zone Air Exhaust Port List': str(related(target_object, "Zone Air Exhaust Port List").handle()) if related(target_object, "Zone Air Exhaust Port List") is not None else None,
+        'Zone Air Node Name': _zone_air_node_name(target_object),
+        'Zone Return Air Port List': str(related(target_object, "Zone Return Air Port List").handle()) if related(target_object, "Zone Return Air Port List") is not None else None,
+        'Primary Daylighting Control Name': related_name(target_object, "Primary Daylighting Control Name"),
         'Fraction of Zone Controlled by Primary Daylighting Control': target_object.fractionofZoneControlledbyPrimaryDaylightingControl(),
-        'Secondary Daylighting Control Name': target_object.secondaryDaylightingControl().get().name().get() if (target_object.secondaryDaylightingControl().is_initialized() and target_object.secondaryDaylightingControl().get().name().is_initialized()) else None,
+        'Secondary Daylighting Control Name': related_name(target_object, "Secondary Daylighting Control Name"),
         'Fraction of Zone Controlled by Secondary Daylighting Control': target_object.fractionofZoneControlledbySecondaryDaylightingControl(),
-        'Illuminance Map Name': target_object.illuminanceMap().get().name().get() if (target_object.illuminanceMap().is_initialized() and target_object.illuminanceMap().get().name().is_initialized()) else None,
-        'Group Rendering Name': target_object.renderingColor().get().name().get() if (target_object.renderingColor().is_initialized() and target_object.renderingColor().get().name().is_initialized()) else None,
-        'Thermostat Name': target_object.thermostat().get().name().get() if(target_object.thermostat().is_initialized() and target_object.thermostat().get().name().is_initialized()) else None,
+        'Illuminance Map Name': related_name(target_object, "Illuminance Map Name"),
+        'Group Rendering Name': related_name(target_object, "Group Rendering Name"),
+        'Thermostat Name': related_name(target_object, "Thermostat Name"),
         'Use Ideal Air Loads': target_object.useIdealAirLoads(),
-        'Humidistat Name': target_object.zoneControlHumidistat().get().name().get() if target_object.zoneControlHumidistat().is_initialized() else None,
-        'Daylighting Controls Availability Schedule Name': target_object.daylightingControlsAvailabilitySchedule().get().name().get() if target_object.daylightingControlsAvailabilitySchedule().is_initialized() else None
+        'Humidistat Name': related_name(target_object, "Humidistat Name"),
+        'Daylighting Controls Availability Schedule Name': related_name(target_object, "Daylighting Controls Availability Schedule Name")
     }
 
 def get_all_thermal_zones_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
@@ -73,7 +108,6 @@ def get_all_thermal_zones_objects_as_dicts(osm_model: openstudio.model.Model) ->
     Returns:
     - List[Dict[str, Any]]: A list of dictionaries containing thermal zone attributes.
     """
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
     return build_all_dicts(osm_model, "getThermalZones", get_thermal_zone_object_as_dict)
 
 def get_all_thermal_zones_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
@@ -86,8 +120,9 @@ def get_all_thermal_zones_objects_as_dataframe(osm_model: openstudio.model.Model
     Returns:
     - pd.DataFrame: A DataFrame containing all ThermalZone attributes.
     """
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-    return build_dataframe(get_all_thermal_zones_objects_as_dicts(osm_model), "ThermalZone")
+    return build_dataframe(
+        get_all_thermal_zones_objects_as_dicts(osm_model), "ThermalZone",
+        sort_by="Name", columns=THERMAL_ZONE_COLUMNS)
 
 
 def assign_spaces_to_thermal_zones(osm_model: openstudio.model.Model, 
@@ -242,7 +277,7 @@ def update_thermal_zones_data(osm_model: openstudio.model.Model,
         changes_made = False
         
         # 2. Update Name
-        if 'Name' in entry and entry['Name'] and entry['Name'] != target_zone.name().get():
+        if 'Name' in entry and entry['Name'] and entry['Name'] != opt(target_zone.name()):
              target_zone.setName(str(entry['Name']))
              changes_made = True
 
@@ -274,7 +309,7 @@ def update_thermal_zones_data(osm_model: openstudio.model.Model,
                 # Let's try to find it as a DualSetpoint first
                 tstat_opt = osm_model.getThermostatSetpointDualSetpointByName(tstat_name)
                 if tstat_opt.is_initialized():
-                    target_zone.setThermostatSetpointDualSetpoint(tstat_opt.get())
+                    target_zone.setThermostatSetpointDualSetpoint(opt(tstat_opt))
                     changes_made = True
                 else:
                     msg = f"Warning: Thermostat (DualSetpoint) '{tstat_name}' not found for zone '{target_zone.nameString()}'"
@@ -290,7 +325,7 @@ def update_thermal_zones_data(osm_model: openstudio.model.Model,
             if hstat_name:
                 hstat_opt = osm_model.getZoneControlHumidistatByName(hstat_name)
                 if hstat_opt.is_initialized():
-                    target_zone.setZoneControlHumidistat(hstat_opt.get())
+                    target_zone.setZoneControlHumidistat(opt(hstat_opt))
                     changes_made = True
                 else:
                     msg = f"Warning: Humidistat '{hstat_name}' not found for zone '{target_zone.nameString()}'"

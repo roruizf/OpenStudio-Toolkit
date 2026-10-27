@@ -196,9 +196,9 @@ generic_reader_status = "implemented"
 # Item 2: every get_all_*_as_dataframe in osm_objects (found by introspection, present and future)
 # returns a DataFrame WITH its columns on a model that has no objects of its family. The populated
 # case and the orphan-blanking case (one subprocess per function) live in tests/osm_objects/.
-dataframe_functions_return_columns_when_empty = "planned"
+dataframe_functions_return_columns_when_empty = "implemented"
 # Curated reads never call .get() on an OpenStudio Optional without a guard; use the helper.
-no_bare_optional_get_in_osm_objects = "planned"
+no_bare_optional_get_in_osm_objects = "implemented"
 # Orphan relations are reported as findings, never a crash. Code: integrity.reference.absent,
 # object_type "model", IDD type and field in evidence. A reference to a non-existent handle is not
 # observable after loading (OpenStudio clears it and logs an error), so there is no "dangling" code.

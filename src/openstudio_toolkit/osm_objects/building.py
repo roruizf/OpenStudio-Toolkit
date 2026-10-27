@@ -3,8 +3,30 @@ import logging
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, optional_name
+from openstudio_toolkit.osm_objects._base import build_dataframe
+
 # Configure logger
 logger = logging.getLogger(__name__)
+
+BUILDING_COLUMNS = (
+    'Handle',
+    'Name',
+    'Building Sector Type',
+    'North Axis {deg}',
+    'Nominal Floor to Floor Height {m}',
+    'Space Type Name',
+    'Default Construction Set Name',
+    'Default Schedule Set Name',
+    'Standards Number of Stories',
+    'Standards Number of Above Ground Stories',
+    'Standards Template',
+    'Standards Building Type',
+    'Standards Number of Living Units',
+    'Relocatable',
+    'Nominal Floor to Ceiling Height {m}',
+)
+
 
 def get_building_object_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
     """
@@ -22,31 +44,22 @@ def get_building_object_as_dataframe(osm_model: openstudio.model.Model) -> pd.Da
 
     # Define attributes to retrieve in a dictionary
     object_attr = {
-        'Handle': [str(building.handle())],
-        'Name': [building.name().get()],
+        'Handle': str(building.handle()),
+        'Name': opt(building.name()),
         'Building Sector Type': None,
-        'North Axis {deg}': [building.northAxis()],
+        'North Axis {deg}': building.northAxis(),
         'Nominal Floor to Floor Height {m}': None,
-        'Space Type Name': [building.spaceType().get().name().get() if not building.spaceType().isNull() else None],
-        'Default Construction Set Name': [building.defaultConstructionSet().get().name().get() if not building.defaultConstructionSet().isNull() else None],
-        'Default Schedule Set Name': [building.defaultScheduleSet().get().name().get() if not building.defaultScheduleSet().isNull() else None],
+        'Space Type Name': optional_name(building.spaceType()),
+        'Default Construction Set Name': optional_name(building.defaultConstructionSet()),
+        'Default Schedule Set Name': optional_name(building.defaultScheduleSet()),
         'Standards Number of Stories': None,
         'Standards Number of Above Ground Stories': None,
         'Standards Template': None,
-        'Standards Building Type': [building.standardsBuildingType().get() if not building.standardsBuildingType().isNull() else None],
+        'Standards Building Type': opt(building.standardsBuildingType()),
         'Standards Number of Living Units': None,
         'Relocatable': None,
         'Nominal Floor to Ceiling Height {m}': None
     }
 
-    # Create a DataFrame of building.
-    building_df = pd.DataFrame(columns=object_attr.keys())
-    for key in object_attr.keys():
-        building_df[key] = object_attr[key]
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    building_df = building_df.sort_values(
-        by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info("Retrieved Building object from the model.")
-    return building_df
+    return build_dataframe(
+        [object_attr], "Building", sort_by="Name", columns=BUILDING_COLUMNS)

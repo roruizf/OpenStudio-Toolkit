@@ -3,7 +3,9 @@
 Derived empirically for OpenStudio 3.11.0 by blanking one reference field at a time on one object of
 each type found in the v0.3 corpus (58 types, 19 real models plus repo fixtures) and calling every
 accessor that returns a related object directly. Script: docs/architecture/v0.3-evidence/blank_probe.py.
-Types absent from that corpus are not covered; re-derive when the OpenStudio pin changes.
+Types absent from that corpus are not covered; re-derive when the OpenStudio pin changes. Five pairs
+(OS:Fan:OnOff speed-ratio curves, OS:ZoneHVAC:UnitHeater fan/coil/schedule) were added on 2026-10-27 by a
+targeted probe of the same kind on fresh objects, for types absent from the corpus.
 """
 
 from __future__ import annotations
@@ -145,6 +147,14 @@ FATAL_WHEN_ABSENT: dict[tuple[str, str], tuple[str, ...]] = {
         "Exterior Lights Definition Name",
     ): ("definition", "exteriorLightsDefinition",),
     (
+        "OS:Fan:OnOff",
+        "Fan Efficiency Ratio Function of Speed Ratio Curve Name",
+    ): ("fanEfficiencyRatioFunctionofSpeedRatioCurve",),
+    (
+        "OS:Fan:OnOff",
+        "Fan Power Ratio Function of Speed Ratio Curve Name",
+    ): ("fanPowerRatioFunctionofSpeedRatioCurve",),
+    (
         "OS:HeatExchanger:AirToAir:SensibleAndLatent",
         "Availability Schedule",
     ): ("availabilitySchedule",),
@@ -264,6 +274,18 @@ FATAL_WHEN_ABSENT: dict[tuple[str, str], tuple[str, ...]] = {
         "OS:ZoneHVAC:TerminalUnit:VariableRefrigerantFlow",
         "Terminal Unit Availability schedule",
     ): ("terminalUnitAvailabilityschedule",),
+    (
+        "OS:ZoneHVAC:UnitHeater",
+        "Availability Schedule Name",
+    ): ("availabilitySchedule",),
+    (
+        "OS:ZoneHVAC:UnitHeater",
+        "Heating Coil Name",
+    ): ("heatingCoil",),
+    (
+        "OS:ZoneHVAC:UnitHeater",
+        "Supply Air Fan Name",
+    ): ("supplyAirFan",),
     (
         "OS:ZoneMixing",
         "Schedule Name",

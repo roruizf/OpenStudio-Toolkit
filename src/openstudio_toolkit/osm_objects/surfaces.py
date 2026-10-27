@@ -4,6 +4,8 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, optional_name
+from openstudio_toolkit.osm_objects._base import build_all_dicts, build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -14,6 +16,21 @@ import math
 # --------------------------------------------------
 #  ***** OS:Surface ********************************
 # --------------------------------------------------
+
+SURFACE_COLUMNS = (
+    'Handle',
+    'Name',
+    'Surface Type',
+    'Construction Name',
+    'Space Name',
+    'Outside Boundary Condition',
+    'Outside Boundary Condition Object',
+    'Sun Exposure',
+    'Wind Exposure',
+    'View Factor to Ground',
+    'Number of Vertices',
+)
+
 
 def get_surface_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -46,12 +63,12 @@ def get_surface_object_as_dict(
     # 1. Pure OSM Attributes (Mirroring .osm file)
     surface_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Surface Type': target_object.surfaceType(),
-        'Construction Name': target_object.construction().get().name().get() if target_object.construction().is_initialized() else None,        
-        'Space Name': target_object.space().get().name().get() if target_object.space().is_initialized() else None,
+        'Construction Name': optional_name(target_object.construction()),        
+        'Space Name': optional_name(target_object.space()),
         'Outside Boundary Condition': target_object.outsideBoundaryCondition(),
-        'Outside Boundary Condition Object': target_object.adjacentSurface().get().name().get() if target_object.adjacentSurface().is_initialized() else None,
+        'Outside Boundary Condition Object': optional_name(target_object.adjacentSurface()),
         'Sun Exposure': target_object.sunExposure(),
         'Wind Exposure': target_object.windExposure(),
         'View Factor to Ground': None,
@@ -79,7 +96,6 @@ def get_all_surface_objects_as_dicts(osm_model: openstudio.model.Model) -> list[
     Returns:
     - List[Dict[str, Any]]: A list of dictionaries containing surface attributes.
     """
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
     return build_all_dicts(osm_model, "getSurfaces", get_surface_object_as_dict)
 
 def get_all_surface_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
@@ -92,8 +108,8 @@ def get_all_surface_objects_as_dataframe(osm_model: openstudio.model.Model) -> p
     Returns:
     - pd.DataFrame: A DataFrame containing all Surface attributes.
     """
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-    return build_dataframe(get_all_surface_objects_as_dicts(osm_model), "Surface")
+    return build_dataframe(get_all_surface_objects_as_dicts(osm_model), "Surface",
+                           sort_by="Name", columns=SURFACE_COLUMNS)
 
 def calculate_surface_orientation(surface: openstudio.model.Surface, method: str = '8-Point') -> dict[str, Any]:
     """
@@ -107,7 +123,7 @@ def calculate_surface_orientation(surface: openstudio.model.Surface, method: str
     rel_azimuth = math.degrees(math.atan2(normal.x(), normal.y())) % 360
 
     # 2. Get Rotation offset
-    space = surface.space().get() if surface.space().is_initialized() else None
+    space = opt(surface.space())
     if not space:
         return {'Azimuth': round(rel_azimuth, 2), 'Orientation': 'Unknown'}
         
