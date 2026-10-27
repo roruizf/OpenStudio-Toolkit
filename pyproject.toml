@@ -63,6 +63,9 @@ known-first-party = ["openstudio_toolkit"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "openstudio_cli: runs Ruby measures through the `openstudio` CLI; skipped when it is not on PATH",
+]
 
 [tool.mypy]
 python_version = "3.11"

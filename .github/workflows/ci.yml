@@ -24,4 +24,4 @@ jobs:
       - name: Lint v0.3 code
         run: uv run --frozen ruff check tests/contract
       - name: Test
-        run: uv run --frozen pytest -q
+        run: uv run --frozen pytest -q -rs

@@ -1,3 +1,4 @@
+import pytest
 import openstudio
 import os
 import logging
@@ -8,6 +9,7 @@ from openstudio_toolkit.tasks.measures import add_overhangs_by_projection_factor
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+@pytest.mark.openstudio_cli
 def test_add_overhangs():
     # 1. Setup paths
     test_model_path = Path("tests/resources/OverhangTestModel_01.osm")
