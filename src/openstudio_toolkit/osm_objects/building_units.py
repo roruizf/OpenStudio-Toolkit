@@ -4,10 +4,20 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, related_name
+from openstudio_toolkit.osm_objects._base import build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+BUILDING_UNIT_COLUMNS = (
+    'Handle',
+    'Name',
+    'Rendering Color',
+    'Building Unit Type',
+)
+
 
 def get_building_unit_as_dict(
     osm_model: openstudio.model.Model, 
@@ -39,8 +49,8 @@ def get_building_unit_as_dict(
 
     return {
         'Handle': str(target_unit.handle()),
-        'Name': target_unit.name().get() if target_unit.name().is_initialized() else None,
-        'Rendering Color': target_unit.renderingColor().get().name().get() if target_unit.renderingColor().is_initialized() else None,
+        'Name': opt(target_unit.name()),
+        'Rendering Color': related_name(target_unit, "Rendering Color"),
         'Building Unit Type': target_unit.buildingUnitType()
     }
 
@@ -67,14 +77,10 @@ def get_all_building_unit_objects_as_dataframe(osm_model: openstudio.model.Model
     Returns:
     - pd.DataFrame: A DataFrame containing all building unit attributes.
     """
-    all_objects_dicts = get_all_building_units_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
+    return build_dataframe(
+        get_all_building_units_as_dicts(osm_model), "BuildingUnit",
+        sort_by="Name", columns=BUILDING_UNIT_COLUMNS)
 
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} building unit objects from the model.")
-    return df
 
 def create_new_building_unit_objects(osm_model: openstudio.model.Model, building_units_to_create: list[dict[str, Any]]) -> dict[str, Any]:
     """
@@ -107,7 +113,7 @@ def create_new_building_unit_objects(osm_model: openstudio.model.Model, building
             if entry.get('Rendering Color'):
                 render_opt = osm_model.getRenderingColorByName(str(entry['Rendering Color']))
                 if render_opt.is_initialized():
-                    new_unit.setRenderingColor(render_opt.get())
+                    new_unit.setRenderingColor(opt(render_opt))
                 else:
                     new_color = openstudio.model.RenderingColor(osm_model)
                     new_color.setName(str(entry['Rendering Color']))
@@ -172,7 +178,7 @@ def update_building_unit_objects(osm_model: openstudio.model.Model, building_uni
 
         try:
             changes_made = False
-            if entry.get('Name') and entry['Name'] != target_unit.name().get():
+            if entry.get('Name') and entry['Name'] != opt(target_unit.name()):
                 target_unit.setName(str(entry['Name']))
                 changes_made = True
 
@@ -183,7 +189,7 @@ def update_building_unit_objects(osm_model: openstudio.model.Model, building_uni
             if entry.get('Rendering Color'):
                 render_opt = osm_model.getRenderingColorByName(str(entry['Rendering Color']))
                 if render_opt.is_initialized():
-                    target_unit.setRenderingColor(render_opt.get())
+                    target_unit.setRenderingColor(opt(render_opt))
                     changes_made = True
             
             if changes_made:
@@ -268,7 +274,7 @@ def assign_spaces_to_building_units(osm_model: openstudio.model.Model, space_uni
             continue
         
         # Assign unit to space
-        space_opt.get().setBuildingUnit(unit)
+        opt(space_opt).setBuildingUnit(unit)
         count += 1
     
     # Determine status
@@ -310,7 +316,7 @@ def remove_unit_from_spaces(osm_model: openstudio.model.Model, space_handles: li
         for handle in space_handles:
             space_opt = osm_model.getSpace(openstudio.toUUID(handle))
             if space_opt.is_initialized():
-                target_spaces.append(space_opt.get())
+                target_spaces.append(opt(space_opt))
             else:
                 msg = f"Warning: Space with handle {handle} not found."
                 logger.warning(msg)
@@ -367,7 +373,7 @@ def get_spaces_in_unit(osm_model: openstudio.model.Model,
 
     # Get spaces associated with the unit
     unit_spaces = target_unit.spaces()
-    logger.info(f"Found {len(unit_spaces)} spaces in unit '{target_unit.name().get() if target_unit.name().is_initialized() else 'Unnamed Unit'}'.")
+    logger.info(f"Found {len(unit_spaces)} spaces in unit '{opt(target_unit.name()) if target_unit.name().is_initialized() else 'Unnamed Unit'}'.")
     
     # Convert space objects to dictionaries
     return [spaces.get_space_object_as_dict(osm_model, _object_ref=space) for space in unit_spaces]
@@ -400,7 +406,7 @@ def delete_building_unit(osm_model: openstudio.model.Model,
             "message": msg
         }
     
-    initial_name = target_unit.name().get() if target_unit.name().is_initialized() else "Unnamed"
+    initial_name = opt(target_unit.name()) if target_unit.name().is_initialized() else "Unnamed"
     
     # Remove the unit itself
     target_unit.remove()

@@ -4,6 +4,8 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, optional_name
+from openstudio_toolkit.osm_objects._base import build_all_dicts, build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -14,6 +16,19 @@ import math
 # --------------------------------------------------
 #  ***** OS:SubSurface *****************************
 # --------------------------------------------------
+
+SUBSURFACE_COLUMNS = (
+    'Handle',
+    'Name',
+    'Sub Surface Type',
+    'Construction Name',
+    'Surface Name',
+    'Outside Boundary Condition Object',
+    'View Factor to Ground',
+    'Multiplier',
+    'Number of Vertices',
+)
+
 
 def get_subsurface_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -46,10 +61,10 @@ def get_subsurface_object_as_dict(
     # 1. Pure OSM Attributes (Mirroring .osm file)
     subsurface_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Sub Surface Type': target_object.subSurfaceType(),
-        'Construction Name': target_object.construction().get().name().get() if target_object.construction().is_initialized() else None,
-        'Surface Name': target_object.surface().get().name().get() if target_object.surface().is_initialized() else None,
+        'Construction Name': optional_name(target_object.construction()),
+        'Surface Name': optional_name(target_object.surface()),
         'Outside Boundary Condition Object': target_object.outsideBoundaryCondition(),
         'View Factor to Ground': None,
         'Multiplier': target_object.multiplier(),
@@ -62,7 +77,7 @@ def get_subsurface_object_as_dict(
         subsurface_dict.update({
             'Azimuth': orientation_data['Azimuth'],
             'Orientation': orientation_data['Orientation'],
-            'Frame and Divider Name': target_object.windowPropertyFrameAndDivider().get().name().get() if target_object.windowPropertyFrameAndDivider().is_initialized() else None,
+            'Frame and Divider Name': optional_name(target_object.windowPropertyFrameAndDivider()),
             'Number of Vertices': len(target_object.vertices())
         })
 
@@ -78,7 +93,6 @@ def get_all_subsurface_objects_as_dicts(osm_model: openstudio.model.Model) -> li
     Returns:
     - List[Dict[str, Any]]: A list of dictionaries containing subsurface attributes.
     """
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
     return build_all_dicts(osm_model, "getSubSurfaces", get_subsurface_object_as_dict)
 
 def get_all_subsurface_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
@@ -91,8 +105,8 @@ def get_all_subsurface_objects_as_dataframe(osm_model: openstudio.model.Model) -
     Returns:
     - pd.DataFrame: A DataFrame containing all SubSurface attributes.
     """
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-    return build_dataframe(get_all_subsurface_objects_as_dicts(osm_model), "SubSurface")
+    return build_dataframe(get_all_subsurface_objects_as_dicts(osm_model), "SubSurface",
+                           sort_by="Name", columns=SUBSURFACE_COLUMNS)
 
 def calculate_subsurface_orientation(subsurface: openstudio.model.SubSurface, method: str = '8-Point') -> dict[str, Any]:
     """
@@ -106,14 +120,14 @@ def calculate_subsurface_orientation(subsurface: openstudio.model.SubSurface, me
     if not parent_surface_opt.is_initialized():
         return {'Azimuth': None, 'Orientation': 'Unknown'}
         
-    parent_surface = parent_surface_opt.get()
+    parent_surface = opt(parent_surface_opt)
     
     # 1. Get relative azimuth from parent normal
     normal = parent_surface.outwardNormal()
     rel_azimuth = math.degrees(math.atan2(normal.x(), normal.y())) % 360
 
     # 2. Get Rotation offset
-    space = parent_surface.space().get() if parent_surface.space().is_initialized() else None
+    space = opt(parent_surface.space())
     if not space:
         return {'Azimuth': round(rel_azimuth, 2), 'Orientation': 'Unknown'}
         

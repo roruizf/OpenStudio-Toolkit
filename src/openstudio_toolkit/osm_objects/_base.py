@@ -12,7 +12,7 @@ all modules. This base module provides those shared pieces.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Any
 
 import pandas as pd
@@ -24,6 +24,7 @@ def build_dataframe(
     dicts: list[dict[str, Any]],
     object_type_name: str,
     sort_by: str = "Name",
+    columns: Sequence[str] = (),
 ) -> pd.DataFrame:
     """Convert a list of object dicts to a sorted, 0-indexed DataFrame.
 
@@ -35,11 +36,14 @@ def build_dataframe(
         object_type_name: Human-readable type name for the log message
             (e.g. "Space", "ThermalZone").
         sort_by: Column to sort by. Defaults to "Name".
+        columns: Columns of the family. Used only when ``dicts`` is empty, so a model without
+            objects of the family still yields a DataFrame with its columns. When there are
+            objects, the columns come from the dicts; tests/osm_objects checks that both agree.
 
     Returns:
         Sorted DataFrame with reset integer index.
     """
-    df = pd.DataFrame(dicts)
+    df = pd.DataFrame(dicts) if dicts else pd.DataFrame(columns=list(columns))
 
     if not df.empty and sort_by in df.columns:
         df = df.sort_values(by=sort_by, ascending=True).reset_index(drop=True)

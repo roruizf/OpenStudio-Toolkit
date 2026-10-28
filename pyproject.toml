@@ -4,16 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openstudio-toolkit"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
     { name = "Roberto Ruiz", email = "roruizf@gmail.com" },
 ]
 description = "A Python library for structured access to OpenStudio models for building energy simulation."
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.11,<3.14"
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
@@ -24,7 +26,11 @@ dependencies = [
     "pandas>=2.0",
     "openpyxl>=3.1",
     "pydantic>=2.0",
+    "polars>=1.0",
 ]
+
+[project.scripts]
+openstudio-toolkit = "openstudio_toolkit.cli:main"
 
 [dependency-groups]
 dev = [
@@ -50,7 +56,7 @@ openstudio_toolkit = [
 ]
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py311"
 line-length = 120
 
 [tool.ruff.lint]
@@ -61,9 +67,12 @@ known-first-party = ["openstudio_toolkit"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "openstudio_cli: runs Ruby measures through the `openstudio` CLI; skipped when it is not on PATH",
+]
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true

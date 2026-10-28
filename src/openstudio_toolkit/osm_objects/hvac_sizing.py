@@ -4,6 +4,8 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, related_name
+from openstudio_toolkit.osm_objects._base import build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -12,6 +14,43 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------
 #  ***** OS:Sizing:Zone ****************************
 # --------------------------------------------------
+
+SIZING_ZONE_COLUMNS = (
+    'Handle',
+    'Zone Name',
+    'Zone Cooling Design Supply Air Temperature Input Method',
+    'Zone Cooling Design Supply Air Temperature {C}',
+    'Zone Cooling Design Supply Air Temperature Difference {deltaC}',
+    'Zone Heating Design Supply Air Temperature Input Method',
+    'Zone Heating Design Supply Air Temperature {C}',
+    'Zone Heating Design Supply Air Temperature Difference {deltaC}',
+    'Zone Cooling Design Supply Air Humidity Ratio {kg-H2O/kg-air}',
+    'Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}',
+    'Zone Heating Sizing Factor',
+    'Zone Cooling Sizing Factor',
+    'Cooling Design Air Flow Method',
+    'Cooling Design Air Flow Rate {m3/s}',
+    'Cooling Minimum Air Flow per Zone Floor Area {m3/s-m2}',
+    'Cooling Minimum Air Flow {m3/s}',
+    'Cooling Minimum Air Flow Fraction',
+    'Heating Design Air Flow Method',
+    'Heating Design Air Flow Rate {m3/s}',
+    'Heating Maximum Air Flow per Zone Floor Area {m3/s-m2}',
+    'Heating Maximum Air Flow {m3/s}',
+    'Heating Maximum Air Flow Fraction',
+    'Account for Dedicated Outdoor Air System',
+    'Dedicated Outdoor Air System Control Strategy',
+    'Dedicated Outdoor Air Low Setpoint Temperature for Design {C}',
+    'Dedicated Outdoor Air High Setpoint Temperature for Design {C}',
+    'Zone Load Sizing Method',
+    'Zone Latent Cooling Design Supply Air Humidity Ratio Input Method',
+    'Zone Dehumidification Design Supply Air Humidity Ratio {kgWater/kgDryAir}',
+    'Zone Cooling Design Supply Air Humidity Ratio Difference {kgWater/kgDryAir}',
+    'Zone Latent Heating Design Supply Air Humidity Ratio Input Method',
+    'Zone Humidification Design Supply Air Humidity Ratio {kgWater/kgDryAir}',
+    'Zone Humidification Design Supply Air Humidity Ratio Difference {kgWater/kgDryAir}',
+)
+
 
 def get_sizing_zone_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -39,7 +78,7 @@ def get_sizing_zone_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()),
-        'Zone Name': target_object.thermalZone().name().get() if target_object.thermalZone().name().is_initialized() else "Unnamed Zone",
+        'Zone Name': related_name(target_object, "Zone or ZoneList Name"),
         'Zone Cooling Design Supply Air Temperature Input Method': target_object.zoneCoolingDesignSupplyAirTemperatureInputMethod(),
         'Zone Cooling Design Supply Air Temperature {C}': target_object.zoneCoolingDesignSupplyAirTemperature(),
         'Zone Cooling Design Supply Air Temperature Difference {deltaC}': target_object.zoneCoolingDesignSupplyAirTemperatureDifference(),
@@ -48,8 +87,8 @@ def get_sizing_zone_object_as_dict(
         'Zone Heating Design Supply Air Temperature Difference {deltaC}': target_object.zoneHeatingDesignSupplyAirTemperatureDifference(),
         'Zone Cooling Design Supply Air Humidity Ratio {kg-H2O/kg-air}': target_object.zoneCoolingDesignSupplyAirHumidityRatio(),
         'Zone Heating Design Supply Air Humidity Ratio {kg-H2O/kg-air}': target_object.zoneHeatingDesignSupplyAirHumidityRatio(),
-        'Zone Heating Sizing Factor': target_object.zoneHeatingSizingFactor(),
-        'Zone Cooling Sizing Factor': target_object.zoneCoolingSizingFactor(),
+        'Zone Heating Sizing Factor': opt(target_object.zoneHeatingSizingFactor()),
+        'Zone Cooling Sizing Factor': opt(target_object.zoneCoolingSizingFactor()),
         'Cooling Design Air Flow Method': target_object.coolingDesignAirFlowMethod(),
         'Cooling Design Air Flow Rate {m3/s}': target_object.coolingDesignAirFlowRate(),
         'Cooling Minimum Air Flow per Zone Floor Area {m3/s-m2}': target_object.coolingMinimumAirFlowperZoneFloorArea(),
@@ -62,14 +101,14 @@ def get_sizing_zone_object_as_dict(
         'Heating Maximum Air Flow Fraction': target_object.heatingMaximumAirFlowFraction(),
         'Account for Dedicated Outdoor Air System': target_object.accountforDedicatedOutdoorAirSystem(),
         'Dedicated Outdoor Air System Control Strategy': target_object.dedicatedOutdoorAirSystemControlStrategy(),
-        'Dedicated Outdoor Air Low Setpoint Temperature for Design {C}': target_object.dedicatedOutdoorAirLowSetpointTemperatureforDesign(),
-        'Dedicated Outdoor Air High Setpoint Temperature for Design {C}': target_object.dedicatedOutdoorAirHighSetpointTemperatureforDesign(),
+        'Dedicated Outdoor Air Low Setpoint Temperature for Design {C}': 'Autosize' if target_object.isDedicatedOutdoorAirLowSetpointTemperatureforDesignAutosized() else opt(target_object.dedicatedOutdoorAirLowSetpointTemperatureforDesign()),
+        'Dedicated Outdoor Air High Setpoint Temperature for Design {C}': 'Autosize' if target_object.isDedicatedOutdoorAirHighSetpointTemperatureforDesignAutosized() else opt(target_object.dedicatedOutdoorAirHighSetpointTemperatureforDesign()),
         'Zone Load Sizing Method': target_object.zoneLoadSizingMethod(),
         'Zone Latent Cooling Design Supply Air Humidity Ratio Input Method': target_object.zoneLatentCoolingDesignSupplyAirHumidityRatioInputMethod(),
-        'Zone Dehumidification Design Supply Air Humidity Ratio {kgWater/kgDryAir}': target_object.zoneDehumidificationDesignSupplyAirHumidityRatio(),
+        'Zone Dehumidification Design Supply Air Humidity Ratio {kgWater/kgDryAir}': opt(target_object.zoneDehumidificationDesignSupplyAirHumidityRatio()),
         'Zone Cooling Design Supply Air Humidity Ratio Difference {kgWater/kgDryAir}': target_object.zoneCoolingDesignSupplyAirHumidityRatioDifference(),
         'Zone Latent Heating Design Supply Air Humidity Ratio Input Method': target_object.zoneLatentHeatingDesignSupplyAirHumidityRatioInputMethod(),
-        'Zone Humidification Design Supply Air Humidity Ratio {kgWater/kgDryAir}': target_object.zoneHumidificationDesignSupplyAirHumidityRatio(),
+        'Zone Humidification Design Supply Air Humidity Ratio {kgWater/kgDryAir}': opt(target_object.zoneHumidificationDesignSupplyAirHumidityRatio()),
         'Zone Humidification Design Supply Air Humidity Ratio Difference {kgWater/kgDryAir}': target_object.zoneHumidificationDesignSupplyAirHumidityRatioDifference()
     }
 
@@ -96,18 +135,55 @@ def get_all_sizing_zone_objects_as_dataframe(osm_model: openstudio.model.Model) 
     Returns:
     - pd.DataFrame: A DataFrame containing all Sizing:Zone attributes.
     """
-    all_objects_dicts = get_all_sizing_zone_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'Zone Name' in df.columns:
-        df = df.sort_values(by='Zone Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} Sizing:Zone objects from the model.")
-    return df
+    return build_dataframe(
+        get_all_sizing_zone_objects_as_dicts(osm_model), "Sizing:Zone",
+        sort_by="Zone Name", columns=SIZING_ZONE_COLUMNS)
 
 # --------------------------------------------------
 #  ***** OS:Sizing:System **************************
 # --------------------------------------------------
+
+SIZING_SYSTEM_COLUMNS = (
+    'Handle',
+    'AirLoop Name',
+    'Type of Load to Size On',
+    'Design Outdoor Air Flow Rate {m3/s}',
+    'Central Heating Maximum System Air Flow Ratio',
+    'Preheat Design Temperature {C}',
+    'Preheat Design Humidity Ratio {kg-H2O/kg-Air}',
+    'Precool Design Temperature {C}',
+    'Precool Design Humidity Ratio {kg-H2O/kg-Air}',
+    'Central Cooling Design Supply Air Temperature {C}',
+    'Central Heating Design Supply Air Temperature {C}',
+    'Sizing Option',
+    '100% Outdoor Air in Cooling',
+    '100% Outdoor Air in Heating',
+    'Central Cooling Design Supply Air Humidity Ratio {kg-H2O/kg-Air}',
+    'Central Heating Design Supply Air Humidity Ratio {kg-H2O/kg-Air}',
+    'Cooling Design Air Flow Method',
+    'Cooling Design Air Flow Rate {m3/s}',
+    'Heating Design Air Flow Method',
+    'Heating Design Air Flow Rate {m3/s}',
+    'System Outdoor Air Method',
+    'Zone Maximum Outdoor Air Fraction {dimensionless}',
+    'Cooling Supply Air Flow Rate Per Floor Area {m3/s-m2}',
+    'Cooling Fraction of Autosized Cooling Supply Air Flow Rate',
+    'Cooling Supply Air Flow Rate Per Unit Cooling Capacity {m3/s-W}',
+    'Heating Supply Air Flow Rate Per Floor Area {m3/s-m2}',
+    'Heating Fraction of Autosized Heating Supply Air Flow Rate',
+    'Heating Supply Air Flow Rate Per Unit Heating Capacity {m3/s-W}',
+    'Cooling Design Capacity Method',
+    'Cooling Design Capacity {W}',
+    'Cooling Design Capacity Per Floor Area {W/m2}',
+    'Fraction of Autosized Cooling Design Capacity',
+    'Heating Design Capacity Method',
+    'Heating Design Capacity {W}',
+    'Heating Design Capacity Per Floor Area {W/m2}',
+    'Fraction of Autosized Heating Design Capacity',
+    'Central Cooling Capacity Control Method',
+    'Occupant Diversity',
+)
+
 
 def get_sizing_system_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -135,10 +211,10 @@ def get_sizing_system_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()),
-        'AirLoop Name': target_object.airLoopHVAC().name().get() if target_object.airLoopHVAC().name().is_initialized() else "Unnamed Air Loop",    
+        'AirLoop Name': related_name(target_object, "AirLoop Name"),
         'Type of Load to Size On': target_object.typeofLoadtoSizeOn(),
-        'Design Outdoor Air Flow Rate {m3/s}': target_object.designOutdoorAirFlowRate().get() if not target_object.isDesignOutdoorAirFlowRateAutosized() else 'autosize',    
-        'Central Heating Maximum System Air Flow Ratio': target_object.centralHeatingMaximumSystemAirFlowRatio().get() if not target_object.isCentralHeatingMaximumSystemAirFlowRatioAutosized() else 'autosize',
+        'Design Outdoor Air Flow Rate {m3/s}': 'Autosize' if target_object.isDesignOutdoorAirFlowRateAutosized() else opt(target_object.designOutdoorAirFlowRate()),    
+        'Central Heating Maximum System Air Flow Ratio': 'Autosize' if target_object.isCentralHeatingMaximumSystemAirFlowRatioAutosized() else opt(target_object.centralHeatingMaximumSystemAirFlowRatio()),
         'Preheat Design Temperature {C}': target_object.preheatDesignTemperature(),
         'Preheat Design Humidity Ratio {kg-H2O/kg-Air}': target_object.preheatDesignHumidityRatio(),
         'Precool Design Temperature {C}': target_object.precoolDesignTemperature(),
@@ -163,15 +239,15 @@ def get_sizing_system_object_as_dict(
         'Heating Fraction of Autosized Heating Supply Air Flow Rate': target_object.heatingFractionofAutosizedCoolingSupplyAirFlowRate(),
         'Heating Supply Air Flow Rate Per Unit Heating Capacity {m3/s-W}': target_object.heatingSupplyAirFlowRatePerUnitHeatingCapacity(),
         'Cooling Design Capacity Method': target_object.coolingDesignCapacityMethod(),
-        'Cooling Design Capacity {W}': target_object.coolingDesignCapacity().get() if not target_object.isCoolingDesignCapacityAutosized() else 'autosize',
+        'Cooling Design Capacity {W}': 'Autosize' if target_object.isCoolingDesignCapacityAutosized() else opt(target_object.coolingDesignCapacity()),
         'Cooling Design Capacity Per Floor Area {W/m2}': target_object.coolingDesignCapacityPerFloorArea(),
         'Fraction of Autosized Cooling Design Capacity': target_object.fractionofAutosizedCoolingDesignCapacity(),
         'Heating Design Capacity Method': target_object.heatingDesignCapacityMethod(), 
-        'Heating Design Capacity {W}': target_object.heatingDesignCapacity().get() if not target_object.isHeatingDesignCapacityAutosized() else 'autosize',
+        'Heating Design Capacity {W}': 'Autosize' if target_object.isHeatingDesignCapacityAutosized() else opt(target_object.heatingDesignCapacity()),
         'Heating Design Capacity Per Floor Area {W/m2}': target_object.heatingDesignCapacityPerFloorArea(),
         'Fraction of Autosized Heating Design Capacity': target_object.fractionofAutosizedHeatingDesignCapacity(),
         'Central Cooling Capacity Control Method': target_object.centralCoolingCapacityControlMethod(),
-        'Occupant Diversity': target_object.occupantDiversity().get() if not target_object.isOccupantDiversityAutosized() else 'autosize',
+        'Occupant Diversity': 'Autosize' if target_object.isOccupantDiversityAutosized() else opt(target_object.occupantDiversity()),
     }
 
 def get_all_air_sizing_system_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
@@ -197,11 +273,6 @@ def get_all_air_sizing_system_objects_as_dataframe(osm_model: openstudio.model.M
     Returns:
     - pd.DataFrame: A DataFrame containing all Sizing:System attributes.
     """
-    all_objects_dicts = get_all_air_sizing_system_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'AirLoop Name' in df.columns:
-        df = df.sort_values(by='AirLoop Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} Sizing:System objects from the model.")
-    return df
+    return build_dataframe(
+        get_all_air_sizing_system_objects_as_dicts(osm_model), "Sizing:System",
+        sort_by="AirLoop Name", columns=SIZING_SYSTEM_COLUMNS)

@@ -5,8 +5,26 @@ import numpy as np
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt
+from openstudio_toolkit.osm_objects._base import build_dataframe
+from openstudio_toolkit.utils import helpers
+
 # Configure logger
 logger = logging.getLogger(__name__)
+
+STANDARD_OPAQUE_MATERIAL_COLUMNS = (
+    'Handle',
+    'Name',
+    'Roughness',
+    'Thickness {m}',
+    'Conductivity {W/m-K}',
+    'Density {kg/m3}',
+    'Specific Heat {J/kg-K}',
+    'Thermal Absorptance',
+    'Solar Absorptance',
+    'Visible Absorptance',
+)
+
 
 def get_standard_opaque_material_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -35,7 +53,7 @@ def get_standard_opaque_material_object_as_dict(
     # Find the standard opaque material by handle or name
     if handle is not None:
         osm_object = osm_model.getStandardOpaqueMaterial(handle)
-        if osm_object is None:
+        if not osm_object:
             logger.warning(
                 f"No standard opaque material found with the handle: {handle}")
             return {}
@@ -47,12 +65,12 @@ def get_standard_opaque_material_object_as_dict(
                 f"No standard opaque material found with the name: {name}")
             return {}
 
-    target_object = osm_object.get()
+    target_object = opt(osm_object)
 
     # Define attributes to retrieve in a dictionary
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Roughness': target_object.roughness(),
         'Thickness {m}': target_object.thickness(),
         'Conductivity {W/m-K}': target_object.thermalConductivity(),
@@ -100,22 +118,24 @@ def get_all_standard_opaque_material_objects_as_dataframe(osm_model: openstudio.
     - pd.DataFrame: A DataFrame containing all material attributes.
     """
 
-    all_objects_dicts = get_all_standard_opaque_material_objects_as_dicts(osm_model)
-
-    # Create a DataFrame of all standard opaque materials.
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_objects_df = all_objects_df.sort_values(
-        by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} standard opaque materials")
-
-    return all_objects_df
+    return build_dataframe(
+        get_all_standard_opaque_material_objects_as_dicts(osm_model), "StandardOpaqueMaterial",
+        sort_by="Name", columns=STANDARD_OPAQUE_MATERIAL_COLUMNS)
 
 # --------------------------------------------------
 #  ***** OS:Material:NoMass ************************
 # --------------------------------------------------
+
+MASSLESS_OPAQUE_MATERIAL_COLUMNS = (
+    'Handle',
+    'Name',
+    'Roughness',
+    'Thermal Resistance {m2-K/W}',
+    'Thermal Absorptance',
+    'Solar Absorptance',
+    'Visible Absorptance',
+)
+
 
 def get_massless_opaque_material_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -144,7 +164,7 @@ def get_massless_opaque_material_object_as_dict(
     # Find the massless opaque material by handle or name
     if handle is not None:
         osm_object = osm_model.getMasslessOpaqueMaterial(handle)
-        if osm_object is None:
+        if not osm_object:
             logger.warning(
                 f"No massless opaque material found with the handle: {handle}")
             return {}
@@ -156,17 +176,17 @@ def get_massless_opaque_material_object_as_dict(
                 f"No massless opaque material found with the name: {name}")
             return {}
 
-    target_object = osm_object.get()
+    target_object = opt(osm_object)
 
     # Define attributes to retrieve in a dictionary
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Roughness': target_object.roughness(),
         'Thermal Resistance {m2-K/W}': target_object.thermalResistance(),
-        'Thermal Absorptance': target_object.thermalAbsorptance().get() if target_object.thermalAbsorptance().is_initialized() else None,
-        'Solar Absorptance': target_object.solarAbsorptance().get() if target_object.solarAbsorptance().is_initialized() else None,
-        'Visible Absorptance': target_object.visibleAbsorptance().get() if target_object.visibleAbsorptance().is_initialized() else None
+        'Thermal Absorptance': opt(target_object.thermalAbsorptance()),
+        'Solar Absorptance': opt(target_object.solarAbsorptance()),
+        'Visible Absorptance': opt(target_object.visibleAbsorptance())
     }
 
     return object_dict
@@ -206,18 +226,9 @@ def get_all_massless_opaque_material_objects_as_dataframe(osm_model: openstudio.
     - pd.DataFrame: A DataFrame containing all material attributes.
     """
 
-    all_objects_dicts = get_all_massless_opaque_material_objects_as_dicts(osm_model)
-
-    # Create a DataFrame of all massless opaque materials.
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_objects_df = all_objects_df.sort_values(
-        by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} massless opaque materials")
-
-    return all_objects_df
+    return build_dataframe(
+        get_all_massless_opaque_material_objects_as_dicts(osm_model), "Material:NoMass",
+        sort_by="Name", columns=MASSLESS_OPAQUE_MATERIAL_COLUMNS)
 
 # --------------------------------------------------
 
@@ -233,7 +244,6 @@ def get_all_opaque_material_objects_as_dataframe(osm_model: openstudio.model.Mod
         pd.DataFrame: DataFrame containing all opaque materials with their properties.
     """
     # Get all standard opaque materials and massless opaque materials
-    all_standard_opaque_materials = osm_model.getStandardOpaqueMaterials()
     all_standard_opaque_materials_df = get_all_standard_opaque_material_objects_as_dataframe(osm_model)
     get_all_massless_opaque_materials_df = get_all_massless_opaque_material_objects_as_dataframe(osm_model)
 
@@ -261,3 +271,75 @@ def get_all_opaque_material_objects_as_dataframe(osm_model: openstudio.model.Mod
     all_opaque_materials_df = all_opaque_materials_df.replace({np.nan: None})
 
     return all_opaque_materials_df
+
+
+# --------------------------------------------------
+#  ***** OS:WindowMaterial:SimpleGlazingSystem ***
+# --------------------------------------------------
+
+WINDOW_MATERIAL_SIMPLE_GLAZING_SYSTEM_COLUMNS = (
+    'Handle',
+    'Name',
+    'U-Factor {W/m2-K}',
+    'Solar Heat Gain Coefficient',
+    'Visible Transmittance',
+)
+
+def get_window_material_simple_glazing_system_object_as_dict(
+    osm_model: openstudio.model.Model,
+    handle: str | None = None,
+    name: str | None = None,
+    _object_ref: openstudio.model.SimpleGlazing | None = None
+) -> dict[str, Any]:
+    """
+    Retrieve attributes of an OS:WindowMaterial:SimpleGlazingSystem from the OpenStudio Model.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.SimpleGlazing, optional): Direct object reference.
+
+    Returns:
+    - Dict[str, Any]: A dictionary with one entry per IDD field (node fields give the node name).
+    """
+    target_object = helpers.fetch_object(
+        osm_model, "SimpleGlazing", handle, name, _object_ref)
+
+    if target_object is None:
+        return {}
+
+    return {
+        'Handle': str(target_object.handle()),
+        'Name': opt(target_object.name()),
+        'U-Factor {W/m2-K}': target_object.uFactor(),
+        'Solar Heat Gain Coefficient': target_object.solarHeatGainCoefficient(),
+        'Visible Transmittance': opt(target_object.visibleTransmittance()),
+    }
+
+def get_all_window_material_simple_glazing_system_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
+    """
+    Retrieve attributes for all OS:WindowMaterial:SimpleGlazingSystem objects in the model.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - List[Dict[str, Any]]: A list of dictionaries, one per object.
+    """
+    all_objects = osm_model.getSimpleGlazings()
+    return [get_window_material_simple_glazing_system_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
+
+def get_all_window_material_simple_glazing_system_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all OS:WindowMaterial:SimpleGlazingSystem objects and organize them into a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: A DataFrame with the columns of WINDOW_MATERIAL_SIMPLE_GLAZING_SYSTEM_COLUMNS.
+    """
+    all_objects_dicts = get_all_window_material_simple_glazing_system_objects_as_dicts(osm_model)
+    return build_dataframe(
+        all_objects_dicts, "WindowMaterial:SimpleGlazingSystem", sort_by="Name", columns=WINDOW_MATERIAL_SIMPLE_GLAZING_SYSTEM_COLUMNS)

@@ -1,15 +1,34 @@
 import calendar
 import datetime
 import logging
+from typing import Any
 
 import numpy as np
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, optional_name, related_name
+from openstudio_toolkit.osm_objects._base import build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_SCHEDULE_SET_COLUMNS = (
+    'Handle',
+    'Name',
+    'Hours of Operation Schedule Name',
+    'Number of People Schedule Name',
+    'People Activity Level Schedule Name',
+    'Lighting Schedule Name',
+    'Electric Equipment Schedule Name',
+    'Gas Equipment Schedule Name',
+    'Hot Water Equipment Schedule Name',
+    'Infiltration Schedule Name',
+    'Steam Equipment Schedule Name',
+    'Other Equipment Schedule Name',
+)
 
 
 def get_default_schedule_set_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.DefaultScheduleSet = None) -> dict:
@@ -33,17 +52,17 @@ def get_default_schedule_set_object_as_dict(osm_model: openstudio.model.Model, h
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Hours of Operation Schedule Name': target_object.hoursofOperationSchedule().get().name().get() if target_object.hoursofOperationSchedule().is_initialized() else None,
-        'Number of People Schedule Name': target_object.numberofPeopleSchedule().get().name().get() if target_object.numberofPeopleSchedule().is_initialized() else None,
-        'People Activity Level Schedule Name': target_object.peopleActivityLevelSchedule().get().name().get() if target_object.peopleActivityLevelSchedule().is_initialized() else None,
-        'Lighting Schedule Name': target_object.lightingSchedule().get().name().get() if target_object.lightingSchedule().is_initialized() else None,
-        'Electric Equipment Schedule Name': target_object.electricEquipmentSchedule().get().name().get() if target_object.electricEquipmentSchedule().is_initialized() else None,
-        'Gas Equipment Schedule Name': target_object.gasEquipmentSchedule().get().name().get() if target_object.gasEquipmentSchedule().is_initialized() else None,
-        'Hot Water Equipment Schedule Name': target_object.hotWaterEquipmentSchedule().get().name().get() if target_object.hotWaterEquipmentSchedule().is_initialized() else None,
-        'Infiltration Schedule Name': target_object.infiltrationSchedule().get().name().get() if target_object.infiltrationSchedule().is_initialized() else None,
-        'Steam Equipment Schedule Name': target_object.steamEquipmentSchedule().get().name().get() if target_object.steamEquipmentSchedule().is_initialized() else None,
-        'Other Equipment Schedule Name': target_object.otherEquipmentSchedule().get().name().get() if target_object.otherEquipmentSchedule().is_initialized() else None
+        'Name': opt(target_object.name()),
+        'Hours of Operation Schedule Name': optional_name(target_object.hoursofOperationSchedule()),
+        'Number of People Schedule Name': optional_name(target_object.numberofPeopleSchedule()),
+        'People Activity Level Schedule Name': optional_name(target_object.peopleActivityLevelSchedule()),
+        'Lighting Schedule Name': optional_name(target_object.lightingSchedule()),
+        'Electric Equipment Schedule Name': optional_name(target_object.electricEquipmentSchedule()),
+        'Gas Equipment Schedule Name': optional_name(target_object.gasEquipmentSchedule()),
+        'Hot Water Equipment Schedule Name': optional_name(target_object.hotWaterEquipmentSchedule()),
+        'Infiltration Schedule Name': optional_name(target_object.infiltrationSchedule()),
+        'Steam Equipment Schedule Name': optional_name(target_object.steamEquipmentSchedule()),
+        'Other Equipment Schedule Name': optional_name(target_object.otherEquipmentSchedule())
     }
 
     return object_dict
@@ -71,16 +90,28 @@ def get_all_default_schedule_set_objects_as_dataframe(osm_model: openstudio.mode
     Returns:
     - pd.DataFrame: DataFrame containing information about all default schedule set objects.
     """
-    all_objects_dicts = get_all_default_schedule_set_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
+    return build_dataframe(
+        get_all_default_schedule_set_objects_as_dicts(osm_model), "DefaultScheduleSet",
+        sort_by="Name", columns=DEFAULT_SCHEDULE_SET_COLUMNS)
 
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
 
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} default schedule sets objects")
-    return all_objects_df
+def _design_day_schedule_name(ruleset: Any, field: str) -> str | None:
+    """Design day schedule as OpenStudio resolves it: the field, else the default day schedule.
+
+    The typed accessors (summerDesignDaySchedule, winterDesignDaySchedule) fall back to the default day
+    and segfault when that field is empty too, so both fields are read through their targets.
+    """
+    return related_name(ruleset, field) or related_name(ruleset, "Default Day Schedule Name")
+
+
+SCHEDULE_RULESET_COLUMNS = (
+    'Handle',
+    'Name',
+    'Schedule Type Limits Name',
+    'Default Day Schedule Name',
+    'Summer Design Day Schedule Name',
+    'Winter Design Day Schedule Name',
+)
 
 
 def get_schedule_ruleset_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.ScheduleRuleset = None) -> dict:
@@ -104,11 +135,11 @@ def get_schedule_ruleset_object_as_dict(osm_model: openstudio.model.Model, handl
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Schedule Type Limits Name': target_object.scheduleTypeLimits().get().name().get() if target_object.scheduleTypeLimits().is_initialized() else None,
-        'Default Day Schedule Name': target_object.defaultDaySchedule().name().get() if target_object.defaultDaySchedule().name().is_initialized() else None,
-        'Summer Design Day Schedule Name': target_object.summerDesignDaySchedule().name().get() if target_object.summerDesignDaySchedule().name().is_initialized() else None,
-        'Winter Design Day Schedule Name': target_object.winterDesignDaySchedule().name().get() if target_object.winterDesignDaySchedule().name().is_initialized() else None
+        'Name': opt(target_object.name()),
+        'Schedule Type Limits Name': related_name(target_object, "Schedule Type Limits Name"),
+        'Default Day Schedule Name': related_name(target_object, "Default Day Schedule Name"),
+        'Summer Design Day Schedule Name': _design_day_schedule_name(target_object, "Summer Design Day Schedule Name"),
+        'Winter Design Day Schedule Name': _design_day_schedule_name(target_object, "Winter Design Day Schedule Name")
     }
 
     return object_dict
@@ -136,16 +167,30 @@ def get_all_schedule_ruleset_objects_as_dataframe(osm_model: openstudio.model.Mo
     Returns:
     - pd.DataFrame: DataFrame containing information about all schedule ruleset objects.
     """
-    all_objects_dicts = get_all_schedule_ruleset_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
+    return build_dataframe(
+        get_all_schedule_ruleset_objects_as_dicts(osm_model), "ScheduleRuleset",
+        sort_by="Name", columns=SCHEDULE_RULESET_COLUMNS)
 
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
 
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} schedule ruleset objects")
-    return all_objects_df
+SCHEDULE_RULE_COLUMNS = (
+    'Handle',
+    'Name',
+    'Schedule Ruleset Name',
+    'Rule Order',
+    'Day Schedule Name',
+    'Apply Sunday',
+    'Apply Monday',
+    'Apply Tuesday',
+    'Apply Wednesday',
+    'Apply Thursday',
+    'Apply Friday',
+    'Apply Saturday',
+    'Date Specification Type',
+    'Start Month',
+    'Start Day',
+    'End Month',
+    'End Day',
+)
 
 
 def get_schedule_rule_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.ScheduleRule = None) -> dict:
@@ -167,12 +212,15 @@ def get_schedule_rule_object_as_dict(osm_model: openstudio.model.Model, handle: 
     if target_object is None:
         return {}
 
+    start_date = opt(target_object.startDate())
+    end_date = opt(target_object.endDate())
+
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Schedule Ruleset Name': target_object.scheduleRuleset().name().get() if target_object.scheduleRuleset().name().is_initialized() else None,
+        'Name': opt(target_object.name()),
+        'Schedule Ruleset Name': opt(target_object.scheduleRuleset().name()),
         'Rule Order': target_object.ruleIndex(),
-        'Day Schedule Name': target_object.daySchedule().name().get() if target_object.daySchedule().name().is_initialized() else None,
+        'Day Schedule Name': related_name(target_object, "Day Schedule Name"),
         'Apply Sunday': target_object.applySunday(),
         'Apply Monday': target_object.applyMonday(),
         'Apply Tuesday': target_object.applyTuesday(),
@@ -181,10 +229,10 @@ def get_schedule_rule_object_as_dict(osm_model: openstudio.model.Model, handle: 
         'Apply Friday': target_object.applyFriday(),
         'Apply Saturday': target_object.applySaturday(),
         'Date Specification Type': target_object.dateSpecificationType(),
-        'Start Month': target_object.startDate().get().monthOfYear().value() if target_object.startDate().is_initialized() else None,
-        'Start Day': target_object.startDate().get().dayOfMonth() if target_object.startDate().is_initialized() else None,
-        'End Month': target_object.endDate().get().monthOfYear().value() if target_object.endDate().is_initialized() else None,
-        'End Day': target_object.endDate().get().dayOfMonth() if target_object.endDate().is_initialized() else None
+        'Start Month': start_date.monthOfYear().value() if start_date is not None else None,
+        'Start Day': start_date.dayOfMonth() if start_date is not None else None,
+        'End Month': end_date.monthOfYear().value() if end_date is not None else None,
+        'End Day': end_date.dayOfMonth() if end_date is not None else None
     }
 
     return object_dict
@@ -212,16 +260,20 @@ def get_all_schedule_rule_objects_as_dataframe(osm_model: openstudio.model.Model
     Returns:
     - pd.DataFrame: DataFrame containing information about all schedule rule objects.
     """
-    all_objects_dicts = get_all_schedule_rule_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
+    return build_dataframe(
+        get_all_schedule_rule_objects_as_dicts(osm_model), "ScheduleRule",
+        sort_by="Name", columns=SCHEDULE_RULE_COLUMNS)
 
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
 
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} schedule rule objects")
-    return all_objects_df
+SCHEDULE_DAY_COLUMNS = (
+    'Handle',
+    'Name',
+    'Schedule Type Limits Name',
+    'Interpolate to Timestep',
+    'Hour',
+    'Minute',
+    'Values',
+)
 
 
 def get_schedule_day_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.ScheduleDay = None) -> dict:
@@ -245,8 +297,8 @@ def get_schedule_day_object_as_dict(osm_model: openstudio.model.Model, handle: s
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Schedule Type Limits Name': target_object.scheduleTypeLimits().get().name().get() if target_object.scheduleTypeLimits().is_initialized() else None,
+        'Name': opt(target_object.name()),
+        'Schedule Type Limits Name': related_name(target_object, "Schedule Type Limits Name"),
         'Interpolate to Timestep': target_object.interpolatetoTimestep(),
         'Hour': tuple(item.hours() for item in target_object.times()),
         'Minute': tuple(item.minutes() for item in target_object.times()),
@@ -278,16 +330,18 @@ def get_all_schedule_day_objects_as_dataframe(osm_model: openstudio.model.Model)
     Returns:
     - pd.DataFrame: DataFrame containing information about all schedule day objects.
     """
-    all_objects_dicts = get_all_schedule_day_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
+    return build_dataframe(
+        get_all_schedule_day_objects_as_dicts(osm_model), "ScheduleDay",
+        sort_by="Name", columns=SCHEDULE_DAY_COLUMNS)
 
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
 
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} schedule day objects")
-    return all_objects_df
+SCHEDULE_TYPE_LIMIT_COLUMNS = (
+    'Handle',
+    'Name',
+    'Lower Limit Value',
+    'Upper Limit Value',
+    'Numeric Type',
+)
 
 
 def get_schedule_type_limit_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.ScheduleTypeLimits = None) -> dict:
@@ -311,10 +365,10 @@ def get_schedule_type_limit_object_as_dict(osm_model: openstudio.model.Model, ha
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Lower Limit Value': target_object.lowerLimitValue().get() if target_object.lowerLimitValue().is_initialized() else None,
-        'Upper Limit Value': target_object.upperLimitValue().get() if target_object.upperLimitValue().is_initialized() else None,
-        'Numeric Type': target_object.numericType().get() if target_object.numericType().is_initialized() else None
+        'Name': opt(target_object.name()),
+        'Lower Limit Value': opt(target_object.lowerLimitValue()),
+        'Upper Limit Value': opt(target_object.upperLimitValue()),
+        'Numeric Type': opt(target_object.numericType())
     }
 
     return object_dict
@@ -342,19 +396,20 @@ def get_all_schedule_type_limit_objects_as_dataframe(osm_model: openstudio.model
     Returns:
     - pd.DataFrame: DataFrame containing information about all schedule type limits objects.
     """
-    all_objects_dicts = get_all_schedule_type_limit_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
+    all_objects_df = build_dataframe(
+        get_all_schedule_type_limit_objects_as_dicts(osm_model), "ScheduleTypeLimits",
+        sort_by="Name", columns=SCHEDULE_TYPE_LIMIT_COLUMNS)
 
     # Replace NaN values with None
     all_objects_df = all_objects_df.replace(np.nan, None)
 
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} schedule type limit objects")
     return all_objects_df
+
+
+DEFAULT_SCHEDULE_SET_COMPONENT_COLUMNS = (
+    'Default Schedule Set Name', 'Schedule Ruleset Type', 'Schedule Ruleset Name', 'Schedule Type Limits Name',
+    'Schedule Day Type', 'Schedule Day Name', 'Schedule Rule Name', 'Schedule Rule Order',
+)
 
 
 def get_all_default_schedule_set_components_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
@@ -371,7 +426,7 @@ def get_all_default_schedule_set_components_as_dataframe(osm_model: openstudio.m
     
     if all_default_schedule_set_df.empty:
         logger.warning("No default schedule sets found in the model.")
-        return pd.DataFrame()
+        return pd.DataFrame(columns=list(DEFAULT_SCHEDULE_SET_COMPONENT_COLUMNS))
 
     columns_to_stack = all_default_schedule_set_df.columns[~all_default_schedule_set_df.columns.isin(['Handle', 'Name'])].tolist()
     default_schedule_ruleset_df = all_default_schedule_set_df.melt(id_vars=['Handle', 'Name'], value_vars=columns_to_stack, var_name='Schedule Ruleset Type', value_name='Schedule Ruleset Name').sort_values(by=['Handle', 'Name']).drop(columns=['Handle'])
@@ -381,7 +436,7 @@ def get_all_default_schedule_set_components_as_dataframe(osm_model: openstudio.m
 
     if default_schedule_ruleset_df.empty:
         logger.info("No schedule rulesets assigned to default schedule sets.")
-        return pd.DataFrame()
+        return pd.DataFrame(columns=list(DEFAULT_SCHEDULE_SET_COMPONENT_COLUMNS))
 
     all_schedule_ruleset_objects_df = get_all_schedule_ruleset_objects_as_dataframe(osm_model)
     default_schedule_ruleset_df = pd.merge(default_schedule_ruleset_df, all_schedule_ruleset_objects_df, left_on='Schedule Ruleset Name', right_on='Name', how='left')
@@ -393,7 +448,6 @@ def get_all_default_schedule_set_components_as_dataframe(osm_model: openstudio.m
                                                                  var_name='Schedule Day Type', value_name='Schedule Day Name').sort_values(by=['Default Schedule Set Name', 'Schedule Ruleset Type', 'Schedule Ruleset Name', 'Schedule Type Limits Name']).reset_index(drop=True)
     default_schedule_day_df['Schedule Day Type'] = default_schedule_day_df['Schedule Day Type'].str.replace('Name', '').str.strip()
 
-    all_schedule_day_objects_df = get_all_schedule_day_objects_as_dataframe(osm_model)
     all_schedule_rule_objects_df = get_all_schedule_rule_objects_as_dataframe(osm_model)
     
     default_schedule_rule_objects_df = all_schedule_rule_objects_df[all_schedule_rule_objects_df['Schedule Ruleset Name'].isin(default_schedule_day_df['Schedule Ruleset Name'].unique())]
@@ -541,7 +595,7 @@ def create_new_default_schedule_ruleset(osm_model: openstudio.model.Model,
     # Assign/Create Schedule Type Limits
     type_limit_obj = osm_model.getScheduleTypeLimitsByName(schedule_type_limits_name)
     if type_limit_obj.is_initialized():
-        schedule_type_limits = type_limit_obj.get()
+        schedule_type_limits = opt(type_limit_obj)
     else:
         schedule_type_limits = create_new_schedule_type_limits(osm_model, schedule_type_limits_name)
 
@@ -661,7 +715,7 @@ def create_new_schedule_ruleset(
     type_limit_name = schdle_ruleset_type
     type_limit_obj = osm_model.getScheduleTypeLimitsByName(type_limit_name)
     if type_limit_obj.is_initialized():
-        schdle_type_limit = type_limit_obj.get()
+        schdle_type_limit = opt(type_limit_obj)
     else:
         schdle_type_limit = create_new_schedule_type_limits(osm_model, type_limit_name)
 
@@ -728,14 +782,14 @@ def create_rule_schedule_day(osm_model: openstudio.model.Model,
         logger.error(err_msg)
         raise ValueError(err_msg)
     
-    schedule_ruleset = ruleset_obj.get()
+    schedule_ruleset = opt(ruleset_obj)
 
     # Create new Schedule Day
     schedule_day = openstudio.model.ScheduleDay(osm_model)
     
     # Set type limit
     if schedule_ruleset.scheduleTypeLimits().is_initialized():
-        schedule_day.setScheduleTypeLimits(schedule_ruleset.scheduleTypeLimits().get())
+        schedule_day.setScheduleTypeLimits(opt(schedule_ruleset.scheduleTypeLimits()))
     
     schedule_day_name = schedule_rule_set_name.replace('Schedule', 'Rule Day Schedule')
     schedule_day.setName(schedule_day_name)

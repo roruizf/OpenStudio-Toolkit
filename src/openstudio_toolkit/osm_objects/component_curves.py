@@ -4,6 +4,8 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt
+from openstudio_toolkit.osm_objects._base import build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -12,6 +14,18 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------
 #  ***** OS:Curve:Cubic ****************************
 # --------------------------------------------------
+
+CURVE_CUBIC_COLUMNS = (
+    'Handle',
+    'Name',
+    'Coefficient1 Constant',
+    'Coefficient2 x',
+    'Coefficient3 x**2',
+    'Coefficient4 x**3',
+    'Minimum Value of x',
+    'Maximum Value of x',
+)
+
 
 def get_curve_cubic_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -39,7 +53,7 @@ def get_curve_cubic_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()), 
-        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Cubic Curve", 
+        'Name': opt(target_object.name()) if target_object.name().is_initialized() else "Unnamed Cubic Curve", 
         'Coefficient1 Constant': target_object.coefficient1Constant(), 
         'Coefficient2 x': target_object.coefficient2x(), 
         'Coefficient3 x**2': target_object.coefficient3xPOW2(), 
@@ -71,18 +85,28 @@ def get_all_curve_cubic_objects_as_dataframe(osm_model: openstudio.model.Model) 
     Returns:
     - pd.DataFrame: A DataFrame containing all curve cubic attributes.
     """
-    all_objects_dicts = get_all_curve_cubic_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} Curve:Cubic objects from the model.")
-    return df
+    return build_dataframe(
+        get_all_curve_cubic_objects_as_dicts(osm_model), "Curve:Cubic", columns=CURVE_CUBIC_COLUMNS)
 
 # --------------------------------------------------
 #  ***** OS:Curve:Biquadratic **********************
 # --------------------------------------------------
+
+CURVE_BIQUADRATIC_COLUMNS = (
+    'Handle',
+    'Name',
+    'Coefficient1 Constant',
+    'Coefficient2 x',
+    'Coefficient3 x**2',
+    'Coefficient4 y',
+    'Coefficient5 y**2',
+    'Coefficient6 x*y',
+    'Minimum Value of x',
+    'Maximum Value of x',
+    'Minimum Value of y',
+    'Maximum Value of y',
+)
+
 
 def get_curve_biquadratic_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -110,7 +134,7 @@ def get_curve_biquadratic_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Biquadratic Curve",
+        'Name': opt(target_object.name()) if target_object.name().is_initialized() else "Unnamed Biquadratic Curve",
         'Coefficient1 Constant': target_object.coefficient1Constant(),
         'Coefficient2 x': target_object.coefficient2x(),
         'Coefficient3 x**2': target_object.coefficient3xPOW2(),  
@@ -146,18 +170,27 @@ def get_all_curve_biquadratic_objects_as_dataframe(osm_model: openstudio.model.M
     Returns:
     - pd.DataFrame: A DataFrame containing all curve biquadratic attributes.
     """
-    all_objects_dicts = get_all_curve_biquadratic_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} Curve:Biquadratic objects from the model.")
-    return df
+    return build_dataframe(
+        get_all_curve_biquadratic_objects_as_dicts(osm_model), "Curve:Biquadratic", columns=CURVE_BIQUADRATIC_COLUMNS)
 
 # --------------------------------------------------
 #  ***** OS:Curve:Exponent *************************
 # --------------------------------------------------
+
+CURVE_EXPONENT_COLUMNS = (
+    'Handle',
+    'Name',
+    'Coefficient1 Constant',
+    'Coefficient2 Constant',
+    'Coefficient3 Constant',
+    'Minimum Value of x',
+    'Maximum Value of x',
+    'Minimum Curve Output',
+    'Maximum Curve Output',
+    'Input Unit Type for X',
+    'Output Unit Type',
+)
+
 
 def get_curve_exponent_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -185,14 +218,14 @@ def get_curve_exponent_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()), 
-        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Exponent Curve", 
+        'Name': opt(target_object.name()) if target_object.name().is_initialized() else "Unnamed Exponent Curve", 
         'Coefficient1 Constant': target_object.coefficient1Constant(), 
         'Coefficient2 Constant': target_object.coefficient2Constant(), 
         'Coefficient3 Constant': target_object.coefficient3Constant(), 
         'Minimum Value of x': target_object.minimumValueofx(), 
         'Maximum Value of x': target_object.maximumValueofx(), 
-        'Minimum Curve Output': target_object.minimumCurveOutput().get() if target_object.minimumCurveOutput().is_initialized() else None, 
-        'Maximum Curve Output': target_object.maximumCurveOutput().get() if target_object.maximumCurveOutput().is_initialized() else None, 
+        'Minimum Curve Output': opt(target_object.minimumCurveOutput()), 
+        'Maximum Curve Output': opt(target_object.maximumCurveOutput()), 
         'Input Unit Type for X': target_object.inputUnitTypeforX(), 
         'Output Unit Type': target_object.outputUnitType()
     }
@@ -220,18 +253,23 @@ def get_all_curve_exponent_objects_as_dataframe(osm_model: openstudio.model.Mode
     Returns:
     - pd.DataFrame: A DataFrame containing all curve exponent attributes.
     """
-    all_objects_dicts = get_all_curve_exponent_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} Curve:Exponent objects from the model.")
-    return df
+    return build_dataframe(
+        get_all_curve_exponent_objects_as_dicts(osm_model), "Curve:Exponent", columns=CURVE_EXPONENT_COLUMNS)
 
 # --------------------------------------------------
 #  ***** OS:Curve:Quadratic ************************
 # --------------------------------------------------
+
+CURVE_QUADRATIC_COLUMNS = (
+    'Handle',
+    'Name',
+    'Coefficient1 Constant',
+    'Coefficient2 x',
+    'Coefficient3 x**2',
+    'Minimum Value of x',
+    'Maximum Value of x',
+)
+
 
 def get_curve_quadratic_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -259,7 +297,7 @@ def get_curve_quadratic_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()), 
-        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Quadratic Curve", 
+        'Name': opt(target_object.name()) if target_object.name().is_initialized() else "Unnamed Quadratic Curve", 
         'Coefficient1 Constant': target_object.coefficient1Constant(), 
         'Coefficient2 x': target_object.coefficient2x(), 
         'Coefficient3 x**2': target_object.coefficient3xPOW2(), 
@@ -290,11 +328,5 @@ def get_all_curve_quadratic_objects_as_dataframe(osm_model: openstudio.model.Mod
     Returns:
     - pd.DataFrame: A DataFrame containing all curve quadratic attributes.
     """
-    all_objects_dicts = get_all_curve_quadratic_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if not df.empty and 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} Curve:Quadratic objects from the model.")
-    return df
+    return build_dataframe(
+        get_all_curve_quadratic_objects_as_dicts(osm_model), "Curve:Quadratic", columns=CURVE_QUADRATIC_COLUMNS)

@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 REFERENCE_PYTHON_MINOR = (3, 13)
+# Python 3.14 segfaults in the OpenStudio binding (measured 2026-06-20 with Python 3.14.1; see AGENTS.md, Runtime).
+SUPPORTED_PYTHON_MINORS = ((3, 11), (3, 12), (3, 13))
 REFERENCE_OPENSTUDIO_VERSION = "3.11.0"
 REFERENCE_ENERGYPLUS_VERSION = "25.2.0"
 
@@ -55,10 +57,9 @@ def assert_reference_runtime(runtime: RuntimeInfo | None = None) -> RuntimeInfo:
     mismatches: list[str] = []
 
     python_minor = tuple(int(part) for part in observed.python_version.split(".")[:2])
-    if python_minor != REFERENCE_PYTHON_MINOR:
-        mismatches.append(
-            f"Python {observed.python_version} (expected {REFERENCE_PYTHON_MINOR[0]}.{REFERENCE_PYTHON_MINOR[1]}.x)"
-        )
+    if python_minor not in SUPPORTED_PYTHON_MINORS:
+        supported = ", ".join(f"{major}.{minor}" for major, minor in SUPPORTED_PYTHON_MINORS)
+        mismatches.append(f"Python {observed.python_version} (expected one of {supported})")
     if observed.openstudio_version != REFERENCE_OPENSTUDIO_VERSION:
         mismatches.append(
             f"OpenStudio {observed.openstudio_version} (expected {REFERENCE_OPENSTUDIO_VERSION})"

@@ -8,7 +8,12 @@ from pathlib import Path
 import openstudio
 import pytest
 
-from openstudio_toolkit.runtime import RuntimeInfo, RuntimeMismatchError, assert_reference_runtime
+from openstudio_toolkit.runtime import (
+    SUPPORTED_PYTHON_MINORS,
+    RuntimeInfo,
+    RuntimeMismatchError,
+    assert_reference_runtime,
+)
 
 
 def _sha256(path: Path) -> str:
@@ -18,7 +23,7 @@ def _sha256(path: Path) -> str:
 def test_reference_runtime_is_active() -> None:
     runtime = assert_reference_runtime()
 
-    assert runtime.python_version.startswith("3.13.")
+    assert tuple(int(part) for part in runtime.python_version.split(".")[:2]) in SUPPORTED_PYTHON_MINORS
     assert runtime.openstudio_version == "3.11.0"
     assert runtime.energyplus_version == "25.2.0"
     assert "site-packages/openstudio" in runtime.openstudio_module_path

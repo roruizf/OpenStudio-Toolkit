@@ -4,6 +4,8 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, optional_name, related_name
+from openstudio_toolkit.osm_objects._base import build_all_dicts, build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -14,6 +16,27 @@ import math
 # --------------------------------------------------
 #  ***** OS:Space **********************************
 # --------------------------------------------------
+
+SPACE_COLUMNS = (
+    'Handle',
+    'Name',
+    'Space Type Name',
+    'Default Construction Set Name',
+    'Default Schedule Set Name',
+    'Direction of Relative North {deg}',
+    'X Origin {m}',
+    'Y Origin {m}',
+    'Z Origin {m}',
+    'Building Story Name',
+    'Thermal Zone Name',
+    'Part of Total Floor Area',
+    'Design Specification Outdoor Air Object Name',
+    'Building Unit Name',
+    'Volume {m3}',
+    'Ceiling Height {m}',
+    'Floor Area {m2}',
+)
+
 
 def get_space_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -44,19 +67,19 @@ def get_space_object_as_dict(
     # 1. Pure OSM Attributes (Mirroring .osm file)
     space_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Space Type Name': target_object.spaceType().get().name().get() if target_object.spaceType().is_initialized() else None,
-        'Default Construction Set Name': target_object.defaultConstructionSet().get().name().get() if target_object.defaultConstructionSet().is_initialized() else None,
-        'Default Schedule Set Name': target_object.defaultScheduleSet().get().name().get() if target_object.defaultScheduleSet().is_initialized() else None,
+        'Name': opt(target_object.name()),
+        'Space Type Name': optional_name(target_object.spaceType()),
+        'Default Construction Set Name': optional_name(target_object.defaultConstructionSet()),
+        'Default Schedule Set Name': optional_name(target_object.defaultScheduleSet()),
         'Direction of Relative North {deg}': target_object.directionofRelativeNorth(),
         'X Origin {m}': target_object.xOrigin(),
         'Y Origin {m}': target_object.yOrigin(),
         'Z Origin {m}': target_object.zOrigin(),
-        'Building Story Name': target_object.buildingStory().get().name().get() if target_object.buildingStory().is_initialized() else None,
-        'Thermal Zone Name': target_object.thermalZone().get().name().get() if target_object.thermalZone().is_initialized() else None,
+        'Building Story Name': optional_name(target_object.buildingStory()),
+        'Thermal Zone Name': related_name(target_object, "Thermal Zone Name"),
         'Part of Total Floor Area': target_object.partofTotalFloorArea(),
-        'Design Specification Outdoor Air Object Name': target_object.designSpecificationOutdoorAir().get().name().get() if target_object.designSpecificationOutdoorAir().is_initialized() else None,
-        'Building Unit Name': target_object.buildingUnit().get().name().get() if target_object.buildingUnit().is_initialized() else None,
+        'Design Specification Outdoor Air Object Name': optional_name(target_object.designSpecificationOutdoorAir()),
+        'Building Unit Name': optional_name(target_object.buildingUnit()),
         'Volume {m3}': target_object.volume(),
         'Ceiling Height {m}': target_object.ceilingHeight(),
         'Floor Area {m2}': target_object.floorArea()
@@ -78,7 +101,6 @@ def get_all_space_objects_as_dicts(osm_model: openstudio.model.Model) -> list[di
     Returns:
     - List[Dict[str, Any]]: A list of dictionaries containing space attributes.
     """
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
     return build_all_dicts(osm_model, "getSpaces", get_space_object_as_dict)
 
 def get_all_space_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
@@ -91,8 +113,8 @@ def get_all_space_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.
     Returns:
     - pd.DataFrame: A DataFrame containing all Space attributes.
     """
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-    return build_dataframe(get_all_space_objects_as_dicts(osm_model), "Space")
+    return build_dataframe(get_all_space_objects_as_dicts(osm_model), "Space",
+                           sort_by="Name", columns=SPACE_COLUMNS)
 
 
 def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: list[dict[str, Any]]) -> dict[str, Any]:
@@ -146,7 +168,7 @@ def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: list[dict
         changes_made = False
         
         # 2. Update Name (if different)
-        if 'Name' in entry and entry['Name'] and entry['Name'] != target_space.name().get():
+        if 'Name' in entry and entry['Name'] and entry['Name'] != opt(target_space.name()):
              target_space.setName(entry['Name'])
              changes_made = True
 
@@ -161,10 +183,10 @@ def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: list[dict
                 # Let's use direct model lookup for clarity on type
                 st_opt = osm_model.getSpaceTypeByName(st_name)
                 if st_opt.is_initialized():
-                    target_space.setSpaceType(st_opt.get())
+                    target_space.setSpaceType(opt(st_opt))
                     changes_made = True
                 else:
-                    msg = f"Warning: Space Type '{st_name}' not found for space '{target_space.name().get()}'"
+                    msg = f"Warning: Space Type '{st_name}' not found for space '{opt(target_space.name())}'"
                     logger.warning(msg)
                     messages.append(msg)
             else: # If None/Empty string provided, clear the assignment? 
@@ -178,10 +200,10 @@ def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: list[dict
             if story_name:
                 story_opt = osm_model.getBuildingStoryByName(story_name)
                 if story_opt.is_initialized():
-                    target_space.setBuildingStory(story_opt.get())
+                    target_space.setBuildingStory(opt(story_opt))
                     changes_made = True
                 else:
-                    msg = f"Warning: Building Story '{story_name}' not found for space '{target_space.name().get()}'"
+                    msg = f"Warning: Building Story '{story_name}' not found for space '{opt(target_space.name())}'"
                     logger.warning(msg)
                     messages.append(msg)
 
@@ -191,10 +213,10 @@ def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: list[dict
             if tz_name:
                 tz_opt = osm_model.getThermalZoneByName(tz_name)
                 if tz_opt.is_initialized():
-                    target_space.setThermalZone(tz_opt.get())
+                    target_space.setThermalZone(opt(tz_opt))
                     changes_made = True
                 else:
-                    msg = f"Warning: Thermal Zone '{tz_name}' not found for space '{target_space.name().get()}'"
+                    msg = f"Warning: Thermal Zone '{tz_name}' not found for space '{opt(target_space.name())}'"
                     logger.warning(msg)
                     messages.append(msg)
 
@@ -204,10 +226,10 @@ def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: list[dict
             if cs_name:
                 cs_opt = osm_model.getDefaultConstructionSetByName(cs_name)
                 if cs_opt.is_initialized():
-                    target_space.setDefaultConstructionSet(cs_opt.get())
+                    target_space.setDefaultConstructionSet(opt(cs_opt))
                     changes_made = True
                 else:
-                     msg = f"Warning: Construction Set '{cs_name}' not found for space '{target_space.name().get()}'"
+                     msg = f"Warning: Construction Set '{cs_name}' not found for space '{opt(target_space.name())}'"
                      logger.warning(msg)
                      messages.append(msg)
 
@@ -217,10 +239,10 @@ def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: list[dict
             if ss_name:
                 ss_opt = osm_model.getDefaultScheduleSetByName(ss_name)
                 if ss_opt.is_initialized():
-                    target_space.setDefaultScheduleSet(ss_opt.get())
+                    target_space.setDefaultScheduleSet(opt(ss_opt))
                     changes_made = True
                 else:
-                     msg = f"Warning: Schedule Set '{ss_name}' not found for space '{target_space.name().get()}'"
+                     msg = f"Warning: Schedule Set '{ss_name}' not found for space '{opt(target_space.name())}'"
                      logger.warning(msg)
                      messages.append(msg)
 
@@ -230,10 +252,10 @@ def update_spaces_data(osm_model: openstudio.model.Model, spaces_data: list[dict
             if oa_name:
                 oa_opt = osm_model.getDesignSpecificationOutdoorAirByName(oa_name)
                 if oa_opt.is_initialized():
-                    target_space.setDesignSpecificationOutdoorAir(oa_opt.get())
+                    target_space.setDesignSpecificationOutdoorAir(opt(oa_opt))
                     changes_made = True
                 else:
-                     msg = f"Warning: Design Spec OA '{oa_name}' not found for space '{target_space.name().get()}'"
+                     msg = f"Warning: Design Spec OA '{oa_name}' not found for space '{opt(target_space.name())}'"
                      # logger.warning(msg) # Optional logging
                      messages.append(msg)
 

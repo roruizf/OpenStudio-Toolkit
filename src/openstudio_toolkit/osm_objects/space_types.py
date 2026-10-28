@@ -4,12 +4,54 @@ import numpy as np
 import openstudio
 import pandas as pd
 
-from openstudio_toolkit.osm_objects.schedules import *
+from openstudio_toolkit._sdk import opt, related, related_name
+from openstudio_toolkit.osm_objects._base import build_dataframe
+from openstudio_toolkit.osm_objects.schedules import create_new_schedule_ruleset
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
+
+
+SPACE_TYPE_COLUMNS = (
+    'Handle',
+    'Name',
+    'Rendering Color',
+    'Default Construction Set',
+    'Default Schedule Set',
+    'Design Specification Outdoor Air',
+    'Standards Template',
+    'Standards Building Type',
+    'Standards Space Type',
+    'Space Infiltration Design Flow Rates',
+    'Space Infiltration Effective Leakage Area',
+    'People Load Name',
+    'People Definition',
+    'People Number Of People Schedule',
+    'People Activity Level Schedule',
+    'Lights Load Name',
+    'Lights Definition',
+    'Lighting Schedule',
+    'Luminaires Load Name',
+    'Luminaires Definition',
+    'Luminaires Schedule',
+    'Electric Equipment Load Name',
+    'Electric Equipment Definition',
+    'Electric Equipment Schedule',
+    'Gas Equipment Load Name',
+    'Gas Equipment Definition',
+    'Gas Equipment Schedule',
+    'Steam Equipment Load Name',
+    'Steam Equipment Definition',
+    'Steam Equipment Schedule',
+    'Other Equipment Load Name',
+    'Other Equipment Definition',
+    'Other Equipment Schedule',
+    'Internal Mass Name',
+    'Internal Mass Definition',
+    'Infiltration Schedule',
+)
 
 
 def get_space_type_as_dict(osm_model: openstudio.model.Model, space_type_handle: str = None, space_type_name: str = None, _object_ref: openstudio.model.SpaceType = None) -> dict:
@@ -31,72 +73,73 @@ def get_space_type_as_dict(osm_model: openstudio.model.Model, space_type_handle:
     if target_space_type is None:
         return {}
     
-    # Helper to check if a default schedule set exists
-    default_sch_set = target_space_type.defaultScheduleSet()
-    has_sch_set = default_sch_set.is_initialized()
+    # Default schedule set, read through its field (None when the space type has none)
+    default_sch_set = related(target_space_type, "Default Schedule Set Name")
+    has_sch_set = default_sch_set is not None
 
     space_type_dict = {
         'Handle': str(target_space_type.handle()),
-        'Name': target_space_type.name().get() if target_space_type.name().is_initialized() else None,
-        'Rendering Color': target_space_type.renderingColor().get().name().get() if target_space_type.renderingColor().is_initialized() else None,
-        'Default Construction Set': target_space_type.defaultConstructionSet().get().name().get() if target_space_type.defaultConstructionSet().is_initialized() else None,
-        'Default Schedule Set': default_sch_set.get().name().get() if has_sch_set else None,
-        
+        'Name': opt(target_space_type.name()),
+        'Rendering Color': related_name(target_space_type, "Group Rendering Name"),
+        'Default Construction Set': related_name(target_space_type, "Default Construction Set Name"),
+        'Default Schedule Set': related_name(target_space_type, "Default Schedule Set Name"),
+
         # Design Specification Outdoor Air
-        'Design Specification Outdoor Air': target_space_type.designSpecificationOutdoorAir().get().name().get() if target_space_type.designSpecificationOutdoorAir().is_initialized() else None,
-        
+        'Design Specification Outdoor Air': related_name(target_space_type, "Design Specification Outdoor Air Object Name"),
+
         # Standards
-        'Standards Template': target_space_type.standardsTemplate().get() if target_space_type.standardsTemplate().is_initialized() else None,
-        'Standards Building Type': target_space_type.standardsBuildingType().get() if target_space_type.standardsBuildingType().is_initialized() else None,
-        'Standards Space Type': target_space_type.standardsSpaceType().get() if target_space_type.standardsSpaceType().is_initialized() else None,
-        
+        'Standards Template': opt(target_space_type.standardsTemplate()),
+        'Standards Building Type': opt(target_space_type.standardsBuildingType()),
+        'Standards Space Type': opt(target_space_type.standardsSpaceType()),
+
         # Infiltration
-        'Space Infiltration Design Flow Rates': target_space_type.spaceInfiltrationDesignFlowRates()[0].name().get() if target_space_type.spaceInfiltrationDesignFlowRates() else None,
-        'Space Infiltration Effective Leakage Area': target_space_type.spaceInfiltrationEffectiveLeakageAreas()[0].name().get() if target_space_type.spaceInfiltrationEffectiveLeakageAreas() else None,
-        
+        'Space Infiltration Design Flow Rates': opt(target_space_type.spaceInfiltrationDesignFlowRates()[0].name()) if target_space_type.spaceInfiltrationDesignFlowRates() else None,
+        'Space Infiltration Effective Leakage Area': opt(target_space_type.spaceInfiltrationEffectiveLeakageAreas()[0].name()) if target_space_type.spaceInfiltrationEffectiveLeakageAreas() else None,
+
         # People
-        'People Load Name': target_space_type.people()[0].name().get() if target_space_type.people() else None,
-        'People Definition': target_space_type.people()[0].definition().name().get() if target_space_type.people() else None,
-        'People Number Of People Schedule': default_sch_set.get().numberofPeopleSchedule().get().name().get() if has_sch_set and default_sch_set.get().numberofPeopleSchedule().is_initialized() else None,
-        'People Activity Level Schedule': default_sch_set.get().peopleActivityLevelSchedule().get().name().get() if has_sch_set and default_sch_set.get().peopleActivityLevelSchedule().is_initialized() else None,
-        
+        'People Load Name': opt(target_space_type.people()[0].name()) if target_space_type.people() else None,
+        'People Definition': related_name(target_space_type.people()[0], "People Definition Name") if target_space_type.people() else None,
+        'People Number Of People Schedule': related_name(default_sch_set, "Number of People Schedule Name") if has_sch_set else None,
+        'People Activity Level Schedule': related_name(default_sch_set, "People Activity Level Schedule Name") if has_sch_set else None,
+
         # Lights
-        'Lights Load Name': target_space_type.lights()[0].name().get() if target_space_type.lights() else None,
-        'Lights Definition': target_space_type.lights()[0].definition().name().get() if target_space_type.lights() else None,
-        'Lighting Schedule': default_sch_set.get().lightingSchedule().get().name().get() if has_sch_set and default_sch_set.get().lightingSchedule().is_initialized() else None,
-        
+        'Lights Load Name': opt(target_space_type.lights()[0].name()) if target_space_type.lights() else None,
+        'Lights Definition': related_name(target_space_type.lights()[0], "Lights Definition Name") if target_space_type.lights() else None,
+        'Lighting Schedule': related_name(default_sch_set, "Lighting Schedule Name") if has_sch_set else None,
+
         # Luminaires
-        'Luminaires Load Name': target_space_type.luminaires()[0].name().get() if target_space_type.luminaires() else None,
-        'Luminaires Definition': target_space_type.luminaires()[0].definition().name().get() if target_space_type.luminaires() else None,
+        'Luminaires Load Name': opt(target_space_type.luminaires()[0].name()) if target_space_type.luminaires() else None,
+        'Luminaires Definition': related_name(target_space_type.luminaires()[0], "Luminaire Definition Name") if target_space_type.luminaires() else None,
         'Luminaires Schedule': None, # Placeholder
-        
+
         # Electric Equipment
-        'Electric Equipment Load Name': target_space_type.electricEquipment()[0].name().get() if target_space_type.electricEquipment() else None,
-        'Electric Equipment Definition': target_space_type.electricEquipment()[0].definition().name().get() if target_space_type.electricEquipment() else None,
-        'Electric Equipment Schedule': default_sch_set.get().electricEquipmentSchedule().get().name().get() if has_sch_set and default_sch_set.get().electricEquipmentSchedule().is_initialized() else None,
-        
-        # Gas Equipment        
-        'Gas Equipment Load Name': target_space_type.gasEquipment()[0].name().get() if target_space_type.gasEquipment() else None,
-        'Gas Equipment Definition': target_space_type.gasEquipment()[0].definition().name().get() if target_space_type.gasEquipment() else None,
-        'Gas Equipment Schedule': default_sch_set.get().gasEquipmentSchedule().get().name().get() if has_sch_set and default_sch_set.get().gasEquipmentSchedule().is_initialized() else None,
-        
-        # Steam Equipment        
-        'Steam Equipment Load Name': target_space_type.steamEquipment()[0].name().get() if target_space_type.steamEquipment() else None,
-        'Steam Equipment Definition': target_space_type.steamEquipment()[0].definition().name().get() if target_space_type.steamEquipment() else None,
-        'Steam Equipment Schedule': default_sch_set.get().steamEquipmentSchedule().get().name().get() if has_sch_set and default_sch_set.get().steamEquipmentSchedule().is_initialized() else None,
-        
-        # Other Equipment        
-        'Other Equipment Load Name': target_space_type.otherEquipment()[0].name().get() if target_space_type.otherEquipment() else None,
-        'Other Equipment Definition': target_space_type.otherEquipment()[0].definition().name().get() if target_space_type.otherEquipment() else None,
-        'Other Equipment Schedule': default_sch_set.get().otherEquipmentSchedule().get().name().get() if has_sch_set and default_sch_set.get().otherEquipmentSchedule().is_initialized() else None,
-        
+        'Electric Equipment Load Name': opt(target_space_type.electricEquipment()[0].name()) if target_space_type.electricEquipment() else None,
+        'Electric Equipment Definition': related_name(target_space_type.electricEquipment()[0], "Electric Equipment Definition Name") if target_space_type.electricEquipment() else None,
+        'Electric Equipment Schedule': related_name(default_sch_set, "Electric Equipment Schedule Name") if has_sch_set else None,
+
+        # Gas Equipment
+        'Gas Equipment Load Name': opt(target_space_type.gasEquipment()[0].name()) if target_space_type.gasEquipment() else None,
+        'Gas Equipment Definition': related_name(target_space_type.gasEquipment()[0], "Gas Equipment Definition Name") if target_space_type.gasEquipment() else None,
+        'Gas Equipment Schedule': related_name(default_sch_set, "Gas Equipment Schedule Name") if has_sch_set else None,
+
+        # Steam Equipment
+        'Steam Equipment Load Name': opt(target_space_type.steamEquipment()[0].name()) if target_space_type.steamEquipment() else None,
+        'Steam Equipment Definition': related_name(target_space_type.steamEquipment()[0], "Steam Equipment Definition Name") if target_space_type.steamEquipment() else None,
+        'Steam Equipment Schedule': related_name(default_sch_set, "Steam Equipment Schedule Name") if has_sch_set else None,
+
+        # Other Equipment
+        'Other Equipment Load Name': opt(target_space_type.otherEquipment()[0].name()) if target_space_type.otherEquipment() else None,
+        'Other Equipment Definition': related_name(target_space_type.otherEquipment()[0], "Other Equipment Definition Name") if target_space_type.otherEquipment() else None,
+        'Other Equipment Schedule': related_name(default_sch_set, "Other Equipment Schedule Name") if has_sch_set else None,
+
         # Internal Mass Definitions
-        'Internal Mass Name': target_space_type.internalMass()[0].name().get() if target_space_type.internalMass() else None,
-        'Internal Mass Definition': target_space_type.internalMass()[0].definition().name().get() if target_space_type.internalMass() else None,
-        
+        'Internal Mass Name': opt(target_space_type.internalMass()[0].name()) if target_space_type.internalMass() else None,
+        'Internal Mass Definition': related_name(target_space_type.internalMass()[0], "Internal Mass Definition Name") if target_space_type.internalMass() else None,
+
         # Infiltration
-        'Infiltration Schedule': default_sch_set.get().infiltrationSchedule().get().name().get() if has_sch_set and default_sch_set.get().infiltrationSchedule().is_initialized() else None 
+        'Infiltration Schedule': related_name(default_sch_set, "Infiltration Schedule Name") if has_sch_set else None
     }
+
     
     return space_type_dict
 
@@ -123,16 +166,9 @@ def get_all_space_types_objects_as_dataframe(osm_model: openstudio.model.Model) 
     Returns:
     - pd.DataFrame: DataFrame containing information about all space type objects.
     """
-    all_objects_dicts = get_all_space_types_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} space types")
-    return all_objects_df
+    return build_dataframe(
+        get_all_space_types_as_dicts(osm_model), "SpaceType",
+        sort_by="Name", columns=SPACE_TYPE_COLUMNS)
 
 def create_new_space_types_objects(osm_model: openstudio.model.Model, space_types_to_create_df: pd.DataFrame) -> openstudio.model.Model:
     """
@@ -156,8 +192,8 @@ def create_new_space_types_objects(osm_model: openstudio.model.Model, space_type
         new_space_type = openstudio.model.SpaceType(osm_model)
         new_space_type.setName(name)
 
-        if new_space_type.name().get() != name:
-            logger.warning(f"Space type name set as '{new_space_type.name().get()}' which is different than requested: '{name}'")
+        if opt(new_space_type.name()) != name:
+            logger.warning(f"Space type name set as '{opt(new_space_type.name())}' which is different than requested: '{name}'")
 
         # Setting attributes if defined in space_types_to_create_df
 
@@ -166,7 +202,7 @@ def create_new_space_types_objects(osm_model: openstudio.model.Model, space_type
         if constr_set_name:
             constr_set_obj = osm_model.getDefaultConstructionSetByName(constr_set_name)
             if constr_set_obj.is_initialized():
-                new_space_type.setDefaultConstructionSet(constr_set_obj.get())
+                new_space_type.setDefaultConstructionSet(opt(constr_set_obj))
             else:
                 new_construction_set = openstudio.model.DefaultConstructionSet(osm_model)
                 new_construction_set.setName(constr_set_name)
@@ -177,7 +213,7 @@ def create_new_space_types_objects(osm_model: openstudio.model.Model, space_type
         if sch_set_name:
             sch_set_obj = osm_model.getDefaultScheduleSetByName(sch_set_name)
             if sch_set_obj.is_initialized():
-                new_space_type.setDefaultScheduleSet(sch_set_obj.get())
+                new_space_type.setDefaultScheduleSet(opt(sch_set_obj))
             else:
                 new_schedule_set = openstudio.model.DefaultScheduleSet(osm_model)
                 new_schedule_set.setName(sch_set_name)
@@ -188,7 +224,7 @@ def create_new_space_types_objects(osm_model: openstudio.model.Model, space_type
         if rendering_name:
             rendering_color_obj = osm_model.getRenderingColorByName(rendering_name)
             if rendering_color_obj.is_initialized():
-                rendering_color = rendering_color_obj.get()
+                rendering_color = opt(rendering_color_obj)
             else:
                 rendering_color = openstudio.model.RenderingColor(osm_model)
                 rendering_color.setName(rendering_name)
@@ -229,7 +265,7 @@ def rename_space_types_components(osm_model: openstudio.model.Model, space_type_
         if not target_obj.is_initialized():
             continue
         
-        target_space_type = target_obj.get()
+        target_space_type = opt(target_obj)
         logger.info(f"Processing space type: {space_type_name}")
         
         for column in filtered_df.drop(columns=['Handle', 'Name']).columns: 
@@ -238,16 +274,16 @@ def rename_space_types_components(osm_model: openstudio.model.Model, space_type_
             
             if current_val is not None and current_val != new_name:
                 if column == 'Rendering Color' and target_space_type.renderingColor().is_initialized():
-                    target_space_type.renderingColor().get().setName(new_name)
+                    opt(target_space_type.renderingColor()).setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Default Construction Set' and target_space_type.defaultConstructionSet().is_initialized():
-                    target_space_type.defaultConstructionSet().get().setName(new_name)
+                    opt(target_space_type.defaultConstructionSet()).setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Default Schedule Set' and target_space_type.defaultScheduleSet().is_initialized():
-                    target_space_type.defaultScheduleSet().get().setName(new_name)
+                    opt(target_space_type.defaultScheduleSet()).setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Design Specification Outdoor Air' and target_space_type.designSpecificationOutdoorAir().is_initialized():
-                    target_space_type.designSpecificationOutdoorAir().get().setName(new_name)
+                    opt(target_space_type.designSpecificationOutdoorAir()).setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Space Infiltration Design Flow Rates' and target_space_type.spaceInfiltrationDesignFlowRates():
                     target_space_type.spaceInfiltrationDesignFlowRates()[0].setName(new_name)
@@ -259,87 +295,103 @@ def rename_space_types_components(osm_model: openstudio.model.Model, space_type_
                     target_space_type.people()[0].setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'People Definition' and target_space_type.people():
-                    target_space_type.people()[0].definition().setName(new_name)
-                    logger.info(f"    * {column} renamed to {new_name}")
+                    definition = related(target_space_type.people()[0], "People Definition Name")
+                    if definition is not None:
+                        definition.setName(new_name)
+                        logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'People Number Of People Schedule' and target_space_type.defaultScheduleSet().is_initialized():
-                    sch_set = target_space_type.defaultScheduleSet().get()
+                    sch_set = opt(target_space_type.defaultScheduleSet())
                     if sch_set.numberofPeopleSchedule().is_initialized():
-                        sch_set.numberofPeopleSchedule().get().setName(new_name)
+                        opt(sch_set.numberofPeopleSchedule()).setName(new_name)
                         logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'People Activity Level Schedule' and target_space_type.defaultScheduleSet().is_initialized():
-                    sch_set = target_space_type.defaultScheduleSet().get()
+                    sch_set = opt(target_space_type.defaultScheduleSet())
                     if sch_set.peopleActivityLevelSchedule().is_initialized():
-                        sch_set.peopleActivityLevelSchedule().get().setName(new_name)
+                        opt(sch_set.peopleActivityLevelSchedule()).setName(new_name)
                         logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Lights Load Name' and target_space_type.lights():
                     target_space_type.lights()[0].setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Lights Definition' and target_space_type.lights():
-                    target_space_type.lights()[0].definition().setName(new_name)
-                    logger.info(f"    * {column} renamed to {new_name}")
+                    definition = related(target_space_type.lights()[0], "Lights Definition Name")
+                    if definition is not None:
+                        definition.setName(new_name)
+                        logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Lighting Schedule' and target_space_type.defaultScheduleSet().is_initialized():
-                    sch_set = target_space_type.defaultScheduleSet().get()
+                    sch_set = opt(target_space_type.defaultScheduleSet())
                     if sch_set.lightingSchedule().is_initialized():
-                        sch_set.lightingSchedule().get().setName(new_name)
+                        opt(sch_set.lightingSchedule()).setName(new_name)
                         logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Luminaires Load Name' and target_space_type.luminaires():
                     target_space_type.luminaires()[0].setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Luminaires Definition' and target_space_type.luminaires():
-                    target_space_type.luminaires()[0].definition().setName(new_name)
+                    definition = related(target_space_type.luminaires()[0], "Luminaire Definition Name")
+                    if definition is not None:
+                        definition.setName(new_name)
                 elif column == 'Electric Equipment Load Name' and target_space_type.electricEquipment():
                     target_space_type.electricEquipment()[0].setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Electric Equipment Definition' and target_space_type.electricEquipment():
-                    target_space_type.electricEquipment()[0].definition().setName(new_name)
-                    logger.info(f"    * {column} renamed to {new_name}")
+                    definition = related(target_space_type.electricEquipment()[0], "Electric Equipment Definition Name")
+                    if definition is not None:
+                        definition.setName(new_name)
+                        logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Electric Equipment Schedule' and target_space_type.defaultScheduleSet().is_initialized():
-                    sch_set = target_space_type.defaultScheduleSet().get()
+                    sch_set = opt(target_space_type.defaultScheduleSet())
                     if sch_set.electricEquipmentSchedule().is_initialized():
-                        sch_set.electricEquipmentSchedule().get().setName(new_name)
+                        opt(sch_set.electricEquipmentSchedule()).setName(new_name)
                         logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Gas Equipment Load Name' and target_space_type.gasEquipment():
                     target_space_type.gasEquipment()[0].setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Gas Equipment Definition' and target_space_type.gasEquipment():
-                    target_space_type.gasEquipment()[0].definition().setName(new_name)
-                    logger.info(f"    * {column} renamed to {new_name}")
+                    definition = related(target_space_type.gasEquipment()[0], "Gas Equipment Definition Name")
+                    if definition is not None:
+                        definition.setName(new_name)
+                        logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Gas Equipment Schedule' and target_space_type.defaultScheduleSet().is_initialized():
-                    sch_set = target_space_type.defaultScheduleSet().get()
+                    sch_set = opt(target_space_type.defaultScheduleSet())
                     if sch_set.gasEquipmentSchedule().is_initialized():
-                        sch_set.gasEquipmentSchedule().get().setName(new_name)
+                        opt(sch_set.gasEquipmentSchedule()).setName(new_name)
                         logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Steam Equipment Load Name' and target_space_type.steamEquipment():
                     target_space_type.steamEquipment()[0].setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Steam Equipment Definition' and target_space_type.steamEquipment():
-                    target_space_type.steamEquipment()[0].definition().setName(new_name)
-                    logger.info(f"    * {column} renamed to {new_name}")
+                    definition = related(target_space_type.steamEquipment()[0], "Steam Equipment Definition Name")
+                    if definition is not None:
+                        definition.setName(new_name)
+                        logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Steam Equipment Schedule' and target_space_type.defaultScheduleSet().is_initialized():
-                    sch_set = target_space_type.defaultScheduleSet().get()
+                    sch_set = opt(target_space_type.defaultScheduleSet())
                     if sch_set.steamEquipmentSchedule().is_initialized():
-                        sch_set.steamEquipmentSchedule().get().setName(new_name)
+                        opt(sch_set.steamEquipmentSchedule()).setName(new_name)
                         logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Other Equipment Load Name' and target_space_type.otherEquipment():
                     target_space_type.otherEquipment()[0].setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Other Equipment Definition' and target_space_type.otherEquipment():
-                    target_space_type.otherEquipment()[0].definition().setName(new_name)
-                    logger.info(f"    * {column} renamed to {new_name}")
+                    definition = related(target_space_type.otherEquipment()[0], "Other Equipment Definition Name")
+                    if definition is not None:
+                        definition.setName(new_name)
+                        logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Other Equipment Schedule' and target_space_type.defaultScheduleSet().is_initialized():
-                    sch_set = target_space_type.defaultScheduleSet().get()
+                    sch_set = opt(target_space_type.defaultScheduleSet())
                     if sch_set.otherEquipmentSchedule().is_initialized():
-                        sch_set.otherEquipmentSchedule().get().setName(new_name)
+                        opt(sch_set.otherEquipmentSchedule()).setName(new_name)
                         logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Internal Mass Name' and target_space_type.internalMass():
                     target_space_type.internalMass()[0].setName(new_name)
                     logger.info(f"    * {column} renamed to {new_name}")
                 elif column == 'Internal Mass Definition' and target_space_type.internalMass():
-                    target_space_type.internalMass()[0].definition().setName(new_name)   
+                    definition = related(target_space_type.internalMass()[0], "Internal Mass Definition Name")
+                    if definition is not None:
+                        definition.setName(new_name)
                 elif column == 'Infiltration Schedule' and target_space_type.defaultScheduleSet().is_initialized():
-                    sch_set = target_space_type.defaultScheduleSet().get()
+                    sch_set = opt(target_space_type.defaultScheduleSet())
                     if sch_set.infiltrationSchedule().is_initialized():
-                        sch_set.infiltrationSchedule().get().setName(new_name)
+                        opt(sch_set.infiltrationSchedule()).setName(new_name)
                         logger.info(f"    * {column} renamed to {new_name}")
 
 
@@ -383,7 +435,7 @@ def create_complete_edit_space_types_components(osm_model: openstudio.model.Mode
             # Assign it to the corresponding space type
             st_obj = osm_model.getSpaceTypeByName(row['Name'])
             if st_obj.is_initialized():
-                st_obj.get().setDefaultScheduleSet(new_sch_set)
+                opt(st_obj).setDefaultScheduleSet(new_sch_set)
                 logger.info(f"* Default Schedule Set: {new_name} - assigned")
 
     # Design Specification Outdoor Air
@@ -399,7 +451,7 @@ def create_complete_edit_space_types_components(osm_model: openstudio.model.Mode
             
             st_obj = osm_model.getSpaceTypeByName(row['Name'])
             if st_obj.is_initialized():
-                st_obj.get().setDesignSpecificationOutdoorAir(new_oa)
+                opt(st_obj).setDesignSpecificationOutdoorAir(new_oa)
                 logger.info(f"* Design Specification Outdoor Air: {new_name} - assigned")
 
     # Space Infiltration Design Flow Rates
@@ -415,7 +467,7 @@ def create_complete_edit_space_types_components(osm_model: openstudio.model.Mode
             
             st_obj = osm_model.getSpaceTypeByName(row['Name'])
             if st_obj.is_initialized():
-                new_inf.setSpaceType(st_obj.get())
+                new_inf.setSpaceType(opt(st_obj))
                 logger.info(f"* Space Infiltration Design Flow Rates: {new_name} - assigned")
 
     # People & People Definition
@@ -438,7 +490,7 @@ def create_complete_edit_space_types_components(osm_model: openstudio.model.Mode
             
             st_obj = osm_model.getSpaceTypeByName(row['Name'])
             if st_obj.is_initialized():
-                people.setSpaceType(st_obj.get())
+                people.setSpaceType(opt(st_obj))
                 logger.info(f"* People: {people_new_name} - assigned")
 
     # Lights & Lights Definition
@@ -459,7 +511,7 @@ def create_complete_edit_space_types_components(osm_model: openstudio.model.Mode
             
             st_obj = osm_model.getSpaceTypeByName(row['Name'])
             if st_obj.is_initialized():
-                lights.setSpaceType(st_obj.get())
+                lights.setSpaceType(opt(st_obj))
                 logger.info(f"* Lights: {lights_new_name} - assigned")
 
     # Electric Equipment & Electric Equipment Definition
@@ -480,7 +532,7 @@ def create_complete_edit_space_types_components(osm_model: openstudio.model.Mode
             
             st_obj = osm_model.getSpaceTypeByName(row['Name'])
             if st_obj.is_initialized():
-                elect_eqp.setSpaceType(st_obj.get())
+                elect_eqp.setSpaceType(opt(st_obj))
                 logger.info(f"* Electric Equipment: {elect_eqp_new_name} - assigned")
 
     # SCHEDULES
@@ -502,7 +554,7 @@ def create_complete_edit_space_types_components(osm_model: openstudio.model.Mode
                 if dss_name:
                     dss_obj = osm_model.getDefaultScheduleSetByName(dss_name)
                     if dss_obj.is_initialized():
-                        getattr(dss_obj.get(), setter_func_name)(sch_obj.get())
+                        getattr(opt(dss_obj), setter_func_name)(opt(sch_obj))
                         logger.info(f"* {suffix}: {new_sch_name} - created and assigned to {dss_name}")
 
     for _, row in filtered_df.iterrows():

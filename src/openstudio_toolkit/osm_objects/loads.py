@@ -25,6 +25,8 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt, optional_name, related_name
+from openstudio_toolkit.osm_objects._base import build_all_dicts, build_dataframe
 from openstudio_toolkit.utils import helpers
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,21 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 #  OS:People
 # ---------------------------------------------------------------------------
+
+PEOPLE_COLUMNS = (
+    'Handle',
+    'Name',
+    'People Definition Name',
+    'Space or SpaceType Name',
+    'Number of People Schedule Name',
+    'Activity Level Schedule Name',
+    'Surface Name/Angle Factor List Name',
+    'Work Efficiency Schedule Name',
+    'Clothing Insulation Schedule Name',
+    'Air Velocity Schedule Name',
+    'Multiplier',
+)
+
 
 def get_people_object_as_dict(
     osm_model: openstudio.model.Model,
@@ -65,56 +82,17 @@ def get_people_object_as_dict(
     if target_object is None:
         return {}
 
-    # Resolve Space or SpaceType Name
-    space_or_spacetype = None
-    if target_object.spaceType().is_initialized():
-        space_or_spacetype = (
-            target_object.spaceType().get().name().get()
-            if target_object.spaceType().get().name().is_initialized()
-            else None
-        )
-    elif target_object.space().is_initialized():
-        space_or_spacetype = (
-            target_object.space().get().name().get()
-            if target_object.space().get().name().is_initialized()
-            else None
-        )
-
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'People Definition Name': (
-            target_object.peopleDefinition().name().get()
-            if target_object.peopleDefinition().name().is_initialized()
-            else None
-        ),
-        'Space or SpaceType Name': space_or_spacetype,
-        'Number of People Schedule Name': (
-            target_object.numberofPeopleSchedule().get().name().get()
-            if target_object.numberofPeopleSchedule().is_initialized()
-            else None
-        ),
-        'Activity Level Schedule Name': (
-            target_object.activityLevelSchedule().get().name().get()
-            if target_object.activityLevelSchedule().is_initialized()
-            else None
-        ),
+        'Name': opt(target_object.name()),
+        'People Definition Name': related_name(target_object, "People Definition Name"),
+        'Space or SpaceType Name': related_name(target_object, "Space or SpaceType Name"),
+        'Number of People Schedule Name': optional_name(target_object.numberofPeopleSchedule()),
+        'Activity Level Schedule Name': optional_name(target_object.activityLevelSchedule()),
         'Surface Name/Angle Factor List Name': None,  # Not accessible via SDK
-        'Work Efficiency Schedule Name': (
-            target_object.workEfficiencySchedule().get().name().get()
-            if target_object.workEfficiencySchedule().is_initialized()
-            else None
-        ),
-        'Clothing Insulation Schedule Name': (
-            target_object.clothingInsulationSchedule().get().name().get()
-            if target_object.clothingInsulationSchedule().is_initialized()
-            else None
-        ),
-        'Air Velocity Schedule Name': (
-            target_object.airVelocitySchedule().get().name().get()
-            if target_object.airVelocitySchedule().is_initialized()
-            else None
-        ),
+        'Work Efficiency Schedule Name': optional_name(target_object.workEfficiencySchedule()),
+        'Clothing Insulation Schedule Name': optional_name(target_object.clothingInsulationSchedule()),
+        'Air Velocity Schedule Name': optional_name(target_object.airVelocitySchedule()),
         'Multiplier': target_object.multiplier(),
     }
 
@@ -123,8 +101,6 @@ def get_all_people_objects_as_dicts(
     osm_model: openstudio.model.Model,
 ) -> list[dict[str, Any]]:
     """Retrieve attributes for all OS:People objects."""
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
-
     return build_all_dicts(
         osm_model,
         "getPeoples",
@@ -136,17 +112,29 @@ def get_all_people_objects_as_dataframe(
     osm_model: openstudio.model.Model,
 ) -> pd.DataFrame:
     """Retrieve all OS:People objects as a DataFrame."""
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-
     return build_dataframe(
         get_all_people_objects_as_dicts(osm_model),
         "People",
+        sort_by="Name", columns=PEOPLE_COLUMNS,
     )
 
 
 # ---------------------------------------------------------------------------
 #  OS:People:Definition
 # ---------------------------------------------------------------------------
+
+PEOPLE_DEFINITION_COLUMNS = (
+    'Handle',
+    'Name',
+    'Number of People Calculation Method',
+    'Number of People {people}',
+    'People per Space Floor Area {person/m2}',
+    'Space Floor Area per Person {m2/person}',
+    'Fraction Radiant',
+    'Sensible Heat Fraction',
+    'Carbon Dioxide Generation Rate {m3/s-W}',
+)
+
 
 def get_people_definition_object_as_dict(
     osm_model: openstudio.model.Model,
@@ -181,29 +169,13 @@ def get_people_definition_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Number of People Calculation Method': target_object.numberofPeopleCalculationMethod(),
-        'Number of People {people}': (
-            target_object.numberofPeople().get()
-            if target_object.numberofPeople().is_initialized()
-            else None
-        ),
-        'People per Space Floor Area {person/m2}': (
-            target_object.peopleperSpaceFloorArea().get()
-            if target_object.peopleperSpaceFloorArea().is_initialized()
-            else None
-        ),
-        'Space Floor Area per Person {m2/person}': (
-            target_object.spaceFloorAreaperPerson().get()
-            if target_object.spaceFloorAreaperPerson().is_initialized()
-            else None
-        ),
+        'Number of People {people}': opt(target_object.numberofPeople()),
+        'People per Space Floor Area {person/m2}': opt(target_object.peopleperSpaceFloorArea()),
+        'Space Floor Area per Person {m2/person}': opt(target_object.spaceFloorAreaperPerson()),
         'Fraction Radiant': target_object.fractionRadiant(),
-        'Sensible Heat Fraction': (
-            target_object.sensibleHeatFraction().get()
-            if target_object.sensibleHeatFraction().is_initialized()
-            else None
-        ),
+        'Sensible Heat Fraction': opt(target_object.sensibleHeatFraction()),
         'Carbon Dioxide Generation Rate {m3/s-W}': target_object.carbonDioxideGenerationRate(),
     }
 
@@ -212,8 +184,6 @@ def get_all_people_definition_objects_as_dicts(
     osm_model: openstudio.model.Model,
 ) -> list[dict[str, Any]]:
     """Retrieve attributes for all OS:People:Definition objects."""
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
-
     return build_all_dicts(
         osm_model,
         "getPeopleDefinitions",
@@ -225,17 +195,28 @@ def get_all_people_definition_objects_as_dataframe(
     osm_model: openstudio.model.Model,
 ) -> pd.DataFrame:
     """Retrieve all OS:People:Definition objects as a DataFrame."""
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-
     return build_dataframe(
         get_all_people_definition_objects_as_dicts(osm_model),
         "PeopleDefinition",
+        sort_by="Name", columns=PEOPLE_DEFINITION_COLUMNS,
     )
 
 
 # ---------------------------------------------------------------------------
 #  OS:Lights
 # ---------------------------------------------------------------------------
+
+LIGHTS_COLUMNS = (
+    'Handle',
+    'Name',
+    'Lights Definition Name',
+    'Space or SpaceType Name',
+    'Schedule Name',
+    'Fraction Replaceable',
+    'Multiplier',
+    'End-Use Subcategory',
+)
+
 
 def get_lights_object_as_dict(
     osm_model: openstudio.model.Model,
@@ -268,35 +249,12 @@ def get_lights_object_as_dict(
     if target_object is None:
         return {}
 
-    # Resolve Space or SpaceType Name
-    space_or_spacetype = None
-    if target_object.spaceType().is_initialized():
-        space_or_spacetype = (
-            target_object.spaceType().get().name().get()
-            if target_object.spaceType().get().name().is_initialized()
-            else None
-        )
-    elif target_object.space().is_initialized():
-        space_or_spacetype = (
-            target_object.space().get().name().get()
-            if target_object.space().get().name().is_initialized()
-            else None
-        )
-
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Lights Definition Name': (
-            target_object.lightsDefinition().name().get()
-            if target_object.lightsDefinition().name().is_initialized()
-            else None
-        ),
-        'Space or SpaceType Name': space_or_spacetype,
-        'Schedule Name': (
-            target_object.schedule().get().name().get()
-            if target_object.schedule().is_initialized()
-            else None
-        ),
+        'Name': opt(target_object.name()),
+        'Lights Definition Name': related_name(target_object, "Lights Definition Name"),
+        'Space or SpaceType Name': related_name(target_object, "Space or SpaceType Name"),
+        'Schedule Name': optional_name(target_object.schedule()),
         'Fraction Replaceable': target_object.fractionReplaceable(),
         'Multiplier': target_object.multiplier(),
         'End-Use Subcategory': target_object.endUseSubcategory(),
@@ -307,8 +265,6 @@ def get_all_lights_objects_as_dicts(
     osm_model: openstudio.model.Model,
 ) -> list[dict[str, Any]]:
     """Retrieve attributes for all OS:Lights objects."""
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
-
     return build_all_dicts(
         osm_model,
         "getLightss",
@@ -320,17 +276,29 @@ def get_all_lights_objects_as_dataframe(
     osm_model: openstudio.model.Model,
 ) -> pd.DataFrame:
     """Retrieve all OS:Lights objects as a DataFrame."""
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-
     return build_dataframe(
         get_all_lights_objects_as_dicts(osm_model),
         "Lights",
+        sort_by="Name", columns=LIGHTS_COLUMNS,
     )
 
 
 # ---------------------------------------------------------------------------
 #  OS:Lights:Definition
 # ---------------------------------------------------------------------------
+
+LIGHTS_DEFINITION_COLUMNS = (
+    'Handle',
+    'Name',
+    'Design Level Calculation Method',
+    'Lighting Level {W}',
+    'Watts per Space Floor Area {W/m2}',
+    'Watts per Person {W/person}',
+    'Fraction Radiant',
+    'Fraction Visible',
+    'Return Air Fraction',
+)
+
 
 def get_lights_definition_object_as_dict(
     osm_model: openstudio.model.Model,
@@ -365,23 +333,11 @@ def get_lights_definition_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Design Level Calculation Method': target_object.designLevelCalculationMethod(),
-        'Lighting Level {W}': (
-            target_object.lightingLevel().get()
-            if target_object.lightingLevel().is_initialized()
-            else None
-        ),
-        'Watts per Space Floor Area {W/m2}': (
-            target_object.wattsperSpaceFloorArea().get()
-            if target_object.wattsperSpaceFloorArea().is_initialized()
-            else None
-        ),
-        'Watts per Person {W/person}': (
-            target_object.wattsperPerson().get()
-            if target_object.wattsperPerson().is_initialized()
-            else None
-        ),
+        'Lighting Level {W}': opt(target_object.lightingLevel()),
+        'Watts per Space Floor Area {W/m2}': opt(target_object.wattsperSpaceFloorArea()),
+        'Watts per Person {W/person}': opt(target_object.wattsperPerson()),
         'Fraction Radiant': target_object.fractionRadiant(),
         'Fraction Visible': target_object.fractionVisible(),
         'Return Air Fraction': target_object.returnAirFraction(),
@@ -392,8 +348,6 @@ def get_all_lights_definition_objects_as_dicts(
     osm_model: openstudio.model.Model,
 ) -> list[dict[str, Any]]:
     """Retrieve attributes for all OS:Lights:Definition objects."""
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
-
     return build_all_dicts(
         osm_model,
         "getLightsDefinitions",
@@ -405,17 +359,27 @@ def get_all_lights_definition_objects_as_dataframe(
     osm_model: openstudio.model.Model,
 ) -> pd.DataFrame:
     """Retrieve all OS:Lights:Definition objects as a DataFrame."""
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-
     return build_dataframe(
         get_all_lights_definition_objects_as_dicts(osm_model),
         "LightsDefinition",
+        sort_by="Name", columns=LIGHTS_DEFINITION_COLUMNS,
     )
 
 
 # ---------------------------------------------------------------------------
 #  OS:ElectricEquipment
 # ---------------------------------------------------------------------------
+
+ELECTRIC_EQUIPMENT_COLUMNS = (
+    'Handle',
+    'Name',
+    'Electric Equipment Definition Name',
+    'Space or SpaceType Name',
+    'Schedule Name',
+    'Multiplier',
+    'End-Use Subcategory',
+)
+
 
 def get_electric_equipment_object_as_dict(
     osm_model: openstudio.model.Model,
@@ -448,35 +412,12 @@ def get_electric_equipment_object_as_dict(
     if target_object is None:
         return {}
 
-    # Resolve Space or SpaceType Name
-    space_or_spacetype = None
-    if target_object.spaceType().is_initialized():
-        space_or_spacetype = (
-            target_object.spaceType().get().name().get()
-            if target_object.spaceType().get().name().is_initialized()
-            else None
-        )
-    elif target_object.space().is_initialized():
-        space_or_spacetype = (
-            target_object.space().get().name().get()
-            if target_object.space().get().name().is_initialized()
-            else None
-        )
-
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Electric Equipment Definition Name': (
-            target_object.definition().name().get()
-            if target_object.definition().name().is_initialized()
-            else None
-        ),
-        'Space or SpaceType Name': space_or_spacetype,
-        'Schedule Name': (
-            target_object.schedule().get().name().get()
-            if target_object.schedule().is_initialized()
-            else None
-        ),
+        'Name': opt(target_object.name()),
+        'Electric Equipment Definition Name': related_name(target_object, "Electric Equipment Definition Name"),
+        'Space or SpaceType Name': related_name(target_object, "Space or SpaceType Name"),
+        'Schedule Name': optional_name(target_object.schedule()),
         'Multiplier': target_object.multiplier(),
         'End-Use Subcategory': target_object.endUseSubcategory(),
     }
@@ -486,8 +427,6 @@ def get_all_electric_equipment_objects_as_dicts(
     osm_model: openstudio.model.Model,
 ) -> list[dict[str, Any]]:
     """Retrieve attributes for all OS:ElectricEquipment objects."""
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
-
     return build_all_dicts(
         osm_model,
         "getElectricEquipments",
@@ -499,17 +438,29 @@ def get_all_electric_equipment_objects_as_dataframe(
     osm_model: openstudio.model.Model,
 ) -> pd.DataFrame:
     """Retrieve all OS:ElectricEquipment objects as a DataFrame."""
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-
     return build_dataframe(
         get_all_electric_equipment_objects_as_dicts(osm_model),
         "ElectricEquipment",
+        sort_by="Name", columns=ELECTRIC_EQUIPMENT_COLUMNS,
     )
 
 
 # ---------------------------------------------------------------------------
 #  OS:ElectricEquipment:Definition
 # ---------------------------------------------------------------------------
+
+ELECTRIC_EQUIPMENT_DEFINITION_COLUMNS = (
+    'Handle',
+    'Name',
+    'Design Level Calculation Method',
+    'Design Level {W}',
+    'Watts per Space Floor Area {W/m2}',
+    'Watts per Person {W/person}',
+    'Fraction Latent',
+    'Fraction Radiant',
+    'Fraction Lost',
+)
+
 
 def get_electric_equipment_definition_object_as_dict(
     osm_model: openstudio.model.Model,
@@ -544,23 +495,11 @@ def get_electric_equipment_definition_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Design Level Calculation Method': target_object.designLevelCalculationMethod(),
-        'Design Level {W}': (
-            target_object.designLevel().get()
-            if target_object.designLevel().is_initialized()
-            else None
-        ),
-        'Watts per Space Floor Area {W/m2}': (
-            target_object.wattsperSpaceFloorArea().get()
-            if target_object.wattsperSpaceFloorArea().is_initialized()
-            else None
-        ),
-        'Watts per Person {W/person}': (
-            target_object.wattsperPerson().get()
-            if target_object.wattsperPerson().is_initialized()
-            else None
-        ),
+        'Design Level {W}': opt(target_object.designLevel()),
+        'Watts per Space Floor Area {W/m2}': opt(target_object.wattsperSpaceFloorArea()),
+        'Watts per Person {W/person}': opt(target_object.wattsperPerson()),
         'Fraction Latent': target_object.fractionLatent(),
         'Fraction Radiant': target_object.fractionRadiant(),
         'Fraction Lost': target_object.fractionLost(),
@@ -571,8 +510,6 @@ def get_all_electric_equipment_definition_objects_as_dicts(
     osm_model: openstudio.model.Model,
 ) -> list[dict[str, Any]]:
     """Retrieve attributes for all OS:ElectricEquipment:Definition objects."""
-    from openstudio_toolkit.osm_objects._base import build_all_dicts
-
     return build_all_dicts(
         osm_model,
         "getElectricEquipmentDefinitions",
@@ -584,11 +521,10 @@ def get_all_electric_equipment_definition_objects_as_dataframe(
     osm_model: openstudio.model.Model,
 ) -> pd.DataFrame:
     """Retrieve all OS:ElectricEquipment:Definition objects as a DataFrame."""
-    from openstudio_toolkit.osm_objects._base import build_dataframe
-
     return build_dataframe(
         get_all_electric_equipment_definition_objects_as_dicts(osm_model),
         "ElectricEquipmentDefinition",
+        sort_by="Name", columns=ELECTRIC_EQUIPMENT_DEFINITION_COLUMNS,
     )
 
 
@@ -600,6 +536,17 @@ def get_all_electric_equipment_definition_objects_as_dataframe(
 # ------------------------------------------------------------------------------------------------
 #  ****** Gas Equipment **************************************************************************
 # ------------------------------------------------------------------------------------------------
+
+GAS_EQUIPMENT_COLUMNS = (
+    'Handle',
+    'Name',
+    'Gas Equipment Definition Name',
+    'Space or SpaceType Name',
+    'Schedule Name',
+    'Multiplier',
+    'End-Use Subcategory',
+)
+
 
 def get_gas_equipment_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.GasEquipment = None) -> dict:
     """
@@ -622,10 +569,10 @@ def get_gas_equipment_object_as_dict(osm_model: openstudio.model.Model, handle: 
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Gas Equipment Definition Name': target_object.definition().name().get() if target_object.definition().name().is_initialized() else None,
-        'Space or SpaceType Name': target_object.spaceType().get().name().get() if target_object.spaceType().is_initialized() else (target_object.space().get().name().get() if target_object.space().is_initialized() else None),
-        'Schedule Name': target_object.schedule().get().name().get() if target_object.schedule().is_initialized() else None,
+        'Name': opt(target_object.name()),
+        'Gas Equipment Definition Name': related_name(target_object, "Gas Equipment Definition Name"),
+        'Space or SpaceType Name': related_name(target_object, "Space or SpaceType Name"),
+        'Schedule Name': optional_name(target_object.schedule()),
         'Multiplier': target_object.multiplier(),
         'End-Use Subcategory': target_object.endUseSubcategory()
     }
@@ -655,21 +602,27 @@ def get_all_gas_equipment_objects_as_dataframe(osm_model: openstudio.model.Model
     Returns:
     - pd.DataFrame: DataFrame containing information about all gas equipment objects.
     """
-    all_objects_dicts = get_all_gas_equipment_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} gas equipment objects")
-    return all_objects_df
+    return build_dataframe(
+        get_all_gas_equipment_objects_as_dicts(osm_model), "GasEquipment",
+        sort_by="Name", columns=GAS_EQUIPMENT_COLUMNS)
 
 
 # ------------------------------------------------------------------------------------------------
 #  ****** Gas Equipment Definition ***************************************************************
 # ------------------------------------------------------------------------------------------------
+
+
+GAS_EQUIPMENT_DEFINITION_COLUMNS = (
+    'Handle',
+    'Name',
+    'Design Level Calculation Method',
+    'Design Level {W}',
+    'Watts per Space Floor Area {W/m2}',
+    'Watts per Person {W/person}',
+    'Fraction Latent',
+    'Fraction Radiant',
+    'Fraction Lost',
+)
 
 
 def get_gas_equipment_definition_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.GasEquipmentDefinition = None) -> dict:
@@ -693,11 +646,11 @@ def get_gas_equipment_definition_object_as_dict(osm_model: openstudio.model.Mode
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Design Level Calculation Method': target_object.designLevelCalculationMethod(),
-        'Design Level {W}': target_object.designLevel().get() if target_object.designLevel().is_initialized() else None,
-        'Watts per Space Floor Area {W/m2}': target_object.wattsperSpaceFloorArea().get() if target_object.wattsperSpaceFloorArea().is_initialized() else None,
-        'Watts per Person {W/person}': target_object.wattsperPerson().get() if target_object.wattsperPerson().is_initialized() else None,
+        'Design Level {W}': opt(target_object.designLevel()),
+        'Watts per Space Floor Area {W/m2}': opt(target_object.wattsperSpaceFloorArea()),
+        'Watts per Person {W/person}': opt(target_object.wattsperPerson()),
         'Fraction Latent': target_object.fractionLatent(),
         'Fraction Radiant': target_object.fractionRadiant(),
         'Fraction Lost': target_object.fractionLost(),
@@ -728,21 +681,25 @@ def get_all_gas_equipment_definition_objects_as_dataframe(osm_model: openstudio.
     Returns:
     - pd.DataFrame: DataFrame containing information about all gas equipment definition objects.
     """
-    all_objects_dicts = get_all_gas_equipment_definition_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} gas equipment definition objects")
-    return all_objects_df
+    return build_dataframe(
+        get_all_gas_equipment_definition_objects_as_dicts(osm_model), "GasEquipmentDefinition",
+        sort_by="Name", columns=GAS_EQUIPMENT_DEFINITION_COLUMNS)
 
 
 # ------------------------------------------------------------------------------------------------
 #  ****** Steam Equipment ************************************************************************
 # ------------------------------------------------------------------------------------------------
+STEAM_EQUIPMENT_COLUMNS = (
+    'Handle',
+    'Name',
+    'Steam Equipment Definition Name',
+    'Space or SpaceType Name',
+    'Schedule Name',
+    'Multiplier',
+    'End-Use Subcategory',
+)
+
+
 def get_steam_equipment_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.SteamEquipment = None) -> dict:
     """
     Retrieve a specified OS:SteamEquipment object from the OpenStudio model by handle, name, or direct reference and return its attributes as a dictionary.
@@ -764,10 +721,10 @@ def get_steam_equipment_object_as_dict(osm_model: openstudio.model.Model, handle
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Steam Equipment Definition Name': target_object.definition().name().get() if target_object.definition().name().is_initialized() else None,
-        'Space or SpaceType Name': target_object.spaceType().get().name().get() if target_object.spaceType().is_initialized() else (target_object.space().get().name().get() if target_object.space().is_initialized() else None),
-        'Schedule Name': target_object.schedule().get().name().get() if target_object.schedule().is_initialized() else None,
+        'Name': opt(target_object.name()),
+        'Steam Equipment Definition Name': related_name(target_object, "Steam Equipment Definition Name"),
+        'Space or SpaceType Name': related_name(target_object, "Space or SpaceType Name"),
+        'Schedule Name': optional_name(target_object.schedule()),
         'Multiplier': target_object.multiplier(),
         'End-Use Subcategory': target_object.endUseSubcategory()
     }
@@ -797,21 +754,27 @@ def get_all_steam_equipment_objects_as_dataframe(osm_model: openstudio.model.Mod
     Returns:
     - pd.DataFrame: DataFrame containing information about all steam equipment objects.
     """
-    all_objects_dicts = get_all_steam_equipment_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} steam equipment objects")
-    return all_objects_df
+    return build_dataframe(
+        get_all_steam_equipment_objects_as_dicts(osm_model), "SteamEquipment",
+        sort_by="Name", columns=STEAM_EQUIPMENT_COLUMNS)
 
 
 # ------------------------------------------------------------------------------------------------
 #  ****** Steam Equipment Definition *************************************************************
 # ------------------------------------------------------------------------------------------------
+
+STEAM_EQUIPMENT_DEFINITION_COLUMNS = (
+    'Handle',
+    'Name',
+    'Design Level Calculation Method',
+    'Design Level {W}',
+    'Watts per Space Floor Area {W/m2}',
+    'Watts per Person {W/person}',
+    'Fraction Latent',
+    'Fraction Radiant',
+    'Fraction Lost',
+)
+
 
 def get_steam_equipment_definition_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.SteamEquipmentDefinition = None) -> dict:
     """
@@ -834,11 +797,11 @@ def get_steam_equipment_definition_object_as_dict(osm_model: openstudio.model.Mo
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Design Level Calculation Method': target_object.designLevelCalculationMethod(),
-        'Design Level {W}': target_object.designLevel().get() if target_object.designLevel().is_initialized() else None,
-        'Watts per Space Floor Area {W/m2}': target_object.wattsperSpaceFloorArea().get() if target_object.wattsperSpaceFloorArea().is_initialized() else None,
-        'Watts per Person {W/person}': target_object.wattsperPerson().get() if target_object.wattsperPerson().is_initialized() else None,
+        'Design Level {W}': opt(target_object.designLevel()),
+        'Watts per Space Floor Area {W/m2}': opt(target_object.wattsperSpaceFloorArea()),
+        'Watts per Person {W/person}': opt(target_object.wattsperPerson()),
         'Fraction Latent': target_object.fractionLatent(),
         'Fraction Radiant': target_object.fractionRadiant(),
         'Fraction Lost': target_object.fractionLost(),
@@ -869,20 +832,25 @@ def get_all_steam_equipment_definition_objects_as_dataframe(osm_model: openstudi
     Returns:
     - pd.DataFrame: DataFrame containing information about all steam equipment definition objects.
     """
-    all_objects_dicts = get_all_steam_equipment_definition_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} steam equipment definition objects")
-    return all_objects_df
+    return build_dataframe(
+        get_all_steam_equipment_definition_objects_as_dicts(osm_model), "SteamEquipmentDefinition",
+        sort_by="Name", columns=STEAM_EQUIPMENT_DEFINITION_COLUMNS)
 
 # ------------------------------------------------------------------------------------------------
 #  ****** Other Equipment ************************************************************************
 # ------------------------------------------------------------------------------------------------
+
+
+OTHER_EQUIPMENT_COLUMNS = (
+    'Handle',
+    'Name',
+    'Other Equipment Definition Name',
+    'Space or SpaceType Name',
+    'Schedule Name',
+    'Multiplier',
+    'Fuel Type',
+    'End-Use Subcategory',
+)
 
 
 def get_other_equipment_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.OtherEquipment = None) -> dict:
@@ -906,10 +874,10 @@ def get_other_equipment_object_as_dict(osm_model: openstudio.model.Model, handle
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Other Equipment Definition Name': target_object.definition().name().get() if target_object.definition().name().is_initialized() else None,
-        'Space or SpaceType Name': target_object.spaceType().get().name().get() if target_object.spaceType().is_initialized() else (target_object.space().get().name().get() if target_object.space().is_initialized() else None),
-        'Schedule Name': target_object.schedule().get().name().get() if target_object.schedule().is_initialized() else None,
+        'Name': opt(target_object.name()),
+        'Other Equipment Definition Name': related_name(target_object, "Other Equipment Definition Name"),
+        'Space or SpaceType Name': related_name(target_object, "Space or SpaceType Name"),
+        'Schedule Name': optional_name(target_object.schedule()),
         'Multiplier': target_object.multiplier(),
         'Fuel Type': target_object.fuelType(),
         'End-Use Subcategory': target_object.endUseSubcategory()
@@ -940,20 +908,26 @@ def get_all_other_equipment_objects_as_dataframe(osm_model: openstudio.model.Mod
     Returns:
     - pd.DataFrame: DataFrame containing information about all other equipment objects.
     """
-    all_objects_dicts = get_all_other_equipment_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} other equipment objects")
-    return all_objects_df
+    return build_dataframe(
+        get_all_other_equipment_objects_as_dicts(osm_model), "OtherEquipment",
+        sort_by="Name", columns=OTHER_EQUIPMENT_COLUMNS)
 
 # ------------------------------------------------------------------------------------------------
 #  ****** Other Equipment Definition *************************************************************
 # ------------------------------------------------------------------------------------------------
+
+
+OTHER_EQUIPMENT_DEFINITION_COLUMNS = (
+    'Handle',
+    'Name',
+    'Design Level Calculation Method',
+    'Design Level {W}',
+    'Watts per Space Floor Area {W/m2}',
+    'Watts per Person {W/person}',
+    'Fraction Latent',
+    'Fraction Radiant',
+    'Fraction Lost',
+)
 
 
 def get_other_equipment_definition_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.OtherEquipmentDefinition = None) -> dict:
@@ -977,11 +951,11 @@ def get_other_equipment_definition_object_as_dict(osm_model: openstudio.model.Mo
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Design Level Calculation Method': target_object.designLevelCalculationMethod(),
-        'Design Level {W}': target_object.designLevel().get() if target_object.designLevel().is_initialized() else None,
-        'Watts per Space Floor Area {W/m2}': target_object.wattsperSpaceFloorArea().get() if target_object.wattsperSpaceFloorArea().is_initialized() else None,
-        'Watts per Person {W/person}': target_object.wattsperPerson().get() if target_object.wattsperPerson().is_initialized() else None,
+        'Design Level {W}': opt(target_object.designLevel()),
+        'Watts per Space Floor Area {W/m2}': opt(target_object.wattsperSpaceFloorArea()),
+        'Watts per Person {W/person}': opt(target_object.wattsperPerson()),
         'Fraction Latent': target_object.fractionLatent(),
         'Fraction Radiant': target_object.fractionRadiant(),
         'Fraction Lost': target_object.fractionLost(),
@@ -1012,21 +986,23 @@ def get_all_other_equipment_definition_objects_as_dataframe(osm_model: openstudi
     Returns:
     - pd.DataFrame: DataFrame containing information about all other equipment definition objects.
     """
-    all_objects_dicts = get_all_other_equipment_definition_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} other equipment definition objects")
-    return all_objects_df
+    return build_dataframe(
+        get_all_other_equipment_definition_objects_as_dicts(osm_model), "OtherEquipmentDefinition",
+        sort_by="Name", columns=OTHER_EQUIPMENT_DEFINITION_COLUMNS)
 
 
 # ------------------------------------------------------------------------------------------------
 #  ****** Water Use Equipment ********************************************************************
 # ------------------------------------------------------------------------------------------------
+
+
+WATER_USE_EQUIPMENT_COLUMNS = (
+    'Handle',
+    'Name',
+    'Water Use Equipment Definition Name',
+    'Space Name',
+    'Flow Rate Fraction Schedule Name',
+)
 
 
 def get_water_use_equipment_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.WaterUseEquipment = None) -> dict:
@@ -1050,10 +1026,10 @@ def get_water_use_equipment_object_as_dict(osm_model: openstudio.model.Model, ha
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Water Use Equipment Definition Name': target_object.definition().name().get() if target_object.definition().name().is_initialized() else None,
-        'Space Name': target_object.space().get().name().get() if target_object.space().is_initialized() else None,
-        'Flow Rate Fraction Schedule Name': target_object.flowRateFractionSchedule().get().name().get() if target_object.flowRateFractionSchedule().is_initialized() else None
+        'Name': opt(target_object.name()),
+        'Water Use Equipment Definition Name': related_name(target_object, "Water Use Equipment Definition Name"),
+        'Space Name': optional_name(target_object.space()),
+        'Flow Rate Fraction Schedule Name': optional_name(target_object.flowRateFractionSchedule())
     }
 
     return object_dict
@@ -1081,20 +1057,24 @@ def get_all_water_use_equipment_objects_as_dataframe(osm_model: openstudio.model
     Returns:
     - pd.DataFrame: DataFrame containing information about all water use equipment objects.
     """
-    all_objects_dicts = get_all_water_use_equipment_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} water use equipment objects")
-    return all_objects_df
+    return build_dataframe(
+        get_all_water_use_equipment_objects_as_dicts(osm_model), "WaterUseEquipment",
+        sort_by="Name", columns=WATER_USE_EQUIPMENT_COLUMNS)
 
 # ------------------------------------------------------------------------------------------------
 #  ****** Water Use Equipment Definition *********************************************************
 # ------------------------------------------------------------------------------------------------
+
+
+WATER_USE_EQUIPMENT_DEFINITION_COLUMNS = (
+    'Handle',
+    'Name',
+    'End-Use Subcategory',
+    'Peak Flow Rate {m3/s}',
+    'Target Temperature Schedule Name',
+    'Sensible Fraction Schedule Name',
+    'Latent Fraction Schedule Name',
+)
 
 
 def get_water_use_equipment_definition_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.WaterUseEquipmentDefinition = None) -> dict:
@@ -1118,12 +1098,12 @@ def get_water_use_equipment_definition_object_as_dict(osm_model: openstudio.mode
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'End-Use Subcategory': target_object.endUseSubcategory(),
         'Peak Flow Rate {m3/s}': target_object.peakFlowRate(),
-        'Target Temperature Schedule Name': target_object.targetTemperatureSchedule().get().name().get() if target_object.targetTemperatureSchedule().is_initialized() else None,
-        'Sensible Fraction Schedule Name': target_object.sensibleFractionSchedule().get().name().get() if target_object.sensibleFractionSchedule().is_initialized() else None,
-        'Latent Fraction Schedule Name': target_object.latentFractionSchedule().get().name().get() if target_object.latentFractionSchedule().is_initialized() else None
+        'Target Temperature Schedule Name': optional_name(target_object.targetTemperatureSchedule()),
+        'Sensible Fraction Schedule Name': optional_name(target_object.sensibleFractionSchedule()),
+        'Latent Fraction Schedule Name': optional_name(target_object.latentFractionSchedule())
     }
 
     return object_dict
@@ -1151,21 +1131,31 @@ def get_all_water_use_equipment_definition_objects_as_dataframe(osm_model: opens
     Returns:
     - pd.DataFrame: DataFrame containing information about all water use equipment definition objects.
     """
-    all_objects_dicts = get_all_water_use_equipment_definition_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} water use equipment definition objects")
-    return all_objects_df
+    return build_dataframe(
+        get_all_water_use_equipment_definition_objects_as_dicts(osm_model), "WaterUseEquipmentDefinition",
+        sort_by="Name", columns=WATER_USE_EQUIPMENT_DEFINITION_COLUMNS)
 
 
 # ------------------------------------------------------------------------------------------------
 #  ****** Space Infiltration Design Flow Rate ****************************************************
 # ------------------------------------------------------------------------------------------------
+
+
+SPACE_INFILTRATION_DESIGN_FLOWRATE_COLUMNS = (
+    'Handle',
+    'Name',
+    'Space or SpaceType Name',
+    'Schedule Name',
+    'Design Flow Rate Calculation Method',
+    'Design Flow Rate {m3/s}',
+    'Flow per Space Floor Area {m3/s-m2}',
+    'Flow per Exterior Surface Area {m3/s-m2}',
+    'Air Changes per Hour {1/hr}',
+    'Constant Term Coefficient',
+    'Temperature Term Coefficient',
+    'Velocity Term Coefficient',
+    'Velocity Squared Term Coefficient',
+)
 
 
 def get_space_infiltration_design_flowrate_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.SpaceInfiltrationDesignFlowRate = None) -> dict:
@@ -1189,15 +1179,20 @@ def get_space_infiltration_design_flowrate_object_as_dict(osm_model: openstudio.
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Space or SpaceType Name': target_object.spaceType().get().name().get() if target_object.spaceType().is_initialized() else (target_object.space().get().name().get() if target_object.space().is_initialized() else None),
-        'Schedule Name': target_object.schedule().get().name().get() if target_object.schedule().is_initialized() else None,
+        'Name': opt(target_object.name()),
+        'Space or SpaceType Name': related_name(target_object, "Space or SpaceType Name"),
+        'Schedule Name': optional_name(target_object.schedule()),
         'Design Flow Rate Calculation Method': target_object.designFlowRateCalculationMethod(),
-        'Design Flow Rate {m3/s}': target_object.designFlowRate().get() if target_object.designFlowRate().is_initialized() else None,
-        'Flow per Space Floor Area {m3/s-m2}': target_object.flowperSpaceFloorArea().get() if target_object.flowperSpaceFloorArea().is_initialized() else None,
-        'Flow per Exterior Surface Area {m3/s-m2}': target_object.flowperExteriorSurfaceArea().get() if target_object.flowperExteriorSurfaceArea().is_initialized()
-        else (target_object.flowperExteriorWallArea().get() if target_object.flowperExteriorWallArea().is_initialized() else None),
-        'Air Changes per Hour {1/hr}': target_object.airChangesperHour().get() if target_object.airChangesperHour().is_initialized() else None,
+        'Design Flow Rate {m3/s}': opt(target_object.designFlowRate()),
+        'Flow per Space Floor Area {m3/s-m2}': opt(target_object.flowperSpaceFloorArea()),
+        'Flow per Exterior Surface Area {m3/s-m2}': (
+            opt(target_object.flowperExteriorSurfaceArea())
+            if target_object.flowperExteriorSurfaceArea().is_initialized()
+            else opt(target_object.flowperExteriorWallArea())
+            if target_object.flowperExteriorWallArea().is_initialized()
+            else None
+        ),
+        'Air Changes per Hour {1/hr}': opt(target_object.airChangesperHour()),
         'Constant Term Coefficient': target_object.constantTermCoefficient(),
         'Temperature Term Coefficient': target_object.temperatureTermCoefficient(),
         'Velocity Term Coefficient': target_object.velocityTermCoefficient(),
@@ -1229,20 +1224,25 @@ def get_all_space_infiltration_design_flowrate_objects_as_dataframe(osm_model: o
     Returns:
     - pd.DataFrame: DataFrame containing information about all space infiltration objects.
     """
-    all_objects_dicts = get_all_space_infiltration_design_flowrate_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} space infiltration design flow rate objects")
-    return all_objects_df
+    return build_dataframe(
+        get_all_space_infiltration_design_flowrate_objects_as_dicts(osm_model), "SpaceInfiltrationDesignFlowRate",
+        sort_by="Name", columns=SPACE_INFILTRATION_DESIGN_FLOWRATE_COLUMNS)
 
 # ------------------------------------------------------------------------------------------------
 #  ****** Design Specification Outdoor Air *******************************************************
 # ------------------------------------------------------------------------------------------------
+
+
+DESIGN_SPECIFICATION_OUTDOOR_AIR_COLUMNS = (
+    'Handle',
+    'Name',
+    'Outdoor Air Method',
+    'Outdoor Air Flow per Person {m3/s-person}',
+    'Outdoor Air Flow per Floor Area {m3/s-m2}',
+    'Outdoor Air Flow Rate {m3/s}',
+    'Outdoor Air Flow Air Changes per Hour {1/hr}',
+    'Outdoor Air Flow Rate Fraction Schedule Name',
+)
 
 
 def get_design_specification_outdoor_air_object_as_dict(osm_model: openstudio.model.Model, handle: str = None, name: str = None, _object_ref: openstudio.model.DesignSpecificationOutdoorAir = None) -> dict:
@@ -1266,13 +1266,13 @@ def get_design_specification_outdoor_air_object_as_dict(osm_model: openstudio.mo
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()),
         'Outdoor Air Method': target_object.outdoorAirMethod(),
         'Outdoor Air Flow per Person {m3/s-person}': target_object.outdoorAirFlowperPerson(),
         'Outdoor Air Flow per Floor Area {m3/s-m2}': target_object.outdoorAirFlowperFloorArea(),
         'Outdoor Air Flow Rate {m3/s}': target_object.outdoorAirFlowRate(),
         'Outdoor Air Flow Air Changes per Hour {1/hr}': target_object.outdoorAirFlowAirChangesperHour(),
-        'Outdoor Air Flow Rate Fraction Schedule Name': target_object.outdoorAirFlowRateFractionSchedule().get().name().get() if target_object.outdoorAirFlowRateFractionSchedule().is_initialized() else None
+        'Outdoor Air Flow Rate Fraction Schedule Name': optional_name(target_object.outdoorAirFlowRateFractionSchedule())
     }
 
     return object_dict
@@ -1300,13 +1300,6 @@ def get_all_design_specification_outdoor_air_objects_as_dataframe(osm_model: ope
     Returns:
     - pd.DataFrame: DataFrame containing information about all design specification outdoor air objects.
     """
-    all_objects_dicts = get_all_design_specification_outdoor_air_objects_as_dicts(osm_model)
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    if not all_objects_df.empty:
-        if 'Name' in all_objects_df.columns:
-            all_objects_df = all_objects_df.sort_values(
-                by='Name', ascending=True, na_position='first').reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} design specification outdoor air objects")
-    return all_objects_df
+    return build_dataframe(
+        get_all_design_specification_outdoor_air_objects_as_dicts(osm_model), "DesignSpecificationOutdoorAir",
+        sort_by="Name", columns=DESIGN_SPECIFICATION_OUTDOOR_AIR_COLUMNS)

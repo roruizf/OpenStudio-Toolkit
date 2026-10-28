@@ -4,12 +4,39 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import connection_node_name, opt, optional_name, related_name
+from openstudio_toolkit.osm_objects._base import build_dataframe
+
 # Configure logger
 logger = logging.getLogger(__name__)
+
 
 #-------------------
 #--- OS:AirLoopHVAC
 #-------------------
+AIR_LOOP_HVAC_COLUMNS = (
+    'Handle',
+    'Name',
+    'Controller List Name',
+    'Availability Schedule',
+    'Availability Manager List Name',
+    'Design Supply Air Flow Rate {m3/s}',
+    'Design Return Air Flow Fraction of Supply Air Flow',
+    'Branch List Name',
+    'Connector List Name',
+    'Supply Side Inlet Node Name',
+    'Demand Side Outlet Node Name',
+    'Demand Side Inlet Node A',
+    'Supply Side Outlet Node A',
+    'Demand Side Inlet Node B',
+    'Supply Side Outlet Node B',
+    'Return Air Bypass Flow Temperature Setpoint Schedule Name',
+    'Demand Mixer Name',
+    'Demand Splitter A Name',
+    'Demand Splitter B Name',
+    'Supply Splitter Name',
+)
+
 def get_air_loop_hvac_object_as_dict(
     osm_model: openstudio.model.Model, 
     handle: str | None = None, 
@@ -37,7 +64,7 @@ def get_air_loop_hvac_object_as_dict(
     if handle is not None:
         osm_object = osm_model.getAirLoopHVAC(
             handle)
-        if osm_object is None:
+        if not osm_object:
             logger.warning(
                 f"No Air Loop HVAC  object found with the handle: {handle}")
             return {}
@@ -50,22 +77,22 @@ def get_air_loop_hvac_object_as_dict(
                 f"No Air Loop HVAC  object found with the name: {name}")
             return {}
 
-    target_object = osm_object.get()
+    target_object = opt(osm_object)
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+        'Name': opt(target_object.name()) if target_object.name().is_initialized() else None,
         'Controller List Name': None,
-        'Availability Schedule': target_object.availabilitySchedule().name().get() if target_object.availabilitySchedule().name().is_initialized() else None,
+        'Availability Schedule': opt(target_object.availabilitySchedule().name()) if target_object.availabilitySchedule().name().is_initialized() else None,
         'Availability Manager List Name': None,
-        'Design Supply Air Flow Rate {m3/s}': target_object.designSupplyAirFlowRate().get() if not target_object.isDesignSupplyAirFlowRateAutosized() else 'Autosize',
+        'Design Supply Air Flow Rate {m3/s}': 'Autosize' if target_object.isDesignSupplyAirFlowRateAutosized() else opt(target_object.designSupplyAirFlowRate()),
         'Design Return Air Flow Fraction of Supply Air Flow': target_object.designReturnAirFlowFractionofSupplyAirFlow(),
         'Branch List Name': None,
         'Connector List Name': None,
-        'Supply Side Inlet Node Name': target_object.supplyInletNode().nameString(),
-        'Demand Side Outlet Node Name': target_object.demandOutletNode().nameString(),
-        'Demand Side Inlet Node A': target_object.demandInletNode().nameString(),
-        'Supply Side Outlet Node A': target_object.supplyOutletNode().nameString(),
+        'Supply Side Inlet Node Name': connection_node_name(target_object, "Supply Side Inlet Node Name"),
+        'Demand Side Outlet Node Name': connection_node_name(target_object, "Demand Side Outlet Node Name"),
+        'Demand Side Inlet Node A': connection_node_name(target_object, "Demand Side Inlet Node A"),
+        'Supply Side Outlet Node A': connection_node_name(target_object, "Supply Side Outlet Node A"),
         'Demand Side Inlet Node B': None,
         'Supply Side Outlet Node B': None,
         'Return Air Bypass Flow Temperature Setpoint Schedule Name': None,
@@ -114,21 +141,25 @@ def get_all_air_loop_hvac_objects_as_dataframe(osm_model: openstudio.model.Model
 
     all_objects_dicts = get_all_air_loop_hvac_objects_as_dicts(osm_model)
 
-    # Create a DataFrame of all spaces.
-    all_air_loop_hvac_df = pd.DataFrame(all_objects_dicts)
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_air_loop_hvac_df = all_air_loop_hvac_df.sort_values(
-        by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(
-        f"The OSM model contains {all_air_loop_hvac_df.shape[0]} Air Loop HVAC objects")
-
-    return all_air_loop_hvac_df
+    return build_dataframe(
+        all_objects_dicts, "Air Loop HVAC", sort_by="Name",
+        columns=AIR_LOOP_HVAC_COLUMNS)
 
 #------------------------------------
 #--- OS:AirLoopHVAC:OutdoorAirSystem
 #------------------------------------
+
+AIR_LOOP_HVAC_OUTDOOR_AIR_SYSTEM_COLUMNS = (
+    'Handle',
+    'Name',
+    'Controller Name',
+    'Outdoor Air Equipment List Name',
+    'Availability Manager List Name',
+    'Mixed Air Node Name',
+    'Outdoor Air Stream Node Name',
+    'Relief Air Stream Node Name',
+    'Return Air Stream Node Name',
+)
 
 def get_air_loop_hvac_outdoor_air_system_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -155,7 +186,7 @@ def get_air_loop_hvac_outdoor_air_system_object_as_dict(
 
     if handle is not None:
         osm_object = osm_model.getAirLoopHVACOutdoorAirSystem(handle)
-        if osm_object is None:
+        if not osm_object:
             logger.warning(
                 f"No AirLoopHVAC:OutdoorAirSystem object found with the handle: {handle}")
             return {}
@@ -167,12 +198,12 @@ def get_air_loop_hvac_outdoor_air_system_object_as_dict(
                 f"No AirLoopHVAC:OutdoorAirSystem object found with the name: {name}")
             return {}
 
-    target_object = osm_object.get()
+    target_object = opt(osm_object)
 
     object_dict = {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else None,
-        'Controller Name': target_object.getControllerOutdoorAir().name().get() if target_object.getControllerOutdoorAir().name().is_initialized() else None,
+        'Name': opt(target_object.name()) if target_object.name().is_initialized() else None,
+        'Controller Name': related_name(target_object, "Controller Name"),
         'Outdoor Air Equipment List Name': None,
         'Availability Manager List Name': None,
         'Mixed Air Node Name': None,
@@ -219,20 +250,56 @@ def get_all_air_loop_hvac_outdoor_air_system_objects_as_dataframe(osm_model: ope
 
     all_objects_dicts = get_all_air_loop_hvac_outdoor_air_system_objects_as_dicts(osm_model)
 
-    # Create a DataFrame of all AirLoopHVAC:OutdoorAirSystem objects.
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_objects_df = all_objects_df.sort_values(
-        by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} AirLoopHVAC:OutdoorAirSystem objects")
-
-    return all_objects_df
+    return build_dataframe(
+        all_objects_dicts, "AirLoopHVAC:OutdoorAirSystem", sort_by="Name",
+        columns=AIR_LOOP_HVAC_OUTDOOR_AIR_SYSTEM_COLUMNS)
 
 #---------------------------------
 #--- OS:AirLoopHVAC:UnitarySystem
 #---------------------------------
+
+AIR_LOOP_HVAC_UNITARY_SYSTEM_COLUMNS = (
+    'Handle',
+    'Name',
+    'Control Type',
+    'Controlling Zone or Thermostat Location',
+    'Dehumidification Control Type',
+    'Availability Schedule Name',
+    'Air Inlet Node Name',
+    'Air Outlet Node Name',
+    'Supply Fan Name',
+    'Fan Placement',
+    'Supply Air Fan Operating Mode Schedule Name',
+    'Heating Coil Name',
+    'DX Heating Coil Sizing Ratio',
+    'Cooling Coil Name',
+    'Use DOAS DX Cooling Coil',
+    'DOAS DX Cooling Coil Leaving Minimum Air Temperature {C}',
+    'Latent Load Control',
+    'Supplemental Heating Coil Name',
+    'Supply Air Flow Rate Method During Cooling Operation',
+    'Supply Air Flow Rate During Cooling Operation {m3/s}',
+    'Supply Air Flow Rate Per Floor Area During Cooling Operation {m3/s-m2}',
+    'Fraction of Autosized Design Cooling Supply Air Flow Rate',
+    'Design Supply Air Flow Rate Per Unit of Capacity During Cooling Operation {m3/s-W}',
+    'Supply Air Flow Rate Method During Heating Operation',
+    'Supply Air Flow Rate During Heating Operation {m3/s}',
+    'Supply Air Flow Rate Per Floor Area during Heating Operation {m3/s-m2}',
+    'Fraction of Autosized Design Heating Supply Air Flow Rate',
+    'Design Supply Air Flow Rate Per Unit of Capacity During Heating Operation {m3/s-W}',
+    'Supply Air Flow Rate Method When No Cooling or Heating is Required',
+    'Supply Air Flow Rate When No Cooling or Heating is Required {m3/s}',
+    'Supply Air Flow Rate Per Floor Area When No Cooling or Heating is Required {m3/s-m2}',
+    'Fraction of Autosized Design Cooling Supply Air Flow Rate When No Cooling or Heating is Required',
+    'Fraction of Autosized Design Heating Supply Air Flow Rate When No Cooling or Heating is Required',
+    'Design Supply Air Flow Rate Per Unit of Capacity During Cooling Operation When No Cooling or Heating is Required {m3/s-W}',
+    'Design Supply Air Flow Rate Per Unit of Capacity During Heating Operation When No Cooling or Heating is Required {m3/s-W}',
+    'Maximum Supply Air Temperature {C}',
+    'Maximum Outdoor Dry-Bulb Temperature for Supplemental Heater Operation {C}',
+    'Outdoor Dry-Bulb Temperature Sensor Node Name',
+    'Ancilliary On-Cycle Electric Power {W}',
+    'Ancilliary Off-Cycle Electric Power {W}',
+)
 
 def get_air_loop_hvac_unitary_system_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -259,7 +326,7 @@ def get_air_loop_hvac_unitary_system_object_as_dict(
 
     if handle is not None:
         osm_object = osm_model.getAirLoopHVACUnitarySystem(handle)
-        if osm_object is None:
+        if not osm_object:
             logger.warning(
                 f"No AirLoopHVAC:UnitarySystem object found with the handle: {handle}")
             return {}
@@ -271,34 +338,34 @@ def get_air_loop_hvac_unitary_system_object_as_dict(
                 f"No AirLoopHVAC:UnitarySystem object found with the name: {name}")
             return {}
 
-    target_object = osm_object.get()
+    target_object = opt(osm_object)
 
     object_dict = {
     'Handle': str(target_object.handle()),
-    'Name': target_object.name().get() if target_object.name().is_initialized() else None,
+    'Name': opt(target_object.name()) if target_object.name().is_initialized() else None,
     "Control Type": target_object.controlType(),
-    "Controlling Zone or Thermostat Location": target_object.controllingZoneorThermostatLocation().get().nameString(),
+    "Controlling Zone or Thermostat Location": opt(target_object.controllingZoneorThermostatLocation()).nameString() if target_object.controllingZoneorThermostatLocation().is_initialized() else None,
     "Dehumidification Control Type": target_object.dehumidificationControlType(),
-    'Availability Schedule Name': target_object.availabilitySchedule().get().name().get() if target_object.availabilitySchedule().get().name().is_initialized() else None,
-    "Air Inlet Node Name": target_object.inletNode().get().name().get() if target_object.inletNode().get().name().is_initialized() else None,
-    "Air Outlet Node Name": target_object.outletNode().get().name().get() if target_object.outletNode().get().name().is_initialized() else None,
-    "Supply Fan Name": target_object.supplyFan().get().name().get() if target_object.supplyFan().get().name().is_initialized() else None,
-    "Fan Placement": target_object.fanPlacement().get(),
-    "Supply Air Fan Operating Mode Schedule Name": target_object.supplyAirFanOperatingModeSchedule().get().name().get() if target_object.supplyAirFanOperatingModeSchedule().get().name().is_initialized() else None,
-    "Heating Coil Name": target_object.heatingCoil().get().name().get() if target_object.heatingCoil().get().name().is_initialized() else None,
+    'Availability Schedule Name': optional_name(target_object.availabilitySchedule()),
+    "Air Inlet Node Name": optional_name(target_object.inletNode()),
+    "Air Outlet Node Name": optional_name(target_object.outletNode()),
+    "Supply Fan Name": optional_name(target_object.supplyFan()),
+    "Fan Placement": opt(target_object.fanPlacement()),
+    "Supply Air Fan Operating Mode Schedule Name": optional_name(target_object.supplyAirFanOperatingModeSchedule()),
+    "Heating Coil Name": optional_name(target_object.heatingCoil()),
     "DX Heating Coil Sizing Ratio": target_object.dXHeatingCoilSizingRatio(),
-    "Cooling Coil Name": target_object.coolingCoil().get().name().get() if target_object.coolingCoil().get().name().is_initialized() else None,
+    "Cooling Coil Name": optional_name(target_object.coolingCoil()),
     "Use DOAS DX Cooling Coil": target_object.useDOASDXCoolingCoil(),
     "DOAS DX Cooling Coil Leaving Minimum Air Temperature {C}": target_object.useDOASDXCoolingCoil(),
     "Latent Load Control": target_object.latentLoadControl(),
-    "Supplemental Heating Coil Name": target_object.supplementalHeatingCoil().get().name().get() if target_object.supplementalHeatingCoil().get().name().is_initialized() else None,
+    "Supplemental Heating Coil Name": optional_name(target_object.supplementalHeatingCoil()),
     "Supply Air Flow Rate Method During Cooling Operation": target_object.supplyAirFlowRateMethodDuringCoolingOperation(),
-    "Supply Air Flow Rate During Cooling Operation {m3/s}": target_object.supplyAirFlowRateDuringCoolingOperation().get() if not target_object.isSupplyAirFlowRateDuringCoolingOperationAutosized() else 'Autosize',    
-    "Supply Air Flow Rate Per Floor Area During Cooling Operation {m3/s-m2}": target_object.supplyAirFlowRatePerFloorAreaDuringCoolingOperation().get() if target_object.supplyAirFlowRatePerFloorAreaDuringCoolingOperation().is_initialized() else None,    
+    "Supply Air Flow Rate During Cooling Operation {m3/s}": 'Autosize' if target_object.isSupplyAirFlowRateDuringCoolingOperationAutosized() else opt(target_object.supplyAirFlowRateDuringCoolingOperation()),    
+    "Supply Air Flow Rate Per Floor Area During Cooling Operation {m3/s-m2}": opt(target_object.supplyAirFlowRatePerFloorAreaDuringCoolingOperation()) if target_object.supplyAirFlowRatePerFloorAreaDuringCoolingOperation().is_initialized() else None,    
     "Fraction of Autosized Design Cooling Supply Air Flow Rate": None,
     "Design Supply Air Flow Rate Per Unit of Capacity During Cooling Operation {m3/s-W}": None,
     "Supply Air Flow Rate Method During Heating Operation": target_object.supplyAirFlowRateMethodDuringHeatingOperation(),
-    "Supply Air Flow Rate During Heating Operation {m3/s}": target_object.supplyAirFlowRateDuringHeatingOperation().get() if not target_object.isSupplyAirFlowRateDuringHeatingOperationAutosized() else 'Autosize',
+    "Supply Air Flow Rate During Heating Operation {m3/s}": 'Autosize' if target_object.isSupplyAirFlowRateDuringHeatingOperationAutosized() else opt(target_object.supplyAirFlowRateDuringHeatingOperation()),
     "Supply Air Flow Rate Per Floor Area during Heating Operation {m3/s-m2}": None,
     "Fraction of Autosized Design Heating Supply Air Flow Rate": None,
     "Design Supply Air Flow Rate Per Unit of Capacity During Heating Operation {m3/s-W}": None,
@@ -309,7 +376,7 @@ def get_air_loop_hvac_unitary_system_object_as_dict(
     "Fraction of Autosized Design Heating Supply Air Flow Rate When No Cooling or Heating is Required": None,
     "Design Supply Air Flow Rate Per Unit of Capacity During Cooling Operation When No Cooling or Heating is Required {m3/s-W}": None,
     "Design Supply Air Flow Rate Per Unit of Capacity During Heating Operation When No Cooling or Heating is Required {m3/s-W}": None,
-    "Maximum Supply Air Temperature {C}": target_object.maximumSupplyAirTemperature().get(),
+    "Maximum Supply Air Temperature {C}": opt(target_object.maximumSupplyAirTemperature()),
     "Maximum Outdoor Dry-Bulb Temperature for Supplemental Heater Operation {C}": target_object.maximumOutdoorDryBulbTemperatureforSupplementalHeaterOperation(),
     "Outdoor Dry-Bulb Temperature Sensor Node Name": None,
     "Ancilliary On-Cycle Electric Power {W}": target_object.ancilliaryOnCycleElectricPower(),
@@ -355,13 +422,6 @@ def get_all_air_loop_hvac_unitary_system_objects_as_dataframe(osm_model: openstu
 
     all_objects_dicts = get_all_air_loop_hvac_unitary_system_objects_as_dict(osm_model)
 
-    # Create a DataFrame of all AirLoopHVAC:UnitarySystem objects.
-    all_objects_df = pd.DataFrame(all_objects_dicts)
-
-    # Sort the DataFrame alphabetically by the Name column and reset indexes
-    all_objects_df = all_objects_df.sort_values(
-        by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"The OSM model contains {all_objects_df.shape[0]} AirLoopHVAC:UnitarySystem objects")
-
-    return all_objects_df
+    return build_dataframe(
+        all_objects_dicts, "AirLoopHVAC:UnitarySystem", sort_by="Name",
+        columns=AIR_LOOP_HVAC_UNITARY_SYSTEM_COLUMNS)

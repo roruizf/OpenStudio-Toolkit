@@ -4,6 +4,8 @@ from typing import Any
 import openstudio
 import pandas as pd
 
+from openstudio_toolkit._sdk import opt
+from openstudio_toolkit.osm_objects._base import build_dataframe
 from openstudio_toolkit.utils import helpers
 
 # Configure logger
@@ -12,6 +14,15 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------
 #  ***** OS:Output:Variable ************************
 # --------------------------------------------------
+
+OUTPUT_VARIABLE_COLUMNS = (
+    'Handle',
+    'Name',
+    'Key Value',
+    'Variable Name',
+    'Reporting Frequency',
+)
+
 
 def get_output_variable_object_as_dict(
     osm_model: openstudio.model.Model, 
@@ -39,7 +50,7 @@ def get_output_variable_object_as_dict(
 
     return {
         'Handle': str(target_object.handle()),
-        'Name': target_object.name().get() if target_object.name().is_initialized() else "Unnamed Output Variable",
+        'Name': opt(target_object.name()) if target_object.name().is_initialized() else "Unnamed Output Variable",
         'Key Value': target_object.keyValue(), 
         'Variable Name': target_object.variableName(), 
         'Reporting Frequency': target_object.reportingFrequency()
@@ -68,13 +79,6 @@ def get_all_output_variable_objects_as_dataframe(osm_model: openstudio.model.Mod
     Returns:
     - pd.DataFrame: A DataFrame containing all Output:Variable attributes.
     """
-    all_objects_dicts = get_all_output_variable_objects_as_dicts(osm_model)
-    df = pd.DataFrame(all_objects_dicts)
-
-    if df.empty:
-        df = pd.DataFrame(columns=['Handle', 'Name', 'Key Value', 'Variable Name', 'Reporting Frequency'])
-    elif 'Name' in df.columns:
-        df = df.sort_values(by='Name', ascending=True).reset_index(drop=True)
-
-    logger.info(f"Retrieved {len(df)} Output:Variable objects from the model.")
-    return df
+    return build_dataframe(
+        get_all_output_variable_objects_as_dicts(osm_model), "OutputVariable",
+        sort_by="Name", columns=OUTPUT_VARIABLE_COLUMNS)

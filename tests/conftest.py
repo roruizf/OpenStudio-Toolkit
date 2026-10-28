@@ -7,6 +7,7 @@ since model loading via VersionTranslator is expensive (~1-2s per file).
 from __future__ import annotations
 
 import os
+import shutil
 from pathlib import Path
 
 import pytest
@@ -62,3 +63,13 @@ def empty_model():
     import openstudio
 
     return openstudio.model.Model()
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip (visibly) tests that need the OpenStudio CLI when it is not installed, e.g. on CI."""
+    if shutil.which("openstudio"):
+        return
+    skip = pytest.mark.skip(reason="OpenStudio CLI not on PATH (Ruby measures cannot run)")
+    for item in items:
+        if "openstudio_cli" in item.keywords:
+            item.add_marker(skip)
