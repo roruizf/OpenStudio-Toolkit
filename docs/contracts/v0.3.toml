@@ -83,42 +83,65 @@ name = "diff_rows"
 status = "implemented"
 
 [[api]]
+item = "7"
+tier = "core"
+module = "views.verification"
+name = "write_report"
+status = "implemented"
+# Visible form (approved by Roberto, 2026-10-27): one self-contained HTML file from a list of pairs;
+# labels in English (default), Spanish or French; Space / Thermal Zone / System per change. The
+# artifact schemas below are unchanged.
+
+[[api]]
+item = "7"
+tier = "core"
+module = "views.verification"
+name = "ReportPair"
+status = "implemented"
+# Input of write_report: parent, child, mapping, names shown, by, tolerance.
+
+[[api]]
 item = "4"
 tier = "volume"
 module = "transforms.apply"
 name = "apply_mapping"
-status = "planned"
+status = "implemented"
+# Approved by Roberto (2026-10-28, "ok 4"): r2f base_model_space_loads.py contract; existing="refuse" (default)
+# or "update" (one unshared load per Space: its value only); a load from the space type is always refused.
 
 [[api]]
 item = "8"
 tier = "volume"
 module = "results"
 name = "zone_sizes"
-status = "planned"
+status = "implemented"
+# Approved by Roberto (2026-10-28): read-only eplusout.sql -> polars; sizes from ZoneSizes/SystemSizes (full
+# precision), unmet hours and end uses from the tabular report with the SQL's own units; optional units=
+# conversion at extraction (results.UNIT_FACTORS), EnergyPlus units by default.
 
 [[api]]
 item = "8"
 tier = "volume"
 module = "results"
 name = "system_sizes"
-status = "planned"
+status = "implemented"
 
 [[api]]
 item = "8"
 tier = "volume"
 module = "results"
 name = "unmet_hours"
-status = "planned"
+status = "implemented"
 
 [[api]]
 item = "8"
 tier = "volume"
 module = "results"
 name = "end_uses"
-status = "planned"
+status = "implemented"
 
 # ---------------------------------------------------------------------------
-# Verification artifact (item 7). Fixed schema; the visual form (Excel/HTML) is open.
+# Verification artifact (item 7). Fixed schema; the visible form is write_report (HTML).
 # ---------------------------------------------------------------------------
 
 [artifact.compare]
@@ -144,7 +167,9 @@ entry_point = "openstudio-toolkit"
 module = "cli"
 commands = ["dump", "apply", "compare", "diff", "results"]
 tier = "volume"
-status = "planned"
+status = "implemented"
+# Approved by Roberto (2026-10-28, "ok 9"): argparse; JSON mapping; CSV out; diff --report writes the HTML report;
+# exit 0 match, 1 does not match / apply refused, 2 usage. Usage guide: docs/VERIFICATION-GUIDE.md.
 
 # ---------------------------------------------------------------------------
 # New curated families (item 3b, volume). IDD object types.
@@ -154,7 +179,9 @@ status = "planned"
 
 [families]
 tier = "volume"
-status = "planned"
+status = "implemented"
+# Curated readers (2026-10-28): every IDD field, units in the column name, 'Autosize' when autosized,
+# relations and port fields by name (a port field points to an OS:Connection; the view gives its node).
 idd_types = [
     "OS:ThermostatSetpoint:DualSetpoint",
     "OS:WindowMaterial:SimpleGlazingSystem",

@@ -7,7 +7,10 @@ OS:BuildingUnit, OS:Exterior:FuelEquipment(+Definition), OS:Exterior:WaterEquipm
 (OS:ZoneHVAC:TerminalUnit:VariableRefrigerantFlow, each holding its cooling and heating
 DX VRF coils), OS:GasEquipment(+Definition), OS:OtherEquipment(+Definition),
 OS:SteamEquipment(+Definition), OS:ZoneHVAC:UnitHeater,
-OS:AirTerminal:SingleDuct:ParallelPIU:Reheat and OS:Output:Variable.
+OS:AirTerminal:SingleDuct:ParallelPIU:Reheat and OS:Output:Variable; and the item 3b families
+(OS:Boiler:HotWater, OS:Pump:ConstantSpeed, OS:CoolingTower:TwoSpeed, OS:CoolingTower:VariableSpeed,
+OS:Fan:VariableVolume, OS:ZoneHVAC:IdealLoadsAirSystem, OS:ThermostatSetpoint:DualSetpoint,
+OS:WindowMaterial:SimpleGlazingSystem), connected to loops where they have ports.
 
 Why: the osm_objects readers for these families are only exercised with empty models
 today. tests/osm_objects can load this file to check them against real objects.
@@ -164,6 +167,63 @@ def build_model() -> openstudio.model.Model:
     out_vrf.setVariableName("VRF Heat Pump Cooling Electricity Energy")
     out_vrf.setKeyValue("VRF_Outdoor_Unit")
     out_vrf.setReportingFrequency("Monthly")
+
+    # Item 3b families. Plant equipment sits on loops so its port fields resolve to node names.
+    hot_water = openstudio.model.PlantLoop(model)
+    hot_water.setName("Hot_Water_Loop")
+    for label in ["Lead", "Lag"]:
+        boiler = openstudio.model.BoilerHotWater(model)
+        boiler.setName(f"{label}_Boiler")
+        boiler.setNominalCapacity(50000.0 if label == "Lead" else 30000.0)
+        hot_water.addSupplyBranchForComponent(boiler)
+    pump = openstudio.model.PumpConstantSpeed(model)
+    pump.setName("Hot_Water_Pump")
+    pump.setRatedPumpHead(150000.0)
+    pump.addToNode(hot_water.supplyInletNode())
+
+    condenser = openstudio.model.PlantLoop(model)
+    condenser.setName("Condenser_Loop")
+    two_speed = openstudio.model.CoolingTowerTwoSpeed(model)
+    two_speed.setName("Two_Speed_Tower")
+    two_speed.setHighFanSpeedFanPower(600.0)
+    condenser.addSupplyBranchForComponent(two_speed)
+    variable_speed = openstudio.model.CoolingTowerVariableSpeed(model)
+    variable_speed.setName("Variable_Speed_Tower")
+    condenser.addSupplyBranchForComponent(variable_speed)
+    spare_pump = openstudio.model.PumpConstantSpeed(model)
+    spare_pump.setName("Spare_Pump")  # not on a loop: its port fields stay empty
+
+    air_loop = openstudio.model.AirLoopHVAC(model)
+    air_loop.setName("VAV_Air_Loop")
+    for label in ["Supply", "Return"]:
+        fan = openstudio.model.FanVariableVolume(model, always_on)
+        fan.setName(f"{label}_VAV_Fan")
+        fan.setPressureRise(500.0 if label == "Supply" else 250.0)
+        fan.addToNode(air_loop.supplyOutletNode() if label == "Supply" else air_loop.supplyInletNode())
+
+    heating = openstudio.model.ScheduleConstant(model)
+    heating.setName("Heating_Setpoint_Schedule")
+    heating.setValue(21.0)
+    cooling = openstudio.model.ScheduleConstant(model)
+    cooling.setName("Cooling_Setpoint_Schedule")
+    cooling.setValue(24.0)
+    for key, zone in zones.items():
+        label = key.capitalize()
+        thermostat = openstudio.model.ThermostatSetpointDualSetpoint(model)
+        thermostat.setName(f"{label}_Thermostat")
+        thermostat.setHeatingSetpointTemperatureSchedule(heating)
+        thermostat.setCoolingSetpointTemperatureSchedule(cooling)
+        zone.setThermostatSetpointDualSetpoint(thermostat)
+
+        ideal = openstudio.model.ZoneHVACIdealLoadsAirSystem(model)
+        ideal.setName(f"{label}_Ideal_Loads")
+        ideal.addToThermalZone(zone)
+
+    for label, u_factor in [("Double", 1.8), ("Triple", 0.9)]:
+        glazing = openstudio.model.SimpleGlazing(model)
+        glazing.setName(f"{label}_Simple_Glazing")
+        glazing.setUFactor(u_factor)
+        glazing.setSolarHeatGainCoefficient(0.4)
 
     return model
 

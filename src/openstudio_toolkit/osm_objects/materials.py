@@ -7,6 +7,7 @@ import pandas as pd
 
 from openstudio_toolkit._sdk import opt
 from openstudio_toolkit.osm_objects._base import build_dataframe
+from openstudio_toolkit.utils import helpers
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -270,3 +271,75 @@ def get_all_opaque_material_objects_as_dataframe(osm_model: openstudio.model.Mod
     all_opaque_materials_df = all_opaque_materials_df.replace({np.nan: None})
 
     return all_opaque_materials_df
+
+
+# --------------------------------------------------
+#  ***** OS:WindowMaterial:SimpleGlazingSystem ***
+# --------------------------------------------------
+
+WINDOW_MATERIAL_SIMPLE_GLAZING_SYSTEM_COLUMNS = (
+    'Handle',
+    'Name',
+    'U-Factor {W/m2-K}',
+    'Solar Heat Gain Coefficient',
+    'Visible Transmittance',
+)
+
+def get_window_material_simple_glazing_system_object_as_dict(
+    osm_model: openstudio.model.Model,
+    handle: str | None = None,
+    name: str | None = None,
+    _object_ref: openstudio.model.SimpleGlazing | None = None
+) -> dict[str, Any]:
+    """
+    Retrieve attributes of an OS:WindowMaterial:SimpleGlazingSystem from the OpenStudio Model.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.SimpleGlazing, optional): Direct object reference.
+
+    Returns:
+    - Dict[str, Any]: A dictionary with one entry per IDD field (node fields give the node name).
+    """
+    target_object = helpers.fetch_object(
+        osm_model, "SimpleGlazing", handle, name, _object_ref)
+
+    if target_object is None:
+        return {}
+
+    return {
+        'Handle': str(target_object.handle()),
+        'Name': opt(target_object.name()),
+        'U-Factor {W/m2-K}': target_object.uFactor(),
+        'Solar Heat Gain Coefficient': target_object.solarHeatGainCoefficient(),
+        'Visible Transmittance': opt(target_object.visibleTransmittance()),
+    }
+
+def get_all_window_material_simple_glazing_system_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
+    """
+    Retrieve attributes for all OS:WindowMaterial:SimpleGlazingSystem objects in the model.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - List[Dict[str, Any]]: A list of dictionaries, one per object.
+    """
+    all_objects = osm_model.getSimpleGlazings()
+    return [get_window_material_simple_glazing_system_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
+
+def get_all_window_material_simple_glazing_system_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all OS:WindowMaterial:SimpleGlazingSystem objects and organize them into a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: A DataFrame with the columns of WINDOW_MATERIAL_SIMPLE_GLAZING_SYSTEM_COLUMNS.
+    """
+    all_objects_dicts = get_all_window_material_simple_glazing_system_objects_as_dicts(osm_model)
+    return build_dataframe(
+        all_objects_dicts, "WindowMaterial:SimpleGlazingSystem", sort_by="Name", columns=WINDOW_MATERIAL_SIMPLE_GLAZING_SYSTEM_COLUMNS)

@@ -34,7 +34,11 @@ NOT_A_FAMILY = {
 
 
 # IDD types whose OpenStudio class name is not the type without "OS:" and colons.
-SDK_CLASS = {"OS:Material:NoMass": "MasslessOpaqueMaterial", "OS:Material": "StandardOpaqueMaterial"}
+SDK_CLASS = {
+    "OS:Material:NoMass": "MasslessOpaqueMaterial",
+    "OS:Material": "StandardOpaqueMaterial",
+    "OS:WindowMaterial:SimpleGlazingSystem": "SimpleGlazing",
+}
 
 
 def _snake(idd_type: str) -> str:
@@ -50,7 +54,7 @@ def models() -> dict:
 
 
 def test_family_names_follow_their_idd_type() -> None:
-    assert len(dump.families()) == 65
+    assert len(dump.families()) == 73  # 65 + the 8 of item 3b
     for name, idd_type in dump.families().items():
         assert name == _snake(idd_type)
     assert len(set(dump.families().values())) == len(dump.families())

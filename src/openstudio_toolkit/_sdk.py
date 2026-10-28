@@ -56,3 +56,24 @@ def optional_name(value: Any) -> str | None:
     """
     obj = opt(value)
     return opt(obj.name()) if obj is not None else None
+
+
+def connection_node_name(obj: Any, field: str) -> str | None:
+    """Return the name of the node an HVAC port field connects to, or None when it is unconnected.
+
+    Port fields (``Inlet Node Name``, ``Water Outlet Node Name``, ...) store the handle of an
+    ``OS:Connection``, not of the node; the node is that connection's source or target object.
+    A field that points to the node directly is also accepted.
+    """
+    target = related(obj, field)
+    if target is None:
+        return None
+    if target.iddObject().name() == "OS:Node":
+        nodes = [target]
+    else:
+        nodes = [related(target, hop) for hop in ("Source Object", "Target Object")]
+    node = next((n for n in nodes if n is not None and n.iddObject().name() == "OS:Node"), None)
+    if node is None:
+        return None
+    name: str | None = opt(node.name())
+    return name

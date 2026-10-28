@@ -15,6 +15,9 @@ touches both); a removed row, in the parent; an added row, in the child. Every o
 ``not_requested``, including added and removed objects; their direction stays in ``field``
 (``(object added)`` / ``(object removed)``), since such rows have no field of their own.
 
+``write_report`` renders a list of ``ReportPair`` as one self-contained HTML file (visible form approved
+by Roberto, 2026-10-27; see ``views/_report.py``).
+
 FPM4 Baseline v9 -> v10 with a lighting mapping: the 21 diff rows (outdoor air on the n01 spaces, fan
 efficiencies, pump and tower power) are all ``not_requested``.
 """
@@ -35,6 +38,7 @@ from openstudio_toolkit.analysis.compare import (
     compare_to_mapping,
 )
 from openstudio_toolkit.analysis.diff import DIFF_COLUMNS, DIFF_MATCH_METHODS, diff_models
+from openstudio_toolkit.views._report import ReportPair, write_report
 
 __all__ = [
     "COMPARE_COLUMNS",
@@ -42,8 +46,10 @@ __all__ = [
     "DIFF_COLUMNS",
     "DIFF_MATCH_METHODS",
     "DIFF_STATUS_VALUES",
+    "ReportPair",
     "compare_rows",
     "diff_rows",
+    "write_report",
 ]
 
 DIFF_STATUS_VALUES = ("changed", "added", "removed", "not_requested")

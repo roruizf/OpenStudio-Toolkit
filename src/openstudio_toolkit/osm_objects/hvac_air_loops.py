@@ -4,21 +4,11 @@ from typing import Any
 import openstudio
 import pandas as pd
 
-from openstudio_toolkit._sdk import opt, optional_name, related, related_name
+from openstudio_toolkit._sdk import connection_node_name, opt, optional_name, related_name
 from openstudio_toolkit.osm_objects._base import build_dataframe
 
 # Configure logger
 logger = logging.getLogger(__name__)
-
-
-def _connection_node_name(target_object: Any, field: str) -> str | None:
-    """Node fields point to an OS:Connection; the node is the connection's source or target object."""
-    connection = related(target_object, field)
-    for hop in ("Source Object", "Target Object"):
-        node = related(connection, hop) if connection is not None else None
-        if node is not None and node.iddObject().name() == "OS:Node":
-            return opt(node.name())
-    return None
 
 
 #-------------------
@@ -99,10 +89,10 @@ def get_air_loop_hvac_object_as_dict(
         'Design Return Air Flow Fraction of Supply Air Flow': target_object.designReturnAirFlowFractionofSupplyAirFlow(),
         'Branch List Name': None,
         'Connector List Name': None,
-        'Supply Side Inlet Node Name': _connection_node_name(target_object, "Supply Side Inlet Node Name"),
-        'Demand Side Outlet Node Name': _connection_node_name(target_object, "Demand Side Outlet Node Name"),
-        'Demand Side Inlet Node A': _connection_node_name(target_object, "Demand Side Inlet Node A"),
-        'Supply Side Outlet Node A': _connection_node_name(target_object, "Supply Side Outlet Node A"),
+        'Supply Side Inlet Node Name': connection_node_name(target_object, "Supply Side Inlet Node Name"),
+        'Demand Side Outlet Node Name': connection_node_name(target_object, "Demand Side Outlet Node Name"),
+        'Demand Side Inlet Node A': connection_node_name(target_object, "Demand Side Inlet Node A"),
+        'Supply Side Outlet Node A': connection_node_name(target_object, "Supply Side Outlet Node A"),
         'Demand Side Inlet Node B': None,
         'Supply Side Outlet Node B': None,
         'Return Air Bypass Flow Temperature Setpoint Schedule Name': None,

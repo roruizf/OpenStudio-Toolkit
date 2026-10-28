@@ -4,8 +4,9 @@ from typing import Any
 import openstudio
 import pandas as pd
 
-from openstudio_toolkit._sdk import opt, optional_name, related_name
+from openstudio_toolkit._sdk import connection_node_name, opt, optional_name, related_name
 from openstudio_toolkit.osm_objects._base import build_dataframe
+from openstudio_toolkit.utils import helpers
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -443,10 +444,10 @@ def get_four_pipe_fan_coil_object_as_dict(
                   'Name': opt(target_object.name()) if target_object.name().is_initialized() else None,
                   'Availability Schedule Name': opt(target_object.availabilitySchedule().name()) if target_object.availabilitySchedule().name().is_initialized() else None,
                   'Capacity Control Method': target_object.capacityControlMethod(),
-                  'Maximum Supply Air Flow Rate {m3/s}': opt(target_object.maximumSupplyAirFlowRate()) if not target_object.isMaximumSupplyAirFlowRateAutosized() else 'autosize',                  
+                  'Maximum Supply Air Flow Rate {m3/s}': opt(target_object.maximumSupplyAirFlowRate()) if not target_object.isMaximumSupplyAirFlowRateAutosized() else 'Autosize',                  
                   'Low Speed Supply Air Flow Ratio': target_object.lowSpeedSupplyAirFlowRatio(),
                   'Medium Speed Supply Air Flow Ratio': target_object.mediumSpeedSupplyAirFlowRatio(),                  
-                  'Maximum Outdoor Air Flow Rate {m3/s}': opt(target_object.maximumOutdoorAirFlowRate()) if not target_object.isMaximumOutdoorAirFlowRateAutosized() else 'autosize',
+                  'Maximum Outdoor Air Flow Rate {m3/s}': opt(target_object.maximumOutdoorAirFlowRate()) if not target_object.isMaximumOutdoorAirFlowRateAutosized() else 'Autosize',
                   'Outdoor Air Schedule Name': optional_name(target_object.outdoorAirSchedule()),
                   'Air Inlet Node Name': optional_name(target_object.inletNode()),
                   'Air Outlet Node Name': optional_name(target_object.outletNode()),
@@ -454,16 +455,16 @@ def get_four_pipe_fan_coil_object_as_dict(
                   'Outdoor Air Mixer Name': target_object.outdoorAirMixerName(),
                   'Supply Air Fan Name': related_name(target_object, "Supply Air Fan Name"),
                   'Cooling Coil Name': related_name(target_object, "Cooling Coil Name"),
-                  'Maximum Cold Water Flow Rate {m3/s}': opt(target_object.maximumColdWaterFlowRate()) if not target_object.isMaximumColdWaterFlowRateAutosized() else 'autosize',
+                  'Maximum Cold Water Flow Rate {m3/s}': opt(target_object.maximumColdWaterFlowRate()) if not target_object.isMaximumColdWaterFlowRateAutosized() else 'Autosize',
                   'Minimum Cold Water Flow Rate {m3/s}': target_object.minimumColdWaterFlowRate(),
                   'Cooling Convergence Tolerance': target_object.coolingConvergenceTolerance(),
                   'Heating Coil Name': related_name(target_object, "Heating Coil Name"),
-                  'Maximum Hot Water Flow Rate {m3/s}': opt(target_object.maximumHotWaterFlowRate()) if not target_object.isMaximumHotWaterFlowRateAutosized() else 'autosize',
+                  'Maximum Hot Water Flow Rate {m3/s}': opt(target_object.maximumHotWaterFlowRate()) if not target_object.isMaximumHotWaterFlowRateAutosized() else 'Autosize',
                   'Minimum Hot Water Flow Rate {m3/s}': target_object.minimumHotWaterFlowRate(),
                   'Heating Convergence Tolerance': target_object.heatingConvergenceTolerance(),
                   'Supply Air Fan Operating Mode Schedule Name': None,
-                  'Minimum Supply Air Temperature in Cooling Mode {C}': opt(target_object.minimumSupplyAirTemperatureInCoolingMode()) if not target_object.isMinimumSupplyAirTemperatureInCoolingModeAutosized() else 'autosize',
-                  'Maximum Supply Air Temperature in Heating Mode {C}': opt(target_object.maximumSupplyAirTemperatureInHeatingMode()) if not target_object.isMaximumSupplyAirTemperatureInHeatingModeAutosized() else 'autosize'
+                  'Minimum Supply Air Temperature in Cooling Mode {C}': opt(target_object.minimumSupplyAirTemperatureInCoolingMode()) if not target_object.isMinimumSupplyAirTemperatureInCoolingModeAutosized() else 'Autosize',
+                  'Maximum Supply Air Temperature in Heating Mode {C}': opt(target_object.maximumSupplyAirTemperatureInHeatingMode()) if not target_object.isMaximumSupplyAirTemperatureInHeatingModeAutosized() else 'Autosize'
               }
 
     return object_dict
@@ -507,3 +508,220 @@ def get_all_four_pipe_fan_coil_objects_as_dataframe(osm_model: openstudio.model.
     return build_dataframe(
         all_objects_dicts, "ZoneHVAC:FourPipeFanCoil", sort_by="Name",
         columns=FOUR_PIPE_FAN_COIL_COLUMNS)
+
+
+# --------------------------------------------------
+#  ***** OS:ThermostatSetpoint:DualSetpoint ******
+# --------------------------------------------------
+
+THERMOSTAT_SETPOINT_DUAL_SETPOINT_COLUMNS = (
+    'Handle',
+    'Name',
+    'Heating Setpoint Temperature Schedule Name',
+    'Cooling Setpoint Temperature Schedule Name',
+    'Temperature Difference Between Cutout And Setpoint {deltaC}',
+)
+
+def get_thermostat_setpoint_dual_setpoint_object_as_dict(
+    osm_model: openstudio.model.Model,
+    handle: str | None = None,
+    name: str | None = None,
+    _object_ref: openstudio.model.ThermostatSetpointDualSetpoint | None = None
+) -> dict[str, Any]:
+    """
+    Retrieve attributes of an OS:ThermostatSetpoint:DualSetpoint from the OpenStudio Model.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.ThermostatSetpointDualSetpoint, optional): Direct object reference.
+
+    Returns:
+    - Dict[str, Any]: A dictionary with one entry per IDD field (node fields give the node name).
+    """
+    target_object = helpers.fetch_object(
+        osm_model, "ThermostatSetpointDualSetpoint", handle, name, _object_ref)
+
+    if target_object is None:
+        return {}
+
+    return {
+        'Handle': str(target_object.handle()),
+        'Name': opt(target_object.name()),
+        'Heating Setpoint Temperature Schedule Name': optional_name(target_object.heatingSetpointTemperatureSchedule()),
+        'Cooling Setpoint Temperature Schedule Name': optional_name(target_object.coolingSetpointTemperatureSchedule()),
+        'Temperature Difference Between Cutout And Setpoint {deltaC}': (
+            target_object.temperatureDifferenceBetweenCutoutAndSetpoint()
+        ),
+    }
+
+def get_all_thermostat_setpoint_dual_setpoint_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
+    """
+    Retrieve attributes for all OS:ThermostatSetpoint:DualSetpoint objects in the model.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - List[Dict[str, Any]]: A list of dictionaries, one per object.
+    """
+    all_objects = osm_model.getThermostatSetpointDualSetpoints()
+    return [get_thermostat_setpoint_dual_setpoint_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
+
+def get_all_thermostat_setpoint_dual_setpoint_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all OS:ThermostatSetpoint:DualSetpoint objects and organize them into a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: A DataFrame with the columns of THERMOSTAT_SETPOINT_DUAL_SETPOINT_COLUMNS.
+    """
+    all_objects_dicts = get_all_thermostat_setpoint_dual_setpoint_objects_as_dicts(osm_model)
+    return build_dataframe(
+        all_objects_dicts, "ThermostatSetpoint:DualSetpoint", sort_by="Name", columns=THERMOSTAT_SETPOINT_DUAL_SETPOINT_COLUMNS)
+
+# --------------------------------------------------
+#  ***** OS:ZoneHVAC:IdealLoadsAirSystem *********
+# --------------------------------------------------
+
+ZONE_HVAC_IDEAL_LOADS_AIR_SYSTEM_COLUMNS = (
+    'Handle',
+    'Name',
+    'Availability Schedule Name',
+    'Zone Supply Air Node Name',
+    'Zone Exhaust Air Node Name',
+    'Maximum Heating Supply Air Temperature {C}',
+    'Minimum Cooling Supply Air Temperature {C}',
+    'Maximum Heating Supply Air Humidity Ratio {kg-H2O/kg-air}',
+    'Minimum Cooling Supply Air Humidity Ratio {kg-H2O/kg-air}',
+    'Heating Limit',
+    'Maximum Heating Air Flow Rate {m3/s}',
+    'Maximum Sensible Heating Capacity {W}',
+    'Cooling Limit',
+    'Maximum Cooling Air Flow Rate {m3/s}',
+    'Maximum Total Cooling Capacity {W}',
+    'Heating Availability Schedule Name',
+    'Cooling Availability Schedule Name',
+    'Dehumidification Control Type',
+    'Cooling Sensible Heat Ratio {dimensionless}',
+    'Humidification Control Type',
+    'Design Specification Outdoor Air Object Name',
+    'Demand Controlled Ventilation Type',
+    'Outdoor Air Economizer Type',
+    'Heat Recovery Type',
+    'Sensible Heat Recovery Effectiveness {dimensionless}',
+    'Latent Heat Recovery Effectiveness {dimensionless}',
+    'Design Specification ZoneHVAC Sizing Object Name',
+    'Heating Fuel Efficiency Schedule Name',
+    'Heating Fuel Type',
+    'Cooling Fuel Efficiency Schedule Name',
+    'Cooling Fuel Type',
+)
+
+def get_zone_hvac_ideal_loads_air_system_object_as_dict(
+    osm_model: openstudio.model.Model,
+    handle: str | None = None,
+    name: str | None = None,
+    _object_ref: openstudio.model.ZoneHVACIdealLoadsAirSystem | None = None
+) -> dict[str, Any]:
+    """
+    Retrieve attributes of an OS:ZoneHVAC:IdealLoadsAirSystem from the OpenStudio Model.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+    - handle (str, optional): The handle of the object to retrieve.
+    - name (str, optional): The name of the object to retrieve.
+    - _object_ref (openstudio.model.ZoneHVACIdealLoadsAirSystem, optional): Direct object reference.
+
+    Returns:
+    - Dict[str, Any]: A dictionary with one entry per IDD field (node fields give the node name).
+    """
+    target_object = helpers.fetch_object(
+        osm_model, "ZoneHVACIdealLoadsAirSystem", handle, name, _object_ref)
+
+    if target_object is None:
+        return {}
+
+    return {
+        'Handle': str(target_object.handle()),
+        'Name': opt(target_object.name()),
+        'Availability Schedule Name': optional_name(target_object.availabilitySchedule()),
+        'Zone Supply Air Node Name': connection_node_name(target_object, "Zone Supply Air Node Name"),
+        'Zone Exhaust Air Node Name': connection_node_name(target_object, "Zone Exhaust Air Node Name"),
+        'Maximum Heating Supply Air Temperature {C}': target_object.maximumHeatingSupplyAirTemperature(),
+        'Minimum Cooling Supply Air Temperature {C}': target_object.minimumCoolingSupplyAirTemperature(),
+        'Maximum Heating Supply Air Humidity Ratio {kg-H2O/kg-air}': (
+            target_object.maximumHeatingSupplyAirHumidityRatio()
+        ),
+        'Minimum Cooling Supply Air Humidity Ratio {kg-H2O/kg-air}': (
+            target_object.minimumCoolingSupplyAirHumidityRatio()
+        ),
+        'Heating Limit': target_object.heatingLimit(),
+        'Maximum Heating Air Flow Rate {m3/s}': (
+            'Autosize' if target_object.isMaximumHeatingAirFlowRateAutosized()
+            else opt(target_object.maximumHeatingAirFlowRate())
+        ),
+        'Maximum Sensible Heating Capacity {W}': (
+            'Autosize' if target_object.isMaximumSensibleHeatingCapacityAutosized()
+            else opt(target_object.maximumSensibleHeatingCapacity())
+        ),
+        'Cooling Limit': target_object.coolingLimit(),
+        'Maximum Cooling Air Flow Rate {m3/s}': (
+            'Autosize' if target_object.isMaximumCoolingAirFlowRateAutosized()
+            else opt(target_object.maximumCoolingAirFlowRate())
+        ),
+        'Maximum Total Cooling Capacity {W}': (
+            'Autosize' if target_object.isMaximumTotalCoolingCapacityAutosized()
+            else opt(target_object.maximumTotalCoolingCapacity())
+        ),
+        'Heating Availability Schedule Name': optional_name(target_object.heatingAvailabilitySchedule()),
+        'Cooling Availability Schedule Name': optional_name(target_object.coolingAvailabilitySchedule()),
+        'Dehumidification Control Type': target_object.dehumidificationControlType(),
+        'Cooling Sensible Heat Ratio {dimensionless}': target_object.coolingSensibleHeatRatio(),
+        'Humidification Control Type': target_object.humidificationControlType(),
+        'Design Specification Outdoor Air Object Name': (
+            optional_name(target_object.designSpecificationOutdoorAirObject())
+        ),
+        'Demand Controlled Ventilation Type': target_object.demandControlledVentilationType(),
+        'Outdoor Air Economizer Type': target_object.outdoorAirEconomizerType(),
+        'Heat Recovery Type': target_object.heatRecoveryType(),
+        'Sensible Heat Recovery Effectiveness {dimensionless}': target_object.sensibleHeatRecoveryEffectiveness(),
+        'Latent Heat Recovery Effectiveness {dimensionless}': target_object.latentHeatRecoveryEffectiveness(),
+        'Design Specification ZoneHVAC Sizing Object Name': (
+            related_name(target_object, "Design Specification ZoneHVAC Sizing Object Name")
+        ),
+        'Heating Fuel Efficiency Schedule Name': optional_name(target_object.heatingFuelEfficiencySchedule()),
+        'Heating Fuel Type': target_object.heatingFuelType(),
+        'Cooling Fuel Efficiency Schedule Name': optional_name(target_object.coolingFuelEfficiencySchedule()),
+        'Cooling Fuel Type': target_object.coolingFuelType(),
+    }
+
+def get_all_zone_hvac_ideal_loads_air_system_objects_as_dicts(osm_model: openstudio.model.Model) -> list[dict[str, Any]]:
+    """
+    Retrieve attributes for all OS:ZoneHVAC:IdealLoadsAirSystem objects in the model.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - List[Dict[str, Any]]: A list of dictionaries, one per object.
+    """
+    all_objects = osm_model.getZoneHVACIdealLoadsAirSystems()
+    return [get_zone_hvac_ideal_loads_air_system_object_as_dict(osm_model, _object_ref=obj) for obj in all_objects]
+
+def get_all_zone_hvac_ideal_loads_air_system_objects_as_dataframe(osm_model: openstudio.model.Model) -> pd.DataFrame:
+    """
+    Retrieve all OS:ZoneHVAC:IdealLoadsAirSystem objects and organize them into a pandas DataFrame.
+
+    Parameters:
+    - osm_model (openstudio.model.Model): The OpenStudio Model object.
+
+    Returns:
+    - pd.DataFrame: A DataFrame with the columns of ZONE_HVAC_IDEAL_LOADS_AIR_SYSTEM_COLUMNS.
+    """
+    all_objects_dicts = get_all_zone_hvac_ideal_loads_air_system_objects_as_dicts(osm_model)
+    return build_dataframe(
+        all_objects_dicts, "ZoneHVAC:IdealLoadsAirSystem", sort_by="Name", columns=ZONE_HVAC_IDEAL_LOADS_AIR_SYSTEM_COLUMNS)

@@ -70,6 +70,7 @@ _FAMILIES: dict[str, tuple[str, Callable[[Any], pd.DataFrame]]] = {
         "OS:AvailabilityManager:NightCycle",
         availability_managers.get_all_availability_manager_night_cycle_objects_as_dataframe,
     ),
+    "boiler_hot_water": ("OS:Boiler:HotWater", hvac_components.get_all_boiler_hot_water_objects_as_dataframe),
     "building_story": ("OS:BuildingStory", building_stories.get_all_building_stories_objects_as_dataframe),
     "building_unit": ("OS:BuildingUnit", building_units.get_all_building_unit_objects_as_dataframe),
     "chiller_electric_eir": (
@@ -91,6 +92,14 @@ _FAMILIES: dict[str, tuple[str, Callable[[Any], pd.DataFrame]]] = {
     "controller_outdoor_air": (
         "OS:Controller:OutdoorAir",
         controllers.get_all_controller_outdoor_air_objects_as_dataframe,
+    ),
+    "cooling_tower_two_speed": (
+        "OS:CoolingTower:TwoSpeed",
+        hvac_components.get_all_cooling_tower_two_speed_objects_as_dataframe,
+    ),
+    "cooling_tower_variable_speed": (
+        "OS:CoolingTower:VariableSpeed",
+        hvac_components.get_all_cooling_tower_variable_speed_objects_as_dataframe,
     ),
     "curve_biquadratic": ("OS:Curve:Biquadratic", component_curves.get_all_curve_biquadratic_objects_as_dataframe),
     "curve_cubic": ("OS:Curve:Cubic", component_curves.get_all_curve_cubic_objects_as_dataframe),
@@ -132,6 +141,7 @@ _FAMILIES: dict[str, tuple[str, Callable[[Any], pd.DataFrame]]] = {
     ),
     "fan_constant_volume": ("OS:Fan:ConstantVolume", hvac_components.get_all_fan_constant_volume_objects_as_dataframe),
     "fan_on_off": ("OS:Fan:OnOff", hvac_components.get_all_fan_on_off_objects_as_dataframe),
+    "fan_variable_volume": ("OS:Fan:VariableVolume", hvac_components.get_all_fan_variable_volume_objects_as_dataframe),
     "gas_equipment": ("OS:GasEquipment", loads.get_all_gas_equipment_objects_as_dataframe),
     "gas_equipment_definition": (
         "OS:GasEquipment:Definition",
@@ -153,6 +163,7 @@ _FAMILIES: dict[str, tuple[str, Callable[[Any], pd.DataFrame]]] = {
     "output_variable": ("OS:Output:Variable", outputs.get_all_output_variable_objects_as_dataframe),
     "people": ("OS:People", loads.get_all_people_objects_as_dataframe),
     "people_definition": ("OS:People:Definition", loads.get_all_people_definition_objects_as_dataframe),
+    "pump_constant_speed": ("OS:Pump:ConstantSpeed", hvac_components.get_all_pump_constant_speed_objects_as_dataframe),
     "pump_variable_speed": ("OS:Pump:VariableSpeed", hvac_components.get_all_pump_variable_speed_objects_as_dataframe),
     "schedule_day": ("OS:Schedule:Day", schedules.get_all_schedule_day_objects_as_dataframe),
     "schedule_rule": ("OS:Schedule:Rule", schedules.get_all_schedule_rule_objects_as_dataframe),
@@ -174,10 +185,18 @@ _FAMILIES: dict[str, tuple[str, Callable[[Any], pd.DataFrame]]] = {
     "sub_surface": ("OS:SubSurface", subsurfaces.get_all_subsurface_objects_as_dataframe),
     "surface": ("OS:Surface", surfaces.get_all_surface_objects_as_dataframe),
     "thermal_zone": ("OS:ThermalZone", thermal_zones.get_all_thermal_zones_objects_as_dataframe),
+    "thermostat_setpoint_dual_setpoint": (
+        "OS:ThermostatSetpoint:DualSetpoint",
+        hvac_zone.get_all_thermostat_setpoint_dual_setpoint_objects_as_dataframe,
+    ),
     "water_use_equipment": ("OS:WaterUse:Equipment", loads.get_all_water_use_equipment_objects_as_dataframe),
     "water_use_equipment_definition": (
         "OS:WaterUse:Equipment:Definition",
         loads.get_all_water_use_equipment_definition_objects_as_dataframe,
+    ),
+    "window_material_simple_glazing_system": (
+        "OS:WindowMaterial:SimpleGlazingSystem",
+        materials.get_all_window_material_simple_glazing_system_objects_as_dataframe,
     ),
     "zone_hvac_equipment_list": (
         "OS:ZoneHVAC:EquipmentList",
@@ -186,6 +205,10 @@ _FAMILIES: dict[str, tuple[str, Callable[[Any], pd.DataFrame]]] = {
     "zone_hvac_four_pipe_fan_coil": (
         "OS:ZoneHVAC:FourPipeFanCoil",
         hvac_zone.get_all_four_pipe_fan_coil_objects_as_dataframe,
+    ),
+    "zone_hvac_ideal_loads_air_system": (
+        "OS:ZoneHVAC:IdealLoadsAirSystem",
+        hvac_zone.get_all_zone_hvac_ideal_loads_air_system_objects_as_dataframe,
     ),
     "zone_hvac_terminal_unit_variable_refrigerant_flow": (
         "OS:ZoneHVAC:TerminalUnit:VariableRefrigerantFlow",

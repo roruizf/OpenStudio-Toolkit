@@ -159,3 +159,11 @@ def test_survives_orphan_relations(entry: tuple[str, str], worker_results) -> No
     assert result["returncode"] >= 0, f"process killed by signal {-result['returncode']}"
     assert [line["model"] for line in result["lines"]] == result["expected"]
     assert not [line for line in _lines(result, "blanked:") if "error" in line]
+
+
+def test_autosized_fields_read_autosize_in_one_spelling() -> None:
+    """An autosized field reads 'Autosize' (the IDD key) in every reader, never 'autosize'."""
+    folder = Path(osm_objects.__file__).parent
+    lower = [f"{p.name}:{n}" for p in sorted(folder.glob("*.py"))
+             for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1) if "'autosize'" in line]
+    assert lower == []
