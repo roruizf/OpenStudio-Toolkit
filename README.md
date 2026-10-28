@@ -1,270 +1,65 @@
 # OpenStudio Toolkit
 
-A Python library that provides structured access to OpenStudio Model (OSM) elements through a set of straightforward functions. It allows users to extract, analyze, and modify building energy models by transforming OpenStudio objects into Python-friendly data structures (dictionaries, lists, and Pandas DataFrames).
+Read, compare and change OpenStudio models (`.osm`), and read simulation results (`eplusout.sql`), from Python
+or the command line. Built to check the work of a modeling agent: compare the new model with what was
+requested and with the previous version, and read every change in one HTML report.
 
-**Built by**: [Roberto Ruiz](https://github.com/roruizf)
+**Built by** [Roberto Ruiz](https://github.com/roruizf). Agents: read [`AGENTS.md`](AGENTS.md) first.
 
----
+## Install
 
-## Table of Contents
-
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Available Modules](#available-modules)
-- [Available Tasks](#available-tasks)
-- [Example Workflows](#example-workflows)
-- [Project Structure](#project-structure)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
-## Features
-
-### Core Functionality
-
-**OSM Objects Module** - Pythonic access to OpenStudio model entities:
-- Building Structure (building, stories)
-- Spatial Elements (spaces, thermal zones, surfaces, subsurfaces, space types)
-- HVAC Systems (air loops, components, sizing, zone equipment)
-- Materials & Constructions
-- Internal Loads & Schedules
-- Simulation Outputs
-- Component Curves & Controllers
-- Exterior Equipment
-
-**Utilities Module** - Helper functions for common operations:
-- Excel import/export utilities
-- OSM model utilities
-- EnergyPlus utilities
-- Jupyter notebook helpers
-
-**Pre-built Tasks** - Ready-to-use automation tasks:
-- Model Setup (normalize names, rename surfaces/subsurfaces, set space properties)
-- Model QA/QC (calculate WWR by space)
-- Simulation Setup (configure output variables)
-- Results Analysis (extract timeseries from SQL)
-
----
-
-## Prerequisites
-
-- **Python** within `requires-python` in `pyproject.toml` (checked by `tests/contract/`)
-- **OpenStudio** 3.11.0 Python bindings
-- **EnergyPlus** 25.2.0 (reported by the OpenStudio binding)
-- **uv** for Python and dependency management
-- **Operating System**: Windows, macOS, or Linux
-
----
-
-## Installation
-
-### 1. Clone the Repository
+Python 3.11 to 3.13. Install a release tag:
 
 ```bash
-git clone https://github.com/roruizf/OpenStudio-Toolkit.git
-cd OpenStudio-Toolkit
+uv add "openstudio-toolkit @ git+https://github.com/roruizf/OpenStudio-Toolkit@v0.3.0"
+# or: pip install "openstudio-toolkit @ git+https://github.com/roruizf/OpenStudio-Toolkit@v0.3.0"
 ```
 
-### 2. Create the Verified Environment
+It brings the OpenStudio 3.11.0 Python wheel (EnergyPlus 25.2.0). It does not run simulations.
+
+## Verify a model version
+
+The request is a JSON *mapping*: family → Space → requested total. Example, three of the 36 Spaces of R2F
+Office Hub with lighting from ASHRAE 90.1 Table G3.7:
+
+```json
+{"lights": {"1.10-MeetingRoom": 335.76, "0.05-Storage": 43.05, "1.24-Office": 130.24}}
+```
 
 ```bash
-uv sync --dev
-uv run python -c "from openstudio_toolkit.runtime import assert_reference_runtime; print(assert_reference_runtime())"
+openstudio-toolkit diff actual-017.osm reference-011.osm --mapping g37.json --tolerance 0.5 \
+    --report verification.html --language es
+# diff: 14 added, 5480 not_requested, 72 removed
+# child vs mapping: 36 match
 ```
 
-`uv` installs the pinned OpenStudio 3.11.0 wheel into the project environment. The runtime assertion fails if Python, OpenStudio, or EnergyPlus does not match the verified profile. Conda and ambient `python3` environments are not supported.
+Exit code `0`: the child matches the request; `1`: it does not; `2`: the command could not run. The full
+procedure is in [`docs/VERIFICATION-GUIDE.md`](docs/VERIFICATION-GUIDE.md).
 
----
+## Commands
 
-## Quick Start
+| Command | What it does |
+|---|---|
+| `dump model.osm --out dump/` | One CSV per family (Spaces, loads, constructions, HVAC...), as OpenStudio resolves it |
+| `apply parent.osm child.osm --mapping m.json` | Writes the child with the requested per-Space loads; never modifies the parent, never doubles a space-type load |
+| `compare model.osm --mapping m.json` | The model against the request, by Space or Thermal Zone |
+| `diff parent.osm child.osm --mapping m.json --report r.html` | Every change parent → child, the request check, and the HTML report (English, Spanish or French) |
+| `results eplusout.sql end_uses --units GJ=kWh` | `zone_sizes`, `system_sizes`, `unmet_hours`, `end_uses` |
 
-Here's a simple example to get started:
+The same functions are available from Python; the stable list is the contract,
+[`docs/contracts/v0.3.toml`](docs/contracts/v0.3.toml).
 
-```python
-import openstudio
-from openstudio_toolkit.osm_objects import spaces, thermal_zones
-from openstudio_toolkit.tasks.model_setup import normalize_space_names
-
-# Load an OpenStudio model
-translator = openstudio.osversion.VersionTranslator()
-osm_model = translator.loadModel("path/to/model.osm").get()
-
-# Extract spaces as a DataFrame
-spaces_df = spaces.get_all_space_objects_as_dataframe(osm_model)
-print(spaces_df.head())
-
-# Run a pre-built task to normalize space names
-validation = normalize_space_names.validator(osm_model)
-if validation["status"] == "READY":
-    osm_model = normalize_space_names.run(osm_model)
-    osm_model.save("path/to/updated_model.osm", True)
-```
-
----
-
-## Available Modules
-
-### OSM Objects
-
-One module per family group under `src/openstudio_toolkit/osm_objects/`. The list of modules and of
-`get_all_*_as_dataframe` functions is whatever the package contains; the tests discover them by
-introspection, so it is not repeated here.
-
-### Utilities
-
-| Module | Description |
-|--------|-------------|
-| `excel_utils` | Excel file read/write operations |
-| `osm_utils` | General OSM manipulation utilities |
-| `eplus_utils` | EnergyPlus-related utilities |
-| `notebook_helpers` | Jupyter notebook convenience functions |
-
----
-
-## Available Tasks
-
-Tasks are pre-built, validated workflows for common modeling operations. Each task includes a `validator()` function to check preconditions and a `run()` function to execute the task.
-
-### Model Setup
-
-| Task | Description |
-|------|-------------|
-| `normalize_space_names` | Replace spaces/underscores with hyphens in space names |
-| `rename_surfaces_based_on_space_names` | Rename surfaces using their parent space names |
-| `rename_subsurfaces_based_on_space_and_surface_names` | Rename subsurfaces using space and surface names |
-| `set_space_surfacearea_height_volume` | Calculate and set space geometric properties |
-
-### Model QA/QC
-
-| Task | Description |
-|------|-------------|
-| `calculate_wwr_by_space` | Calculate window-to-wall ratio for each space |
-
-### Measures
-
-| Task | Description |
-|------|-------------|
-| `apply_space_type_and_construction_set_wizard` | Applies Space Types and Construction Sets based on Building Type, Climate Zone, and Template (ASHRAE/DOE standards) |
-| `create_view_model_html` | Generates a standalone HTML report with 3D geometry visualization and model statistics |
-
-### Simulation Setup
-
-| Task | Description |
-|------|-------------|
-| `set_output_variables` | Configure simulation output variables |
-
-### Results Analysis
-
-| Task | Description |
-|------|-------------|
-| `get_timeseries_from_sql` | Extract timeseries data from EnergyPlus SQL output |
-
-**Example Task Usage:**
-
-```python
-from openstudio_toolkit.tasks.model_setup import normalize_space_names
-
-# Validate before running
-result = normalize_space_names.validator(osm_model)
-print(result["messages"])
-
-if result["status"] == "READY":
-    osm_model = normalize_space_names.run(osm_model)
-```
-
----
-
-## Example Workflows
-
-The `notebooks/` directory contains Jupyter notebook examples organized by workflow type:
-
-### 1. Model Setup
-- `1.1_Normalize_Space_Names.ipynb` - Clean up space naming conventions
-- `1.2_Rename_Surfaces_Based_on_Space_Names.ipynb` - Systematic surface renaming
-- `1.3_Rename_Subsurfaces_Based_on_Space_and_Surface_Names.ipynb` - Subsurface naming
-- `1.4_Set_Space_SurfaceArea_Height_Volume.ipynb` - Calculate space geometry
-
-### 2. Model QA/QC
-- `2.1_Calculate_WWR_by_Space.ipynb` - Window-to-wall ratio analysis
-
-### 3. Simulation Setup
-- `3.1_Set_Output_Variables.ipynb` - Configure simulation outputs
-
-### 4. Results Analysis
-- `4.1_Get_Timeseries_from_SQL.ipynb` - Extract and analyze simulation results
-
----
-
-## Project Structure
-
-```
-OpenStudio-Toolkit/
-├── src/openstudio_toolkit/        # Core library
-│   ├── osm_objects/                # OSM object modules
-│   ├── utils/                      # Utility functions
-│   ├── tasks/                      # Pre-built task modules
-│   │   ├── model_setup/
-│   │   ├── model_qa_qc/
-│   │   ├── simulation_setup/
-│   │   └── results_analysis/
-│   └── workflows/                  # Workflow orchestration
-├── notebooks/                      # Example Jupyter notebooks
-│   ├── 1_Model_Setup/
-│   ├── 2_Model_QA_QC/
-│   ├── 3_Simulation_Setup/
-│   └── 4_Results_Analysis/
-├── examples/                       # Example OSM files
-├── tests/                          # Unit tests
-├── pyproject.toml                  # Project configuration
-└── README.md
-```
-
----
-
-## Testing
-
-Run the test suite in the locked environment:
+## Develop
 
 ```bash
-uv run pytest tests/
+git clone https://github.com/roruizf/OpenStudio-Toolkit.git && cd OpenStudio-Toolkit
+uv sync
+uv run pytest -q
 ```
 
-Run specific test modules:
-
-```bash
-uv run pytest tests/test_spaces.py
-uv run pytest tests/test_schemas/
-```
-
----
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
+Rules, patterns and the release process: [`AGENTS.md`](AGENTS.md). Bugs and ideas:
+[`docs/BACKLOG.md`](docs/BACKLOG.md).
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-## Related Projects
-
-- [openstudio-mcp-server](https://github.com/roruizf/openstudio-mcp-server) - Model Context Protocol server for OpenStudio
-- [OpenStudio](https://github.com/NREL/OpenStudio) - Cross-platform collection of software tools for building energy modeling
-
----
-
-**Questions or Issues?** Please open an issue on [GitHub](https://github.com/roruizf/OpenStudio-Toolkit/issues).
+MIT, as declared in `pyproject.toml`.

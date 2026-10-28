@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 REFERENCE_PYTHON_MINOR = (3, 13)
-# Python 3.14 segfaults in the OpenStudio binding (docs/runtime/REFERENCE-PROFILE.md, P1 evidence).
+# Python 3.14 segfaults in the OpenStudio binding (measured 2026-06-20 with Python 3.14.1; see AGENTS.md, Runtime).
 SUPPORTED_PYTHON_MINORS = ((3, 11), (3, 12), (3, 13))
 REFERENCE_OPENSTUDIO_VERSION = "3.11.0"
 REFERENCE_ENERGYPLUS_VERSION = "25.2.0"

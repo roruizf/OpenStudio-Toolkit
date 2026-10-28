@@ -27,8 +27,3 @@ tests/output/
 # test_*.py
 test_*.html
 
-# Notebook outputs (modified OSM files from test runs)
-notebooks/**/*_normalized.osm
-notebooks/**/*_renamed.osm
-notebooks/**/*_outputs_set.osm
-notebooks/**/*_modified.osm
